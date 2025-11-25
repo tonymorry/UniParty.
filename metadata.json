@@ -1,0 +1,7 @@
+{
+  "name": "UniParty",
+  "description": "The ultimate university event platform. Buy tickets, manage events, and connect with your campus community.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
