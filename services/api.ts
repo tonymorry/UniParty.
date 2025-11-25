@@ -7,14 +7,10 @@ import { Event, EventCategory, LoginResponse, Ticket, User, UserRole } from '../
 // CHANGE THIS TO FALSE TO USE THE REAL BACKEND
 const USE_MOCK = false; 
 
-// Safely determine if production environment
-const meta = import.meta as any;
-const isProd = meta && meta.env && meta.env.PROD;
-
-// Automatically determine API URL:
-// In production (when served by the same backend), use relative path '/api'
-// In development, use localhost:5000
-const API_URL = isProd ? '/api' : 'http://localhost:5000/api';
+// Automatically determine API URL based on the current browser domain
+// If we are on localhost, look for port 5000. Otherwise, use relative path '/api'
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_URL = isLocalhost ? 'http://localhost:5000/api' : '/api';
 
 // ==========================================
 // MOCK DATA & IMPLEMENTATION (Keep existing mock logic for fallback)
