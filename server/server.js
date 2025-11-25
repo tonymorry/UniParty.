@@ -303,13 +303,14 @@ app.post('/api/tickets/validate', authMiddleware, async (req, res) => {
 app.post('/api/stripe/connect', authMiddleware, StripeController.createConnectAccount);
 app.post('/api/stripe/create-checkout-session', authMiddleware, StripeController.createCheckoutSession);
 
-// --- SERVE STATIC FILES IN PRODUCTION ---
-    // Serve any static files
-    app.use(express.static(path.join(__dirname, '../dist')));
-    // Handle React routing, return all requests to React app
-    app.get('*', (req, res) => {
-        res.sendFile(path.join(__dirname, '../dist', 'index.html'));
-    });
+// --- SERVE STATIC FILES (ALWAYS) ---
+// Serve any static files
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// Handle React routing, return all requests to React app
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dist', 'index.html'));
+});
 
 // Listen
 app.listen(PORT, () => {
