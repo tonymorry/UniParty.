@@ -6,6 +6,7 @@
     "dev": "concurrently \"vite\" \"node server/server.js\"",
     "start": "node server/server.js",
     "build": "tsc && vite build",
+    "render-build": "npm install && npm run build",
     "preview": "vite preview"
   },
   "dependencies": {
