@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { api } from '../services/api';
 import { Ticket, UserRole } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -15,10 +15,10 @@ const Scanner: React.FC = () => {
   const [manualCode, setManualCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null);
+  const [isScannerActive, setIsScannerActive] = useState(false);
   
   // Ref for the scanner instance
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
-  const isScanningRef = useRef<boolean>(false);
 
   // Initialize Scanner
   useEffect(() => {
@@ -27,82 +27,100 @@ const Scanner: React.FC = () => {
         return;
     }
 
-    // Don't start if we have a result or are loading
+    // If we have a result or error, stop the scanner
     if (scanResult || error || loading) {
-        stopScanner();
+        if (isScannerActive) {
+            stopScanner();
+        }
         return;
     }
 
-    const startScanner = async () => {
-        // Prevent multiple initializations
-        if (html5QrCodeRef.current || isScanningRef.current) return;
+    // Start sequence
+    let isMounted = true;
 
-        // Wait for DOM
-        await new Promise(r => setTimeout(r, 100));
+    const startScanner = async () => {
+        // Wait for DOM element to be fully rendered
+        await new Promise(r => setTimeout(r, 300));
+        
         const element = document.getElementById('reader');
-        if (!element) return;
+        if (!element || !isMounted) return;
+
+        // If already instance exists, clean it first
+        if (html5QrCodeRef.current) {
+            try {
+                await html5QrCodeRef.current.clear();
+            } catch(e) {
+                // ignore clear error
+            }
+        }
 
         try {
             const html5QrCode = new Html5Qrcode("reader");
             html5QrCodeRef.current = html5QrCode;
 
-            // Check cameras
             const devices = await Html5Qrcode.getCameras();
             if (devices && devices.length) {
+                if (!isMounted) return;
                 setCameraPermission(true);
                 
-                // Start scanning (Prefer Back Camera)
                 await html5QrCode.start(
                     { facingMode: "environment" }, 
                     {
                         fps: 10,
                         qrbox: { width: 250, height: 250 },
-                        aspectRatio: 1.0
+                        aspectRatio: 1.0,
+                        disableFlip: false
                     },
                     (decodedText) => {
-                        // Success Callback
-                        stopScanner();
+                        if (!isMounted) return;
                         handleValidation(decodedText);
                     },
                     (errorMessage) => {
-                        // Error Callback (ignore frame errors)
+                        // ignore frame errors
                     }
                 );
-                isScanningRef.current = true;
+                if (isMounted) setIsScannerActive(true);
             } else {
-                setCameraPermission(false);
-                setError("No cameras found.");
+                if (isMounted) {
+                    setCameraPermission(false);
+                    setError("No cameras found on this device.");
+                }
             }
         } catch (err) {
             console.error("Error starting scanner", err);
-            setCameraPermission(false);
-            // Don't set global error yet, let them use manual
+            if (isMounted) setCameraPermission(false);
         }
     };
 
-    startScanner();
+    if (!isScannerActive) {
+        startScanner();
+    }
 
-    // Cleanup on unmount
     return () => {
+        isMounted = false;
         stopScanner();
     };
   }, [user, navigate, scanResult, error, loading]);
 
   const stopScanner = async () => {
-      if (html5QrCodeRef.current && isScanningRef.current) {
+      if (html5QrCodeRef.current) {
           try {
-              isScanningRef.current = false;
-              await html5QrCodeRef.current.stop();
-              await html5QrCodeRef.current.clear();
+              if (html5QrCodeRef.current.isScanning) {
+                  await html5QrCodeRef.current.stop();
+              }
+              html5QrCodeRef.current.clear();
           } catch (e) {
               console.error("Failed to stop scanner", e);
-          } finally {
-              html5QrCodeRef.current = null;
           }
+          html5QrCodeRef.current = null;
+          setIsScannerActive(false);
       }
   };
 
   const handleValidation = async (qrCodeId: string) => {
+      // Stop scanner immediately upon detection
+      await stopScanner();
+      
       setLoading(true);
       setError(null);
       setScanResult(null);
@@ -147,7 +165,7 @@ const Scanner: React.FC = () => {
       setError(null);
       setManualCode('');
       setLoading(false);
-      // Changing state will trigger useEffect to restart scanner
+      setIsScannerActive(false); // This triggers useEffect to restart
   };
 
   return (
@@ -168,10 +186,10 @@ const Scanner: React.FC = () => {
               <div className="w-full max-w-md relative">
                    <div className="bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-indigo-500 relative aspect-square">
                         {/* Force height to prevent collapse */}
-                        <div id="reader" className="w-full h-full" style={{ minHeight: '300px' }}></div>
+                        <div id="reader" className="w-full h-full" style={{ minHeight: '300px', height: '100%' }}></div>
                         
                         {/* Overlay Guide */}
-                        <div className="absolute inset-0 border-2 border-white/30 rounded-2xl pointer-events-none">
+                        <div className="absolute inset-0 border-2 border-white/30 rounded-2xl pointer-events-none z-10">
                             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-indigo-400 rounded-lg bg-transparent box-border"></div>
                         </div>
                    </div>
@@ -188,76 +206,4 @@ const Scanner: React.FC = () => {
 
           {/* LOADING STATE */}
           {loading && (
-              <div className="flex flex-col items-center animate-in fade-in duration-200">
-                  <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                  <p className="text-xl font-bold">Verifying...</p>
-              </div>
-          )}
-
-          {/* SUCCESS RESULT */}
-          {scanResult && (
-              <div className="bg-white text-gray-900 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl animate-in zoom-in duration-300">
-                  <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <CheckCircle className="w-12 h-12 text-green-600" />
-                  </div>
-                  <h2 className="text-3xl font-bold text-green-600 mb-2">Access Granted</h2>
-                  <div className="bg-gray-100 rounded-lg p-4 mb-6 text-left border border-gray-200">
-                      <p className="text-lg font-bold text-indigo-900 mb-1">{scanResult.event.title}</p>
-                      <div className="border-t border-gray-200 my-2"></div>
-                      <p className="text-sm text-gray-500 uppercase font-bold">Holder</p>
-                      <p className="text-xl font-bold text-gray-900 mb-2">{scanResult.ticketHolderName}</p>
-                      <p className="text-sm text-gray-500 uppercase font-bold">PR List</p>
-                      <p className="text-lg font-bold text-indigo-600">{scanResult.prList || "None"}</p>
-                  </div>
-                  <button onClick={resetScanner} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl flex items-center justify-center transition-transform active:scale-95">
-                      <RefreshCw className="w-5 h-5 mr-2" /> Scan Next
-                  </button>
-              </div>
-          )}
-
-          {/* ERROR RESULT */}
-          {error && (
-              <div className="bg-white text-gray-900 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl animate-in shake duration-300">
-                  <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      {error.includes("ALREADY") ? (
-                           <AlertTriangle className="w-12 h-12 text-red-600" />
-                      ) : (
-                           <XCircle className="w-12 h-12 text-red-600" />
-                      )}
-                  </div>
-                  <h2 className="text-3xl font-bold text-red-600 mb-4">Access Denied</h2>
-                  <p className="text-xl font-medium text-gray-800 mb-8 leading-snug">{error}</p>
-                  <button onClick={resetScanner} className="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl flex items-center justify-center transition-transform active:scale-95">
-                      <RefreshCw className="w-5 h-5 mr-2" /> Try Again
-                  </button>
-              </div>
-          )}
-          
-          {/* MANUAL ENTRY */}
-          {(!scanResult && !error && !loading) && (
-              <div className="w-full max-w-md mt-8">
-                  <p className="text-gray-400 text-sm text-center mb-2">Or enter code manually:</p>
-                  <form onSubmit={handleManualSubmit} className="flex gap-2">
-                      <input 
-                          type="text" 
-                          value={manualCode}
-                          onChange={(e) => setManualCode(e.target.value)}
-                          placeholder="Ticket ID (e.g. 123-ABC)"
-                          className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-500 uppercase"
-                      />
-                      <button 
-                        type="submit"
-                        disabled={!manualCode}
-                        className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-lg font-bold disabled:opacity-50 transition-colors"
-                      >
-                          <Search className="w-5 h-5" />
-                      </button>
-                  </form>
-              </div>
-          )}
-      </div>
-    </div>
-  );
-};
-
-export default Scanner;
+              <div

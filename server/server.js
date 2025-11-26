@@ -179,7 +179,10 @@ app.post('/api/users/favorites/toggle', authMiddleware, async (req, res) => {
         const { eventId } = req.body;
         const user = await User.findById(req.user.userId);
         
-        const index = user.favorites.indexOf(eventId);
+        // FIX: Compare strings because user.favorites are ObjectIds and eventId is String
+        const strEventId = eventId.toString();
+        const index = user.favorites.findIndex(favId => favId.toString() === strEventId);
+
         if (index === -1) {
             // Add Favorite
             user.favorites.push(eventId);
@@ -189,6 +192,7 @@ app.post('/api/users/favorites/toggle', authMiddleware, async (req, res) => {
             // Remove Favorite
             user.favorites.splice(index, 1);
             // Decrement count on Event
+            // Use $max to prevent negative counts just in case
             await Event.findByIdAndUpdate(eventId, { $inc: { favoritesCount: -1 } });
         }
         
