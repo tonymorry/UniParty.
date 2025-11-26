@@ -40,36 +40,43 @@ const Scanner: React.FC = () => {
         // If already initialized, do nothing
         if (scannerRef.current) return;
 
-        // Create Scanner
-        const scanner = new Html5QrcodeScanner(
-          "reader",
-          { 
-              fps: 10, 
-              qrbox: { width: 250, height: 250 },
-              aspectRatio: 1.0,
-              showTorchButtonIfSupported: true,
-              rememberLastUsedCamera: true
-          },
-          /* verbose= */ false
-        );
-        
-        scannerRef.current = scanner;
+        // Clear previous content just in case
+        scannerWrapperRef.current.innerHTML = "";
 
-        const onScanSuccess = (decodedText: string) => {
-           // Stop scanning immediately upon success
-           if(scannerRef.current) {
-               scannerRef.current.clear().then(() => {
-                   scannerRef.current = null;
-                   handleValidation(decodedText);
-               }).catch(err => {
-                   console.error("Failed to clear", err);
-                   handleValidation(decodedText);
-               });
-           }
-        };
+        try {
+            // Create Scanner
+            const scanner = new Html5QrcodeScanner(
+              "reader",
+              { 
+                  fps: 10, 
+                  qrbox: { width: 250, height: 250 },
+                  aspectRatio: 1.0,
+                  showTorchButtonIfSupported: true,
+                  rememberLastUsedCamera: true
+              },
+              /* verbose= */ false
+            );
+            
+            scannerRef.current = scanner;
 
-        scanner.render(onScanSuccess, (err) => { /* ignore failures */ });
-    }, 100);
+            const onScanSuccess = (decodedText: string) => {
+               // Stop scanning immediately upon success
+               if(scannerRef.current) {
+                   scannerRef.current.clear().then(() => {
+                       scannerRef.current = null;
+                       handleValidation(decodedText);
+                   }).catch(err => {
+                       console.error("Failed to clear", err);
+                       handleValidation(decodedText);
+                   });
+               }
+            };
+
+            scanner.render(onScanSuccess, (err) => { /* ignore failures */ });
+        } catch(e) {
+            console.error("Scanner init error", e);
+        }
+    }, 300); // Increased delay slightly for stability
 
     return () => {
         clearTimeout(timer);
@@ -141,7 +148,8 @@ const Scanner: React.FC = () => {
           {/* SCANNER VIEWPORT */}
           {(!scanResult && !error && !loading) && (
               <div className="w-full max-w-md bg-black rounded-xl overflow-hidden shadow-2xl border-2 border-indigo-500 relative">
-                   <div id="reader" ref={scannerWrapperRef} className="w-full"></div>
+                   {/* Added min-height to prevent collapse */}
+                   <div id="reader" ref={scannerWrapperRef} className="w-full min-h-[300px]"></div>
               </div>
           )}
 
