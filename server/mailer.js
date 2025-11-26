@@ -1,32 +1,26 @@
 const nodemailer = require('nodemailer');
 
-// Configurazione Gmail SSL (Porta 465) - Tentativo finale
-// Usiamo SSL implicito che è spesso più stabile sui server cloud
+// Configurazione Gmail Esplicita e Robusta per Render
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // IMPORTANTE: true per la porta 465
+  service: 'gmail', // Questo imposta automaticamente host='smtp.gmail.com', port=465, secure=true
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  tls: {
-    rejectUnauthorized: false, // Accetta certificati anche se imperfetti
-  },
-  family: 4, // Forza IPv4
+  // Opzioni di rete fondamentali per evitare timeout su Render
+  family: 4, // Forza IPv4 (Risolve ETIMEDOUT causato da IPv6)
+  pool: true, // Usa connessioni riutilizzabili per performance migliori
   logger: true,
   debug: true,
-  connectionTimeout: 30000, // Aumentato a 30 secondi
-  greetingTimeout: 30000,   // Attende 30 secondi il saluto del server
-  socketTimeout: 30000      // Attende 30 secondi per i dati
+  connectionTimeout: 10000 // 10 seconds
 });
 
-// Verifica connessione
+// Verifica connessione immediata
 transporter.verify(function (error, success) {
   if (error) {
     console.error("❌ SMTP CONNECTION ERROR:", error);
   } else {
-    console.log("✅ SMTP Server is ready (Port 465/SSL/IPv4)");
+    console.log("✅ SMTP Server is ready (IPv4/Gmail)");
   }
 });
 
@@ -54,9 +48,7 @@ const sendWelcomeEmail = async (to, name) => {
 const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
   try {
     console.log(`📤 Attempting to send TICKETS email to: ${to}`);
-    const namesList = Array.isArray(ticketNames) 
-      ? ticketNames.map(name => `<li><strong>${name}</strong></li>`).join('') 
-      : `<li>${ticketNames}</li>`;
+    const namesList = ticketNames.map(name => `<li><strong>${name}</strong></li>`).join('');
     
     const info = await transporter.sendMail({
       from: `"UniParty Team" <${process.env.SMTP_USER}>`,
