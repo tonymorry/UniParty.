@@ -180,24 +180,25 @@ app.post('/api/users/favorites/toggle', authMiddleware, async (req, res) => {
         const { eventId } = req.body;
         const user = await User.findById(req.user.userId);
         
-        // FIX: Properly compare ObjectIds with String IDs using toString()
+        // Ensure we handle ObjectId comparison correctly by converting to string
         const index = user.favorites.findIndex(fav => fav.toString() === eventId);
         
         if (index === -1) {
             // Add Favorite
             user.favorites.push(eventId);
-            // Increment count on Event
+            // Increment logic (Best effort, self-heals in stats)
             await Event.findByIdAndUpdate(eventId, { $inc: { favoritesCount: 1 } });
         } else {
             // Remove Favorite
             user.favorites.splice(index, 1);
-            // Decrement count on Event (prevent negative just in case)
+            // Decrement logic
             await Event.findByIdAndUpdate(eventId, { $inc: { favoritesCount: -1 } });
         }
         
         await user.save();
         res.json(user.favorites); // Return updated list
     } catch (e) {
+        console.error("Toggle Favorite Error:", e);
         res.status(500).json({ error: e.message });
     }
 });
@@ -351,20 +352,34 @@ app.delete('/api/events/:id', authMiddleware, async (req, res) => {
 
 app.get('/api/events/:id/stats', authMiddleware, async (req, res) => {
     try {
-        const event = await Event.findById(req.params.id);
+        const eventId = req.params.id;
+        const event = await Event.findById(eventId);
+        
         if (!event) return res.status(404).json({ error: "Event not found" });
         if (event.organization.toString() !== req.user.userId) return res.status(403).json({ error: "Unauthorized" });
 
-        const tickets = await Ticket.find({ event: req.params.id });
+        const tickets = await Ticket.find({ event: eventId });
+        
+        // FIX: Explicitly count distinct users who have this event ID in their favorites array.
+        // This provides the "real" source of truth.
+        const favoritesRealCount = await User.countDocuments({ favorites: new mongoose.Types.ObjectId(eventId) });
+
+        // Self-Healing: Update the cached count on the event document if it's wrong
+        if (event.favoritesCount !== favoritesRealCount) {
+            await Event.findByIdAndUpdate(eventId, { favoritesCount: favoritesRealCount });
+        }
+
         const stats = {
-            favorites: event.favoritesCount || 0
+            favorites: favoritesRealCount
         };
+        
         tickets.forEach(t => {
             const list = t.prList || "Nessuna lista";
             stats[list] = (stats[list] || 0) + 1;
         });
         res.json(stats);
     } catch (e) {
+        console.error("Stats Error:", e);
         res.status(500).json({ error: e.message });
     }
 });
