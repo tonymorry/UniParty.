@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
-// Configurazione Gmail in modalità "Direct Connection" (No Pool)
-// Più lenta ma molto più affidabile su reti restrittive come Render
+// Configurazione Gmail Standard (Porta 587)
+// SENZA SSLv3 che causa il blocco
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
@@ -10,27 +10,23 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  // Opzioni di rete "pesanti" per forzare la connessione
+  // Opzioni di rete
   tls: {
-    ciphers: 'SSLv3',          
-    rejectUnauthorized: false, 
+    rejectUnauthorized: false, // Accetta certificati anche se ci sono problemi minori
+    // RIMOSSO ciphers: 'SSLv3' -> Questo era il colpevole!
   },
-  family: 4,             // Forza IPv4
-  pool: false,           // <--- IMPORTANTE: Disabilita il pooling
+  family: 4, // Forza IPv4 (Fondamentale per Render)
   logger: true,
   debug: true,
-  connectionTimeout: 60000, // Aumentato a 60 secondi
-  greetingTimeout: 30000,   // Attendi 30s il "Ciao" del server
-  socketTimeout: 60000      // Attendi 60s per i dati
+  connectionTimeout: 10000 
 });
 
-// Verifica connessione
-console.log("⏳ Testing SMTP connection...");
+// Verifica connessione all'avvio
 transporter.verify(function (error, success) {
   if (error) {
     console.error("❌ SMTP CONNECTION ERROR:", error);
   } else {
-    console.log("✅ SMTP Server is ready (Direct/IPv4)");
+    console.log("✅ SMTP Server is ready (Port 587/IPv4)");
   }
 });
 
@@ -60,6 +56,7 @@ const sendWelcomeEmail = async (to, name) => {
 const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
   try {
     console.log(`📤 Attempting to send TICKETS email to: ${to}`);
+    
     const namesList = Array.isArray(ticketNames) 
       ? ticketNames.map(name => `<li><strong>${name}</strong></li>`).join('') 
       : `<li>${ticketNames}</li>`;
