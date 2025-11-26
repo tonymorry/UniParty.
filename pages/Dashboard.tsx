@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { UserRole, EventCategory } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, Infinity as InfinityIcon } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -20,6 +20,9 @@ const Dashboard: React.FC = () => {
   const [image, setImage] = useState('');
   const [maxCapacity, setMaxCapacity] = useState('100');
   const [category, setCategory] = useState<EventCategory>(EventCategory.PARTY);
+  
+  // Unlimited Logic
+  const [isUnlimited, setIsUnlimited] = useState(false);
   
   // PR Lists State
   const [prLists, setPrLists] = useState<string[]>([]);
@@ -68,7 +71,12 @@ const Dashboard: React.FC = () => {
     e.preventDefault();
     
     const numericPrice = parseFloat(price);
-    const numericCapacity = parseInt(maxCapacity);
+    let numericCapacity = parseInt(maxCapacity);
+
+    // If unlimited is checked, force high capacity
+    if (isUnlimited && numericPrice === 0) {
+        numericCapacity = 1000000; 
+    }
 
     // Validation Logic: If price > 0, Stripe is required.
     if (numericPrice > 0 && !user.stripeOnboardingComplete) {
@@ -213,7 +221,12 @@ const Dashboard: React.FC = () => {
                                 <input 
                                     type="number" step="0.01" min="0"
                                     className={`w-full pl-9 pr-4 py-2 border rounded-lg focus:ring-2 outline-none bg-white text-gray-900 ${!user.stripeOnboardingComplete && parseFloat(price) > 0 ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-indigo-500'}`}
-                                    value={price} onChange={e => setPrice(e.target.value)} required
+                                    value={price} 
+                                    onChange={e => {
+                                        setPrice(e.target.value);
+                                        if(parseFloat(e.target.value) > 0) setIsUnlimited(false); // Disable unlimited if paid
+                                    }} 
+                                    required
                                 />
                              </div>
                              {!user.stripeOnboardingComplete && parseFloat(price) > 0 && (
@@ -231,10 +244,28 @@ const Dashboard: React.FC = () => {
                                 <Users className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                                 <input 
                                     type="number" min="1" step="1"
-                                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-gray-900"
-                                    value={maxCapacity} onChange={e => setMaxCapacity(e.target.value)} required
+                                    className={`w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-gray-900 ${isUnlimited ? 'bg-gray-100 text-gray-500' : ''}`}
+                                    value={isUnlimited ? 1000000 : maxCapacity} 
+                                    onChange={e => setMaxCapacity(e.target.value)} 
+                                    required
+                                    disabled={isUnlimited}
                                 />
                              </div>
+                             {/* Unlimited Checkbox - Only for FREE events */}
+                             {parseFloat(price) === 0 && (
+                                 <div className="mt-2 flex items-center">
+                                     <input 
+                                        type="checkbox" 
+                                        id="unlimited"
+                                        checked={isUnlimited}
+                                        onChange={(e) => setIsUnlimited(e.target.checked)}
+                                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                     />
+                                     <label htmlFor="unlimited" className="ml-2 block text-sm text-gray-900 flex items-center">
+                                         <InfinityIcon className="w-4 h-4 mr-1" /> Unlimited Capacity
+                                     </label>
+                                 </div>
+                             )}
                         </div>
                      </div>
 

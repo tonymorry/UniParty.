@@ -42,6 +42,7 @@ export interface Event {
   stripeAccountId: string;
   prLists?: string[]; // Array of PR list names
   category: EventCategory; 
+  favoritesCount?: number;
 }
 
 export interface Ticket {

@@ -46,7 +46,10 @@ const eventSchema = new mongoose.Schema({
   organization: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   
   // PR Lists
-  prLists: [String]
+  prLists: [String],
+  
+  // Favorites Counter
+  favoritesCount: { type: Number, default: 0 }
 }, { timestamps: true });
 
 // --- TICKET SCHEMA ---

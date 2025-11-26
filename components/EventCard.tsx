@@ -71,6 +71,13 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
                         />
                    </button>
                )}
+               {/* Owner sees favorite count */}
+               {isOwner && (
+                   <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-pink-600 font-bold text-sm shadow-sm flex items-center">
+                       <Heart className="w-3 h-3 mr-1 fill-pink-600" />
+                       {event.favoritesCount || 0}
+                   </div>
+               )}
                <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-indigo-700 font-bold text-sm shadow-sm flex items-center">
                     {event.price === 0 ? 'Free' : `€${finalPrice.toFixed(2)}`}
                </div>
