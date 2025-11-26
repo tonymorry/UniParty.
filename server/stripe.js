@@ -10,6 +10,43 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const APPLICATION_FEE_CENTS = 40; // €0.40 fee kept by platform
 
+// Helper to process a successful order (Shared logic)
+const processSuccessfulOrder = async (order, session, dbSession) => {
+    // 1. Update Event Sold Count
+    const eventDoc = await Event.findByIdAndUpdate(
+        order.eventId, 
+        { $inc: { ticketsSold: order.quantity } },
+        { new: true, session: dbSession }
+    );
+
+    if (!eventDoc) {
+       throw new Error("Event not found during processing");
+    }
+
+    // 2. Generate Tickets
+    const ticketsToCreate = [];
+    for (let name of order.ticketNames) {
+        ticketsToCreate.push({
+            event: order.eventId,
+            owner: order.userId,
+            ticketHolderName: name || "Guest",
+            qrCodeId: uuidv4(), 
+            prList: order.prList,
+            used: false,
+            sessionId: session.id,
+            paymentIntentId: session.payment_intent
+        });
+    }
+
+    await Ticket.insertMany(ticketsToCreate, { session: dbSession });
+
+    // 3. Mark Order as Completed
+    order.status = 'completed';
+    await order.save({ session: dbSession });
+    
+    return { eventDoc, ticketsToCreate };
+};
+
 const StripeController = {
   
   /**
@@ -115,7 +152,7 @@ const StripeController = {
         payment_intent_data: {
           application_fee_amount: feeCents * quantity,
         },
-        success_url: `${FRONTEND_URL}/#/payment-success?eventId=${eventId}&quantity=${quantity}&session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${FRONTEND_URL}/#/payment-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${FRONTEND_URL}/#/events/${eventId}`,
         
         // Pass ONLY the orderId in metadata
@@ -138,9 +175,77 @@ const StripeController = {
   },
 
   /**
-   * 3. WEBHOOK HANDLER
-   * UPDATED: Uses Mongoose Transactions for data integrity.
-   * Retrieves data from Order model instead of metadata.
+   * 3. VERIFY PAYMENT (Called by Frontend Success Page)
+   * Forces ticket generation if webhook hasn't run yet.
+   */
+  verifyPayment: async (req, res) => {
+    const { sessionId } = req.body;
+    
+    if (!sessionId) return res.status(400).json({ error: "Missing Session ID" });
+
+    // Start a Transaction Session
+    const dbSession = await mongoose.startSession();
+    dbSession.startTransaction();
+
+    try {
+        // 1. Find order by session ID
+        const order = await Order.findOne({ stripeSessionId: sessionId }).session(dbSession);
+        
+        if (!order) {
+            await dbSession.abortTransaction();
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        // If already completed, just return success
+        if (order.status === 'completed') {
+            await dbSession.abortTransaction();
+            return res.json({ success: true, message: "Already processed" });
+        }
+
+        // 2. Retrieve Session from Stripe to confirm payment
+        const event = await Event.findById(order.eventId).populate('organization');
+        const stripeAccountId = event.organization.stripeAccountId;
+
+        const session = await stripe.checkout.sessions.retrieve(sessionId, {
+            stripeAccount: stripeAccountId
+        });
+
+        if (session.payment_status !== 'paid') {
+            await dbSession.abortTransaction();
+            return res.status(400).json({ error: "Payment not paid" });
+        }
+
+        console.log(`💰 Verifying Order ${order._id} (Force Process)...`);
+
+        // 3. Process Order (Shared Logic)
+        const { eventDoc } = await processSuccessfulOrder(order, session, dbSession);
+
+        // 4. Commit Transaction
+        await dbSession.commitTransaction();
+        
+        // 5. Send Email
+        try {
+             const user = await User.findById(order.userId);
+             if (user) {
+                 mailer.sendTicketsEmail(user.email, order.ticketNames, eventDoc.title);
+             }
+        } catch(emailErr) {
+             console.error("Email error:", emailErr);
+        }
+
+        res.json({ success: true });
+
+    } catch (error) {
+        console.error("Verify Payment Error:", error);
+        await dbSession.abortTransaction();
+        res.status(500).json({ error: error.message });
+    } finally {
+        dbSession.endSession();
+    }
+  },
+
+  /**
+   * 4. WEBHOOK HANDLER
    */
   handleWebhook: async (req, res) => {
     const sig = req.headers['stripe-signature'];
@@ -155,89 +260,45 @@ const StripeController = {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
-      
-      // 1. Extract Order ID from metadata
       const { orderId } = session.metadata;
 
-      if (!orderId) {
-          console.error("Missing orderId in metadata");
-          return res.status(400).end();
-      }
+      if (!orderId) return res.status(400).end();
 
-      // Start a Transaction Session
       const dbSession = await mongoose.startSession();
       dbSession.startTransaction();
 
       try {
-          // 2. Fetch the Order from DB
           const order = await Order.findById(orderId).session(dbSession);
           
           if (!order) {
-              console.error(`Order ${orderId} not found`);
               await dbSession.abortTransaction();
               return res.status(404).end();
           }
 
           if (order.status === 'completed') {
-              console.log(`Order ${orderId} already processed.`);
               await dbSession.abortTransaction();
               return res.json({received: true});
           }
 
-          console.log(`💰 Processing Order ${orderId} for ${order.quantity} tickets...`);
+          console.log(`💰 Webhook Processing Order ${orderId}...`);
 
-          // 3. Update Event Sold Count
-          const eventDoc = await Event.findByIdAndUpdate(
-              order.eventId, 
-              { $inc: { ticketsSold: order.quantity } },
-              { new: true, session: dbSession }
-          );
+          const { eventDoc } = await processSuccessfulOrder(order, session, dbSession);
 
-          if (!eventDoc) {
-             throw new Error("Event not found during processing");
-          }
-
-          // 4. Generate Tickets
-          const ticketsToCreate = [];
-          for (let name of order.ticketNames) {
-              ticketsToCreate.push({
-                  event: order.eventId,
-                  owner: order.userId,
-                  ticketHolderName: name || "Guest",
-                  qrCodeId: uuidv4(), 
-                  prList: order.prList,
-                  used: false,
-                  sessionId: session.id,
-                  paymentIntentId: session.payment_intent
-              });
-          }
-
-          await Ticket.insertMany(ticketsToCreate, { session: dbSession });
-
-          // 5. Mark Order as Completed
-          order.status = 'completed';
-          await order.save({ session: dbSession });
-
-          // 6. Commit Transaction
           await dbSession.commitTransaction();
-          console.log(`✅ Successfully processed order ${orderId}`);
-
-          // 7. SEND EMAIL (After commit, so if email fails, DB is still correct)
+          
+          // Send Email
           try {
              const user = await User.findById(order.userId);
              if (user) {
                  mailer.sendTicketsEmail(user.email, order.ticketNames, eventDoc.title);
              }
           } catch(emailErr) {
-              console.error("Failed to send ticket email after webhook success:", emailErr);
-              // Do not fail the webhook here, money is taken and tickets are generated
+              console.error("Email error:", emailErr);
           }
 
       } catch (dbError) {
-          // If anything fails, rollback everything
-          console.error("Transaction Error inside Webhook:", dbError);
+          console.error("Webhook Transaction Error:", dbError);
           await dbSession.abortTransaction();
-          // Return 500 so Stripe retries later
           return res.status(500).json({ error: "Transaction failed" });
       } finally {
           dbSession.endSession();

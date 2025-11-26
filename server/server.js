@@ -302,6 +302,7 @@ app.post('/api/tickets/validate', authMiddleware, async (req, res) => {
 // --- STRIPE ---
 app.post('/api/stripe/connect', authMiddleware, StripeController.createConnectAccount);
 app.post('/api/stripe/create-checkout-session', authMiddleware, StripeController.createCheckoutSession);
+app.post('/api/stripe/verify', authMiddleware, StripeController.verifyPayment);
 
 // --- SERVE STATIC FILES (ALWAYS) ---
 // Serve any static files
