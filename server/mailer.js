@@ -3,8 +3,8 @@ const nodemailer = require('nodemailer');
 // Configure Transporter
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: process.env.SMTP_PORT || 587,
-  secure: false, // true for 465
+  port: Number(process.env.SMTP_PORT) || 587,
+  secure: false, // true for 465, false for other ports
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -13,7 +13,17 @@ const transporter = nodemailer.createTransport({
   debug: true   // Include debug info
 });
 
+// --- DEBUG: Verify Connection on Startup ---
+transporter.verify(function (error, success) {
+  if (error) {
+    console.error("❌ SMTP Connection Error:", error);
+  } else {
+    console.log("✅ SMTP Server is ready to take our messages");
+  }
+});
+
 const sendWelcomeEmail = async (to, name) => {
+  console.log(`Attempting to send WELCOME email to: ${to}`);
   try {
     const info = await transporter.sendMail({
       from: `"UniParty Team" <${process.env.SMTP_USER}>`,
@@ -34,6 +44,7 @@ const sendWelcomeEmail = async (to, name) => {
 };
 
 const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
+  console.log(`Attempting to send TICKETS email to: ${to} for event: ${eventTitle}`);
   try {
     const namesList = ticketNames.map(name => `<li><strong>${name}</strong></li>`).join('');
     
