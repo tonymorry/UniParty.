@@ -47,10 +47,11 @@ const cleanupExpiredEvents = async () => {
 
         for (const event of events) {
             // Calculate Hard Deletion Date: Event Date + 5 Days at 10:00 AM
+            // The event remains in the DB (visible to associations in dashboard) for 5 days.
             const eventDate = new Date(event.date);
             const expirationDate = new Date(eventDate);
-            expirationDate.setDate(expirationDate.getDate() + 5); // KEEP FOR 5 DAYS
-            expirationDate.setHours(10, 0, 0, 0); // At 10:00 AM
+            expirationDate.setDate(expirationDate.getDate() + 5); // Add 5 days
+            expirationDate.setHours(10, 0, 0, 0); // Set to 10:00 AM
 
             if (now > expirationDate) {
                 console.log(`🗑️ Deleting old event (5+ days passed): ${event.title}`);
@@ -222,19 +223,27 @@ app.get('/api/events', async (req, res) => {
         let query = {};
 
         if (organization) {
-            // Dashboard Request: Show ALL events in DB (DB holds them for 5 days)
+            // CASE 1: DASHBOARD REQUEST (Association Profile)
+            // If searching by organization, return ALL events in DB.
+            // The DB holds events for 5 days past expiration (see cleanupExpiredEvents).
+            // This allows associations to see recent history in their profile.
             query.organization = organization;
         } else {
-            // Public Request: Filter by 10 AM rule
+            // CASE 2: HOME PAGE REQUEST (Public/Students)
+            // Apply strictly the 10:00 AM rule.
+            // If it's past 10 AM, hide yesterday's events.
+            
             const now = new Date();
             const currentHour = now.getHours();
             
             const visibilityCutoff = new Date();
-            visibilityCutoff.setHours(0, 0, 0, 0); // Start of Today
+            visibilityCutoff.setHours(0, 0, 0, 0); // Start of Today (Midnight)
 
             if (currentHour < 10) {
-                visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); // Start of Yesterday
+                // Before 10 AM: We still want to see events from Yesterday.
+                visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); 
             } 
+            // After 10 AM: visibilityCutoff remains Today. Events < Today are hidden.
 
             query.date = { $gte: visibilityCutoff };
         }
@@ -273,7 +282,13 @@ app.post('/api/events', authMiddleware, async (req, res) => {
 
         if (price < 0) return res.status(400).json({ error: "Price cannot be negative" });
         if (maxCapacity <= 0) return res.status(400).json({ error: "Max capacity must be > 0" });
-        if (new Date(date) < new Date()) return res.status(400).json({ error: "Event date cannot be in the past" });
+        
+        // Prevent creating events in the past
+        // Allow creating events for today even if time passed, but date must be >= today
+        const inputDate = new Date(date);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        if (inputDate < today) return res.status(400).json({ error: "Event date cannot be in the past" });
 
         const newEvent = await Event.create({
             title, 
@@ -363,8 +378,8 @@ app.get('/api/tickets', authMiddleware, async (req, res) => {
         // Get tickets and populate event
         const tickets = await Ticket.find({ owner: req.user.userId }).populate('event');
         
-        // Filter tickets for Student View (10 AM rule)
-        // Tickets should disappear from wallet if the event expired (> 10 AM next day)
+        // Filter tickets for Student View (Wallet)
+        // Logic: Tickets disappear from wallet if the event expired > 10 AM next day.
         const now = new Date();
         const currentHour = now.getHours();
         
@@ -375,10 +390,10 @@ app.get('/api/tickets', authMiddleware, async (req, res) => {
             visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); // Start of Yesterday
         }
         
-        // Filter tickets where the associated event date is still >= cutoff
         const visibleTickets = tickets.filter(ticket => {
             if (!ticket.event) return false; // Handle potential orphans
             const eventDate = new Date(ticket.event.date);
+            // Show ticket only if event date is within visibility range
             return eventDate >= visibilityCutoff;
         });
 
@@ -396,7 +411,11 @@ app.post('/api/tickets/validate', authMiddleware, async (req, res) => {
         const ticket = await Ticket.findOne({ qrCodeId }).populate('event');
 
         if (!ticket) return res.status(404).json({ error: "INVALID_TICKET" });
-        if (ticket.event.organization.toString() !== req.user.userId) return res.status(403).json({ error: "WRONG_EVENT_ORGANIZER" });
+        
+        // Verify ownership using ID string comparison
+        const orgId = typeof ticket.event.organization === 'object' ? ticket.event.organization._id.toString() : ticket.event.organization.toString();
+        
+        if (orgId !== req.user.userId) return res.status(403).json({ error: "WRONG_EVENT_ORGANIZER" });
         if (ticket.used) return res.status(400).json({ error: "ALREADY_USED" });
 
         ticket.used = true;
