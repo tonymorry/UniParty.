@@ -1,37 +1,32 @@
 const nodemailer = require('nodemailer');
 
-// Configure Transporter with specific settings to avoid timeouts on cloud hosting (Render)
+// Configurazione Gmail Esplicita e Robusta per Render
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // Use built-in Gmail service preset
-  host: 'smtp.gmail.com',
-  port: 465, // Use port 465 for secure SSL connection
-  secure: true, // Must be true for port 465
+  service: 'gmail', // Questo imposta automaticamente host='smtp.gmail.com', port=465, secure=true
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  // Critical options for cloud environments:
-  tls: {
-    rejectUnauthorized: false, // Helps avoid issues with internal certificates
-  },
-  family: 4, // Force IPv4 to avoid IPv6 timeouts common in containerized environments
-  connectionTimeout: 10000, // 10 seconds timeout
-  logger: true, // Log to console
-  debug: true   // Include debug info
+  // Opzioni di rete fondamentali per evitare timeout su Render
+  family: 4, // Forza IPv4 (Risolve ETIMEDOUT causato da IPv6)
+  pool: true, // Usa connessioni riutilizzabili per performance migliori
+  logger: true,
+  debug: true,
+  connectionTimeout: 10000 // 10 seconds
 });
 
-// Verify connection on startup
+// Verifica connessione immediata
 transporter.verify(function (error, success) {
   if (error) {
-    console.error("❌ SMTP Connection Error during startup:", error);
+    console.error("❌ SMTP CONNECTION ERROR:", error);
   } else {
-    console.log("✅ SMTP Server is ready to take our messages");
+    console.log("✅ SMTP Server is ready (IPv4/Gmail)");
   }
 });
 
 const sendWelcomeEmail = async (to, name) => {
-  console.log(`📧 Attempting to send WELCOME email to: ${to}`);
   try {
+    console.log(`📤 Attempting to send WELCOME email to: ${to}`);
     const info = await transporter.sendMail({
       from: `"UniParty Team" <${process.env.SMTP_USER}>`,
       to: to,
@@ -44,15 +39,15 @@ const sendWelcomeEmail = async (to, name) => {
         </div>
       `,
     });
-    console.log("📨 Welcome email sent:", info.messageId);
+    console.log("📨 Welcome email sent ID:", info.messageId);
   } catch (error) {
     console.error("❌ Welcome email failed:", error);
   }
 };
 
 const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
-  console.log(`📧 Attempting to send TICKETS email to: ${to} for event: ${eventTitle}`);
   try {
+    console.log(`📤 Attempting to send TICKETS email to: ${to}`);
     const namesList = ticketNames.map(name => `<li><strong>${name}</strong></li>`).join('');
     
     const info = await transporter.sendMail({
@@ -65,12 +60,11 @@ const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
           <p>Your payment was successful and your tickets have been issued.</p>
           <p><strong>Ticket Holders:</strong></p>
           <ul>${namesList}</ul>
-          <p>You can find your QR codes in the <a href="${process.env.FRONTEND_URL || 'https://uniparty-app.onrender.com'}/#/wallet">My Wallet</a> section of the app.</p>
-          <p>See you there!</p>
+          <p>You can find your QR codes in the <a href="${process.env.FRONTEND_URL || 'https://uniparty-app.onrender.com'}/#/wallet">My Wallet</a> section.</p>
         </div>
       `,
     });
-    console.log("📨 Tickets email sent:", info.messageId);
+    console.log("📨 Tickets email sent ID:", info.messageId);
   } catch (error) {
     console.error("❌ Tickets email failed:", error);
   }

@@ -183,7 +183,7 @@ const EventDetails: React.FC = () => {
   const isFree = event.price === 0;
   
   // FIX: Use Integer Math (Cents) to guarantee precision
-  const priceInCents = Math.round(event.price * 100);
+  const priceInCents = Math.round(Number(event.price) * 100);
   const feeInCents = isFree ? 0 : 40; // 40 cents fee
   const totalPerTicketCents = priceInCents + feeInCents;
   
@@ -412,7 +412,8 @@ const EventDetails: React.FC = () => {
             </div>
 
             <div className="lg:col-span-1">
-                <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24 border border-gray-100">
+                {/* CHECKOUT CARD - STICKY CONTAINER */}
+                <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24 border border-gray-100 max-h-[calc(100vh-8rem)] overflow-y-auto">
                     <h3 className="text-xl font-bold text-gray-900 mb-6">{isFree ? 'Register' : 'Get Tickets'}</h3>
                     
                     {isSoldOut && (
@@ -491,26 +492,76 @@ const EventDetails: React.FC = () => {
                         </div>
                     )}
 
-                    <button
-                        onClick={handlePurchase}
-                        disabled={purchasing || isSoldOut || (event.prLists && event.prLists.length > 0 && selectedPrList === "")}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                    >
-                        {purchasing ? (
-                            <span className="flex items-center">
-                                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-                                Processing...
-                            </span>
-                        ) : isSoldOut ? (
-                            'Sold Out'
-                        ) : (
-                            <>
-                                <CreditCard className="w-5 h-5 mr-2"/>
-                                {isFree ? 'Get Free Ticket' : `Pay €${totalAmount.toFixed(2)}`}
-                            </>
-                        )}
-                    </button>
-                    
+                    {/* Ticket Names Inputs - INSIDE Sticky Card */}
+                    {!isSoldOut && user && user.role === UserRole.STUDENTE && (
+                        <div className="mb-6 space-y-3 border-t border-gray-100 pt-4">
+                            <p className="text-sm font-semibold text-gray-700">Ticket Holders</p>
+                            {Array.from({ length: quantity }).map((_, idx) => (
+                                <div key={idx} className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <UserIcon className="h-4 w-4 text-gray-400" />
+                                    </div>
+                                    <input 
+                                        type="text"
+                                        placeholder={`Name on Ticket #${idx + 1}`}
+                                        value={ticketNames[idx] || ''}
+                                        onChange={(e) => handleNameChange(idx, e.target.value)}
+                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        required
+                                    />
+                                </div>
+                            ))}
+                            <p className="text-xs text-gray-400 mt-1">
+                                Full name for each ticket holder.
+                            </p>
+                        </div>
+                    )}
+
+                    <div className="border-t border-gray-100 pt-4 mb-6">
+                        <div className="flex justify-between items-center text-lg font-bold text-gray-900">
+                            <span>Total</span>
+                            <span>€{totalAmount.toFixed(2)}</span>
+                        </div>
+                    </div>
+
+                    {user?.role === UserRole.ASSOCIAZIONE ? (
+                         <div className="bg-yellow-50 text-yellow-700 p-4 rounded-lg flex items-start">
+                            <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5"/>
+                            <span className="text-sm">Associations cannot buy tickets. Please login as a student.</span>
+                         </div>
+                    ) : (
+                        <button
+                            onClick={() => {
+                                if((!event.prLists || event.prLists.length === 0) && selectedPrList === "") {
+                                    setSelectedPrList("Nessuna lista");
+                                }
+                                handlePurchase();
+                            }}
+                            disabled={purchasing || isSoldOut || (event.prLists && event.prLists.length > 0 && selectedPrList === "")}
+                            className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center ${
+                                isSoldOut ? 'bg-gray-300 text-gray-500' : ''
+                            }`}
+                        >
+                            {purchasing ? (
+                                <span className="flex items-center">
+                                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                                    Processing...
+                                </span>
+                            ) : isSoldOut ? (
+                                'Sold Out'
+                            ) : (
+                                <>
+                                    <CreditCard className="w-5 h-5 mr-2"/>
+                                    {isFree ? 'Get Free Ticket' : `Pay €${totalAmount.toFixed(2)}`}
+                                </>
+                            )}
+                        </button>
+                    )}
+                    {!isFree && !isSoldOut && (
+                        <p className="text-center text-xs text-gray-400 mt-4">
+                            Secure payment via Stripe. 
+                        </p>
+                    )}
                     {!user && (
                         <p className="text-center text-xs text-gray-500 mt-4">
                             You must be logged in to purchase tickets.
@@ -523,31 +574,6 @@ const EventDetails: React.FC = () => {
                         </p>
                     )}
                 </div>
-
-                {/* Ticket Names Inputs */}
-                {!isSoldOut && user && user.role === UserRole.STUDENTE && (
-                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mt-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">Ticket Holder Names</h3>
-                        <div className="space-y-3">
-                            {ticketNames.map((name, index) => (
-                                <div key={index}>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Ticket #{index + 1}</label>
-                                    <input
-                                        type="text"
-                                        value={name}
-                                        onChange={(e) => handleNameChange(index, e.target.value)}
-                                        placeholder={`Name for Ticket #${index + 1}`}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        required
-                                    />
-                                </div>
-                            ))}
-                            <p className="text-xs text-gray-400 mt-2">
-                                Please enter the full name of the person who will use each ticket.
-                            </p>
-                        </div>
-                    </div>
-                )}
 
                 {/* Owner Stats Section */}
                 {isOwner && prStats && (
