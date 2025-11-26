@@ -17,15 +17,17 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
     month: 'short',
   });
 
-  // FIX: Use integer math (cents) to avoid floating point errors (e.g. 15 + 0.40 = 15.39999)
-  const finalPrice = (Math.round(event.price * 100) + 40) / 100;
+  // FIX: Strict Cents Calculation
+  // 15.00 -> 1500 cents. + 40 cents = 1540 cents. / 100 = 15.40
+  // Ensure event.price is treated as number
+  const priceInCents = Math.round(Number(event.price) * 100);
+  const finalPrice = (priceInCents + 40) / 100;
 
   // Logic for ticket display
   const soldRatio = event.ticketsSold / event.maxCapacity;
   const isSoldOut = soldRatio >= 1;
   const isAlmostSoldOut = soldRatio >= 0.6 && !isSoldOut;
   
-  // Determine if the current user is the OWNER of this event
   const organizationId = typeof event.organization === 'string' 
     ? event.organization 
     : event.organization._id;
@@ -33,11 +35,10 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
   const isOwner = user && user._id === organizationId;
   const showExactNumbers = isOwner;
 
-  // Favorite Logic
   const isFavorite = user?.favorites?.includes(event._id) || false;
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
-      e.preventDefault(); // Prevent navigating to event details
+      e.preventDefault(); 
       e.stopPropagation();
       if (user && user.role === UserRole.STUDENTE) {
           toggleFavorite(event._id);

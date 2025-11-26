@@ -66,12 +66,12 @@ const Dashboard: React.FC = () => {
     e.preventDefault();
     
     // FIX: Robust Price Parsing to prevent 14.99 issue
-    // 1. Normalize separator (comma to dot)
+    // 1. Normalize separator (comma to dot) just in case
     const cleanPriceStr = price.toString().replace(',', '.');
     const rawPrice = parseFloat(cleanPriceStr);
     
-    // 2. Math.round to ensure 2 decimal precision (15 -> 15.00)
-    // This scrubs any floating point artifacts
+    // 2. STRICT ROUNDING: Math.round(X * 100) / 100
+    // This forces the number to snap to the nearest cent, eliminating 14.99999 artifacts.
     const numericPrice = Math.round(rawPrice * 100) / 100;
     
     let numericCapacity = parseInt(maxCapacity);
@@ -95,7 +95,7 @@ const Dashboard: React.FC = () => {
         await api.events.create({
             title,
             description,
-            price: numericPrice, // Sends perfectly rounded number
+            price: numericPrice, // Sends perfectly rounded number (e.g., 15)
             date: new Date(date).toISOString(),
             time: time,
             location,
@@ -112,6 +112,14 @@ const Dashboard: React.FC = () => {
     } finally {
         setCreatingEvent(false);
     }
+  };
+
+  // Handler to clean up display on blur
+  const handlePriceBlur = () => {
+      const val = parseFloat(price.replace(',', '.'));
+      if (!isNaN(val)) {
+          setPrice(val.toFixed(2)); // Shows "15.00" to user
+      }
   };
 
   return (
@@ -228,6 +236,7 @@ const Dashboard: React.FC = () => {
                                         setPrice(e.target.value);
                                         if(parseFloat(e.target.value.replace(',','.')) > 0) setIsUnlimited(false); 
                                     }} 
+                                    onBlur={handlePriceBlur}
                                     required
                                 />
                              </div>

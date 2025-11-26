@@ -47,6 +47,7 @@ const cleanupExpiredEvents = async () => {
 
         for (const event of events) {
             // Calculate Hard Deletion Date: Event Date + 5 Days at 10:00 AM
+            // This implies the event stays in DB for 5 days after it occurs.
             const eventDate = new Date(event.date);
             const expirationDate = new Date(eventDate);
             expirationDate.setDate(expirationDate.getDate() + 5); // KEEP FOR 5 DAYS
@@ -185,19 +186,18 @@ app.post('/api/users/favorites/toggle', authMiddleware, async (req, res) => {
         if (index === -1) {
             // Add Favorite
             user.favorites.push(eventId);
-            // Increment logic (Best effort, self-heals in stats)
+            // Increment count on Event (as cache)
             await Event.findByIdAndUpdate(eventId, { $inc: { favoritesCount: 1 } });
         } else {
             // Remove Favorite
             user.favorites.splice(index, 1);
-            // Decrement logic
+            // Decrement count on Event (prevent negative just in case)
             await Event.findByIdAndUpdate(eventId, { $inc: { favoritesCount: -1 } });
         }
         
         await user.save();
         res.json(user.favorites); // Return updated list
     } catch (e) {
-        console.error("Toggle Favorite Error:", e);
         res.status(500).json({ error: e.message });
     }
 });
@@ -280,7 +280,8 @@ app.post('/api/events', authMiddleware, async (req, res) => {
             location, price, maxCapacity, category, prLists 
         } = req.body;
 
-        // Force numeric conversion and rounding to 2 decimals on server side as well
+        // SERVER SIDE SANITIZATION
+        // Force price to integer math round to avoid 14.999999 storage
         price = Math.round(Number(price) * 100) / 100;
 
         if (price < 0) return res.status(400).json({ error: "Price cannot be negative" });
@@ -327,8 +328,7 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
             location, maxCapacity, category, prLists, price 
         } = req.body;
 
-        // Force numeric conversion and rounding to 2 decimals
-        // Note: Price might not be editable depending on logic, but if it is, sanitize it.
+        // SERVER SIDE SANITIZATION
         if (price !== undefined) {
              price = Math.round(Number(price) * 100) / 100;
         }
@@ -336,7 +336,6 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
         const updated = await Event.findByIdAndUpdate(req.params.id, {
             title, description, longDescription, image, date, time, 
             location, maxCapacity, category, prLists,
-            // Only update price if provided, otherwise keep existing
             ...(price !== undefined && { price })
         }, { new: true }).populate('organization', 'name _id');
 
