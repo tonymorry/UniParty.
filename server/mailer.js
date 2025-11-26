@@ -1,32 +1,32 @@
 const nodemailer = require('nodemailer');
 
-// Configurazione Gmail Standard (Porta 587)
-// SENZA SSLv3 che causa il blocco
+// Configurazione Gmail SSL (Porta 465) - Tentativo finale
+// Usiamo SSL implicito che è spesso più stabile sui server cloud
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // false per 587 (STARTTLS)
+  port: 465,
+  secure: true, // IMPORTANTE: true per la porta 465
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  // Opzioni di rete
   tls: {
-    rejectUnauthorized: false, // Accetta certificati anche se ci sono problemi minori
-    // RIMOSSO ciphers: 'SSLv3' -> Questo era il colpevole!
+    rejectUnauthorized: false, // Accetta certificati anche se imperfetti
   },
-  family: 4, // Forza IPv4 (Fondamentale per Render)
+  family: 4, // Forza IPv4
   logger: true,
   debug: true,
-  connectionTimeout: 10000 
+  connectionTimeout: 30000, // Aumentato a 30 secondi
+  greetingTimeout: 30000,   // Attende 30 secondi il saluto del server
+  socketTimeout: 30000      // Attende 30 secondi per i dati
 });
 
-// Verifica connessione all'avvio
+// Verifica connessione
 transporter.verify(function (error, success) {
   if (error) {
     console.error("❌ SMTP CONNECTION ERROR:", error);
   } else {
-    console.log("✅ SMTP Server is ready (Port 587/IPv4)");
+    console.log("✅ SMTP Server is ready (Port 465/SSL/IPv4)");
   }
 });
 
@@ -42,8 +42,6 @@ const sendWelcomeEmail = async (to, name) => {
           <h1 style="color: #4f46e5;">Welcome to UniParty, ${name}!</h1>
           <p>We are thrilled to have you on board.</p>
           <p>Start browsing events, buy tickets, or organize the next big party on campus.</p>
-          <br/>
-          <p>Cheers,<br/>The UniParty Team</p>
         </div>
       `,
     });
@@ -56,7 +54,6 @@ const sendWelcomeEmail = async (to, name) => {
 const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
   try {
     console.log(`📤 Attempting to send TICKETS email to: ${to}`);
-    
     const namesList = Array.isArray(ticketNames) 
       ? ticketNames.map(name => `<li><strong>${name}</strong></li>`).join('') 
       : `<li>${ticketNames}</li>`;
@@ -72,8 +69,6 @@ const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
           <p><strong>Ticket Holders:</strong></p>
           <ul>${namesList}</ul>
           <p>You can find your QR codes in the <a href="${process.env.FRONTEND_URL || 'https://uniparty-app.onrender.com'}/#/wallet">My Wallet</a> section.</p>
-          <br/>
-          <p>See you there!</p>
         </div>
       `,
     });
