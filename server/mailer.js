@@ -1,23 +1,24 @@
 const nodemailer = require('nodemailer');
 
-// Configurazione per Porta 587 (STARTTLS) - Più compatibile con i firewall cloud
+// Configurazione Gmail su Porta 587
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: 587, // Usiamo la porta standard
-  secure: false, // false per 587, true per 465
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // false per 587 (STARTTLS)
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  tls: {
-    ciphers: 'SSLv3',
-    rejectUnauthorized: false, // Aiuta con alcuni certificati server
-  },
-  family: 4, // Manteniamo IPv4 obbligatorio
+  // Opzioni di rete
+  family: 4, // Forza IPv4
   pool: true,
   logger: true,
   debug: true,
-  connectionTimeout: 10000 // 10 secondi
+  connectionTimeout: 10000, // 10 secondi
+  // Configurazione TLS corretta (SENZA SSLv3)
+  tls: {
+    rejectUnauthorized: false 
+  }
 });
 
 // Verifica connessione all'avvio
@@ -55,6 +56,7 @@ const sendWelcomeEmail = async (to, name) => {
 const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
   try {
     console.log(`📤 Attempting to send TICKETS email to: ${to}`);
+    
     const namesList = Array.isArray(ticketNames) 
       ? ticketNames.map(name => `<li><strong>${name}</strong></li>`).join('') 
       : `<li>${ticketNames}</li>`;
