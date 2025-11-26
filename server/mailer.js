@@ -1,29 +1,36 @@
 const nodemailer = require('nodemailer');
 
-// Configure Transporter
+// Configure Transporter with specific settings to avoid timeouts on cloud hosting (Render)
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: false, // true for 465, false for other ports
+  service: 'gmail', // Use built-in Gmail service preset
+  host: 'smtp.gmail.com',
+  port: 465, // Use port 465 for secure SSL connection
+  secure: true, // Must be true for port 465
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  // Critical options for cloud environments:
+  tls: {
+    rejectUnauthorized: false, // Helps avoid issues with internal certificates
+  },
+  family: 4, // Force IPv4 to avoid IPv6 timeouts common in containerized environments
+  connectionTimeout: 10000, // 10 seconds timeout
   logger: true, // Log to console
   debug: true   // Include debug info
 });
 
-// --- DEBUG: Verify Connection on Startup ---
+// Verify connection on startup
 transporter.verify(function (error, success) {
   if (error) {
-    console.error("❌ SMTP Connection Error:", error);
+    console.error("❌ SMTP Connection Error during startup:", error);
   } else {
     console.log("✅ SMTP Server is ready to take our messages");
   }
 });
 
 const sendWelcomeEmail = async (to, name) => {
-  console.log(`Attempting to send WELCOME email to: ${to}`);
+  console.log(`📧 Attempting to send WELCOME email to: ${to}`);
   try {
     const info = await transporter.sendMail({
       from: `"UniParty Team" <${process.env.SMTP_USER}>`,
@@ -44,7 +51,7 @@ const sendWelcomeEmail = async (to, name) => {
 };
 
 const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
-  console.log(`Attempting to send TICKETS email to: ${to} for event: ${eventTitle}`);
+  console.log(`📧 Attempting to send TICKETS email to: ${to} for event: ${eventTitle}`);
   try {
     const namesList = ticketNames.map(name => `<li><strong>${name}</strong></li>`).join('');
     
