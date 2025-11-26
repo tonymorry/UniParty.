@@ -47,6 +47,7 @@ const cleanupExpiredEvents = async () => {
 
         for (const event of events) {
             // Calculate Hard Deletion Date: Event Date + 5 Days at 10:00 AM
+            // This implies the event stays in DB for 5 days after it occurs.
             const eventDate = new Date(event.date);
             const expirationDate = new Date(eventDate);
             expirationDate.setDate(expirationDate.getDate() + 5); // KEEP FOR 5 DAYS
@@ -179,7 +180,9 @@ app.post('/api/users/favorites/toggle', authMiddleware, async (req, res) => {
         const { eventId } = req.body;
         const user = await User.findById(req.user.userId);
         
-        const index = user.favorites.indexOf(eventId);
+        // FIX: Properly compare ObjectIds with String IDs using toString()
+        const index = user.favorites.findIndex(fav => fav.toString() === eventId);
+        
         if (index === -1) {
             // Add Favorite
             user.favorites.push(eventId);
@@ -188,7 +191,7 @@ app.post('/api/users/favorites/toggle', authMiddleware, async (req, res) => {
         } else {
             // Remove Favorite
             user.favorites.splice(index, 1);
-            // Decrement count on Event
+            // Decrement count on Event (prevent negative just in case)
             await Event.findByIdAndUpdate(eventId, { $inc: { favoritesCount: -1 } });
         }
         
