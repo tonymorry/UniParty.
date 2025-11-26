@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
     type: String, 
     required: true, 
     unique: true, 
-    lowercase: true, // Forces email to lowercase
+    lowercase: true, // Forces email to lowercase on save
     trim: true       // Removes whitespace
   },
   password: { type: String, required: true }, // Will be hashed

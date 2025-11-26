@@ -35,12 +35,19 @@ mongoose.connect(process.env.MONGODB_URI)
 
 app.post('/api/auth/register', async (req, res) => {
     try {
-        // Normalize email: lowercase and trim
-        const email = req.body.email.toLowerCase().trim();
-        const { password, name, role, surname, description, socialLinks } = req.body;
+        const { email, password, name, role, surname, description, socialLinks } = req.body;
         
-        // Check existing
-        const existing = await User.findOne({ email });
+        // Validation basic
+        if (!email || !password || !name) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        // Case-Insensitive Search for existing user
+        // This ensures 'Test@mail.com' and 'test@mail.com' are treated as the same user
+        const existing = await User.findOne({ 
+            email: { $regex: new RegExp(`^${email}$`, 'i') } 
+        });
+
         if (existing) return res.status(400).json({ error: "User already exists" });
 
         // Hash password
@@ -50,8 +57,9 @@ app.post('/api/auth/register', async (req, res) => {
         // Determine verification status
         const isVerified = (role === 'studente');
 
+        // Always save email in lowercase to normalize DB for the future
         const newUser = await User.create({
-            email,
+            email: email.toLowerCase().trim(),
             password: hashedPassword,
             name,
             role,
@@ -65,21 +73,26 @@ app.post('/api/auth/register', async (req, res) => {
         const token = jwt.sign({ userId: newUser._id, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
         // Send Welcome Email (Non-blocking)
-        mailer.sendWelcomeEmail(email, name).catch(err => console.error("Welcome email failed", err));
+        mailer.sendWelcomeEmail(newUser.email, name).catch(err => console.error("Welcome email failed", err));
 
         res.json({ token, user: newUser });
     } catch (e) {
+        console.error("Register Error:", e);
         res.status(500).json({ error: e.message });
     }
 });
 
 app.post('/api/auth/login', async (req, res) => {
     try {
-        // Normalize email: lowercase and trim
-        const email = req.body.email.toLowerCase().trim();
-        const { password } = req.body;
+        const { email, password } = req.body;
         
-        const user = await User.findOne({ email });
+        // Case-Insensitive Search
+        // Finds the user regardless of whether they typed 'User@mail.com' or 'user@mail.com'
+        // and regardless of how it is stored in the DB (Legacy uppercase vs New lowercase)
+        const user = await User.findOne({ 
+            email: { $regex: new RegExp(`^${email.trim()}$`, 'i') } 
+        });
+
         if (!user) return res.status(400).json({ error: "Invalid credentials" });
 
         const isMatch = await bcrypt.compare(password, user.password);
@@ -89,6 +102,7 @@ app.post('/api/auth/login', async (req, res) => {
 
         res.json({ token, user });
     } catch (e) {
+        console.error("Login Error:", e);
         res.status(500).json({ error: e.message });
     }
 });
