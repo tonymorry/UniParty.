@@ -2,7 +2,13 @@ const mongoose = require('mongoose');
 
 // --- USER SCHEMA ---
 const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
+  email: { 
+    type: String, 
+    required: true, 
+    unique: true, 
+    lowercase: true, // Forces email to lowercase
+    trim: true       // Removes whitespace
+  },
   password: { type: String, required: true }, // Will be hashed
   name: { type: String, required: true },
   role: { type: String, enum: ['studente', 'associazione'], required: true },

@@ -35,7 +35,9 @@ mongoose.connect(process.env.MONGODB_URI)
 
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { email, password, name, role, surname, description, socialLinks } = req.body;
+        // Normalize email: lowercase and trim
+        const email = req.body.email.toLowerCase().trim();
+        const { password, name, role, surname, description, socialLinks } = req.body;
         
         // Check existing
         const existing = await User.findOne({ email });
@@ -73,7 +75,10 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        // Normalize email: lowercase and trim
+        const email = req.body.email.toLowerCase().trim();
+        const { password } = req.body;
+        
         const user = await User.findOne({ email });
         if (!user) return res.status(400).json({ error: "Invalid credentials" });
 
@@ -96,6 +101,12 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
 // Update Profile
 app.put('/api/users/:id', authMiddleware, async (req, res) => {
     if (req.user.userId !== req.params.id) return res.status(403).json({ error: "Unauthorized" });
+    
+    // If email is being updated, normalize it
+    if (req.body.email) {
+        req.body.email = req.body.email.toLowerCase().trim();
+    }
+
     const updated = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updated);
 });
