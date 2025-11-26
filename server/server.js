@@ -28,6 +28,59 @@ mongoose.connect(process.env.MONGODB_URI)
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 // ==========================================
+// HELPERS
+// ==========================================
+function escapeRegex(text) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+}
+
+// ==========================================
+// AUTOMATIC CLEANUP (CRON-LIKE TASK)
+// ==========================================
+const cleanupExpiredEvents = async () => {
+    try {
+        console.log("🧹 Running scheduled cleanup for expired events (5 Days Policy)...");
+        const events = await Event.find();
+        const now = new Date();
+
+        let deletedCount = 0;
+
+        for (const event of events) {
+            // Calculate Hard Deletion Date: Event Date + 5 Days at 10:00 AM
+            const eventDate = new Date(event.date);
+            const expirationDate = new Date(eventDate);
+            expirationDate.setDate(expirationDate.getDate() + 5); // KEEP FOR 5 DAYS
+            expirationDate.setHours(10, 0, 0, 0); // At 10:00 AM
+
+            if (now > expirationDate) {
+                console.log(`🗑️ Deleting old event (5+ days passed): ${event.title}`);
+                
+                // 1. Delete associated tickets
+                await Ticket.deleteMany({ event: event._id });
+                
+                // 2. Delete the event itself
+                await Event.findByIdAndDelete(event._id);
+                
+                deletedCount++;
+            }
+        }
+        
+        if (deletedCount > 0) {
+            console.log(`✅ Cleanup complete. Permanently deleted ${deletedCount} old events.`);
+        }
+    } catch (error) {
+        console.error("❌ Auto-delete error:", error);
+    }
+};
+
+// Run cleanup on server startup
+cleanupExpiredEvents();
+
+// Run cleanup every hour (3600000 ms)
+setInterval(cleanupExpiredEvents, 3600000);
+
+
+// ==========================================
 // ROUTES
 // ==========================================
 
@@ -37,27 +90,22 @@ app.post('/api/auth/register', async (req, res) => {
     try {
         const { email, password, name, role, surname, description, socialLinks } = req.body;
         
-        // Validation basic
         if (!email || !password || !name) {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
-        // Case-Insensitive Search for existing user
-        // This ensures 'Test@mail.com' and 'test@mail.com' are treated as the same user
+        const escapedEmail = escapeRegex(email.trim());
         const existing = await User.findOne({ 
-            email: { $regex: new RegExp(`^${email}$`, 'i') } 
+            email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } 
         });
 
         if (existing) return res.status(400).json({ error: "User already exists" });
 
-        // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Determine verification status
         const isVerified = (role === 'studente');
 
-        // Always save email in lowercase to normalize DB for the future
         const newUser = await User.create({
             email: email.toLowerCase().trim(),
             password: hashedPassword,
@@ -72,7 +120,6 @@ app.post('/api/auth/register', async (req, res) => {
 
         const token = jwt.sign({ userId: newUser._id, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-        // Send Welcome Email (Non-blocking)
         mailer.sendWelcomeEmail(newUser.email, name).catch(err => console.error("Welcome email failed", err));
 
         res.json({ token, user: newUser });
@@ -86,11 +133,13 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         
-        // Case-Insensitive Search
-        // Finds the user regardless of whether they typed 'User@mail.com' or 'user@mail.com'
-        // and regardless of how it is stored in the DB (Legacy uppercase vs New lowercase)
+        if (!email || !password) {
+             return res.status(400).json({ error: "Missing credentials" });
+        }
+
+        const escapedEmail = escapeRegex(email.trim());
         const user = await User.findOne({ 
-            email: { $regex: new RegExp(`^${email.trim()}$`, 'i') } 
+            email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } 
         });
 
         if (!user) return res.status(400).json({ error: "Invalid credentials" });
@@ -116,7 +165,6 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
 app.put('/api/users/:id', authMiddleware, async (req, res) => {
     if (req.user.userId !== req.params.id) return res.status(403).json({ error: "Unauthorized" });
     
-    // If email is being updated, normalize it
     if (req.body.email) {
         req.body.email = req.body.email.toLowerCase().trim();
     }
@@ -145,7 +193,7 @@ app.post('/api/users/favorites/toggle', authMiddleware, async (req, res) => {
     }
 });
 
-// Get Favorite Events (Populated)
+// Get Favorite Events
 app.get('/api/users/favorites/list', authMiddleware, async (req, res) => {
     try {
         const user = await User.findById(req.user.userId).populate({
@@ -158,8 +206,6 @@ app.get('/api/users/favorites/list', authMiddleware, async (req, res) => {
     }
 });
 
-
-// Refresh Stripe Status specifically
 app.get('/api/users/:id/refresh-stripe', authMiddleware, async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user || !user.stripeAccountId) return res.status(400).json({ error: "No stripe account" });
@@ -174,7 +220,24 @@ app.get('/api/events', async (req, res) => {
     try {
         const { organization } = req.query;
         let query = {};
-        if (organization) query.organization = organization;
+
+        if (organization) {
+            // Dashboard Request: Show ALL events in DB (DB holds them for 5 days)
+            query.organization = organization;
+        } else {
+            // Public Request: Filter by 10 AM rule
+            const now = new Date();
+            const currentHour = now.getHours();
+            
+            const visibilityCutoff = new Date();
+            visibilityCutoff.setHours(0, 0, 0, 0); // Start of Today
+
+            if (currentHour < 10) {
+                visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); // Start of Yesterday
+            } 
+
+            query.date = { $gte: visibilityCutoff };
+        }
 
         const events = await Event.find(query).populate('organization', 'name _id');
         res.json(events);
@@ -200,7 +263,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         const user = await User.findById(req.user.userId);
         
         if (!user.isVerified) {
-            return res.status(403).json({ error: "Account not verified. Please contact support to activate your association account." });
+            return res.status(403).json({ error: "Account not verified." });
         }
 
         const { 
@@ -209,7 +272,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         } = req.body;
 
         if (price < 0) return res.status(400).json({ error: "Price cannot be negative" });
-        if (maxCapacity <= 0) return res.status(400).json({ error: "Max capacity must be greater than 0" });
+        if (maxCapacity <= 0) return res.status(400).json({ error: "Max capacity must be > 0" });
         if (new Date(date) < new Date()) return res.status(400).json({ error: "Event date cannot be in the past" });
 
         const newEvent = await Event.create({
@@ -296,8 +359,30 @@ app.get('/api/tickets', authMiddleware, async (req, res) => {
     try {
         const { owner } = req.query;
         if (owner && owner !== req.user.userId) return res.status(403).json({ error: "Unauthorized" });
+        
+        // Get tickets and populate event
         const tickets = await Ticket.find({ owner: req.user.userId }).populate('event');
-        res.json(tickets);
+        
+        // Filter tickets for Student View (10 AM rule)
+        // Tickets should disappear from wallet if the event expired (> 10 AM next day)
+        const now = new Date();
+        const currentHour = now.getHours();
+        
+        const visibilityCutoff = new Date();
+        visibilityCutoff.setHours(0, 0, 0, 0); // Start of Today
+
+        if (currentHour < 10) {
+            visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); // Start of Yesterday
+        }
+        
+        // Filter tickets where the associated event date is still >= cutoff
+        const visibleTickets = tickets.filter(ticket => {
+            if (!ticket.event) return false; // Handle potential orphans
+            const eventDate = new Date(ticket.event.date);
+            return eventDate >= visibilityCutoff;
+        });
+
+        res.json(visibleTickets);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -330,10 +415,7 @@ app.post('/api/stripe/create-checkout-session', authMiddleware, StripeController
 app.post('/api/stripe/verify', authMiddleware, StripeController.verifyPayment);
 
 // --- SERVE STATIC FILES (ALWAYS) ---
-// Serve any static files
 app.use(express.static(path.join(__dirname, '../dist')));
-
-// Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });

@@ -167,7 +167,8 @@ const Scanner: React.FC = () => {
           {(!scanResult && !error && !loading) && (
               <div className="w-full max-w-md relative">
                    <div className="bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-indigo-500 relative aspect-square">
-                        <div id="reader" className="w-full h-full"></div>
+                        {/* Force height to prevent collapse */}
+                        <div id="reader" className="w-full h-full" style={{ minHeight: '300px' }}></div>
                         
                         {/* Overlay Guide */}
                         <div className="absolute inset-0 border-2 border-white/30 rounded-2xl pointer-events-none">
