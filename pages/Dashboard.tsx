@@ -70,7 +70,11 @@ const Dashboard: React.FC = () => {
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const numericPrice = parseFloat(price);
+    // FIX: Use Math.round to force strict 2-decimal precision.
+    // Example: 15.0000004 -> 1500 -> 15.00
+    const rawPrice = parseFloat(price);
+    const numericPrice = Math.round(rawPrice * 100) / 100;
+    
     let numericCapacity = parseInt(maxCapacity);
 
     // If unlimited is checked, force high capacity
@@ -94,7 +98,7 @@ const Dashboard: React.FC = () => {
         await api.events.create({
             title,
             description,
-            price: numericPrice,
+            price: numericPrice, // Sending clean integer-based float
             date: new Date(date).toISOString(),
             time: time,
             location,

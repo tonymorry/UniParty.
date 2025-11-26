@@ -17,7 +17,8 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
     month: 'short',
   });
 
-  const finalPrice = event.price + 0.40;
+  // FIX: Use integer math (cents) to avoid floating point errors (e.g. 15 + 0.40 = 15.39999)
+  const finalPrice = (Math.round(event.price * 100) + 40) / 100;
 
   // Logic for ticket display
   const soldRatio = event.ticketsSold / event.maxCapacity;

@@ -94,7 +94,7 @@ const EventDetails: React.FC = () => {
         return;
     }
 
-    if (selectedPrList === "") {
+    if (event && event.prLists && event.prLists.length > 0 && selectedPrList === "") {
         alert("Please select a PR List (or 'Nessuna lista').");
         return;
     }
@@ -102,10 +102,14 @@ const EventDetails: React.FC = () => {
     if (event) {
       setPurchasing(true);
       try {
-        const redirectUrl = await api.payments.createCheckoutSession(event._id, quantity, user._id, ticketNames, selectedPrList);
-        window.location.hash = redirectUrl;
+        const redirectUrl = await api.payments.createCheckoutSession(event._id, quantity, user._id, ticketNames, selectedPrList || "Nessuna lista");
+        if (redirectUrl) {
+            window.location.hash = redirectUrl;
+        }
       } catch (error) {
         console.error("Checkout failed", error);
+        alert("Checkout failed. Please try again.");
+      } finally {
         setPurchasing(false);
       }
     }
@@ -177,9 +181,15 @@ const EventDetails: React.FC = () => {
   if (!event) return <div className="min-h-screen flex items-center justify-center">Event not found or expired</div>;
 
   const isFree = event.price === 0;
-  const serviceFee = isFree ? 0 : 0.40;
-  const totalPricePerTicket = event.price + serviceFee;
-  const totalAmount = totalPricePerTicket * quantity;
+  
+  // FIX: Use Integer Math (Cents) to guarantee precision
+  const priceInCents = Math.round(event.price * 100);
+  const feeInCents = isFree ? 0 : 40; // 40 cents fee
+  const totalPerTicketCents = priceInCents + feeInCents;
+  
+  const totalPricePerTicket = totalPerTicketCents / 100;
+  const totalAmount = (totalPerTicketCents * quantity) / 100;
+
   const remainingTickets = event.maxCapacity - event.ticketsSold;
   const isSoldOut = remainingTickets <= 0;
   const maxPurchaseLimit = Math.min(10, remainingTickets);
@@ -471,133 +481,97 @@ const EventDetails: React.FC = () => {
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
                                     required
                                 >
-                                    <option value="" disabled>Select a list...</option>
-                                    <option value="Nessuna lista">Nessuna lista</option>
+                                    <option value="" disabled>Select a list</option>
                                     {event.prLists.map((list, idx) => (
                                         <option key={idx} value={list}>{list}</option>
                                     ))}
+                                    <option value="Nessuna lista">Nessuna lista</option>
                                 </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                </div>
                             </div>
                         </div>
                     )}
-                    
-                    {!isSoldOut && (!event.prLists || event.prLists.length === 0) && (
-                        <input type="hidden" value="Nessuna lista" /> 
-                    )}
 
-                    {!isSoldOut && (
-                        <div className="mb-6 space-y-3">
-                            <p className="text-sm font-semibold text-gray-700">Ticket Holders</p>
-                            {Array.from({ length: quantity }).map((_, idx) => (
-                                <div key={idx} className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <UserIcon className="h-4 w-4 text-gray-400" />
-                                    </div>
-                                    <input 
+                    <button
+                        onClick={handlePurchase}
+                        disabled={purchasing || isSoldOut || (event.prLists && event.prLists.length > 0 && selectedPrList === "")}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                        {purchasing ? (
+                            <span className="flex items-center">
+                                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                                Processing...
+                            </span>
+                        ) : isSoldOut ? (
+                            'Sold Out'
+                        ) : (
+                            <>
+                                <CreditCard className="w-5 h-5 mr-2"/>
+                                {isFree ? 'Get Free Ticket' : `Pay €${totalAmount.toFixed(2)}`}
+                            </>
+                        )}
+                    </button>
+                    
+                    {!user && (
+                        <p className="text-center text-xs text-gray-500 mt-4">
+                            You must be logged in to purchase tickets.
+                        </p>
+                    )}
+                    
+                    {user && user.role !== UserRole.STUDENTE && (
+                        <p className="text-center text-xs text-red-500 mt-4">
+                            Only Student accounts can purchase tickets.
+                        </p>
+                    )}
+                </div>
+
+                {/* Ticket Names Inputs */}
+                {!isSoldOut && user && user.role === UserRole.STUDENTE && (
+                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mt-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Ticket Holder Names</h3>
+                        <div className="space-y-3">
+                            {ticketNames.map((name, index) => (
+                                <div key={index}>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Ticket #{index + 1}</label>
+                                    <input
                                         type="text"
-                                        placeholder={`Name on Ticket #${idx + 1}`}
-                                        value={ticketNames[idx] || ''}
-                                        onChange={(e) => handleNameChange(idx, e.target.value)}
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        value={name}
+                                        onChange={(e) => handleNameChange(index, e.target.value)}
+                                        placeholder={`Name for Ticket #${index + 1}`}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                                         required
                                     />
                                 </div>
                             ))}
-                        </div>
-                    )}
-
-                    <div className="border-t border-gray-100 pt-4 mb-6">
-                        <div className="flex justify-between items-center text-lg font-bold text-gray-900">
-                            <span>Total</span>
-                            <span>€{totalAmount.toFixed(2)}</span>
+                            <p className="text-xs text-gray-400 mt-2">
+                                Please enter the full name of the person who will use each ticket.
+                            </p>
                         </div>
                     </div>
+                )}
 
-                    {user?.role === UserRole.ASSOCIAZIONE ? (
-                         <div className="bg-yellow-50 text-yellow-700 p-4 rounded-lg flex items-start">
-                            <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5"/>
-                            <span className="text-sm">Associations cannot buy tickets. Please login as a student.</span>
-                         </div>
-                    ) : (
-                        <button
-                            onClick={() => {
-                                if((!event.prLists || event.prLists.length === 0) && selectedPrList === "") {
-                                    setSelectedPrList("Nessuna lista");
-                                }
-                                handlePurchase();
-                            }}
-                            disabled={purchasing || isSoldOut}
-                            className={`w-full font-bold py-4 rounded-xl transition shadow-lg flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed ${
-                                isSoldOut 
-                                ? 'bg-gray-300 text-gray-500' 
-                                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                            }`}
-                        >
-                            {purchasing ? (
-                                <span className="animate-pulse">Processing...</span>
-                            ) : isSoldOut ? (
-                                <>
-                                    <Ban className="w-5 h-5 mr-2" />
-                                    Sold Out
-                                </>
-                            ) : (
-                                <>
-                                    <CreditCard className="w-5 h-5 mr-2" />
-                                    {isFree ? 'Register Now' : 'Buy Now'}
-                                </>
+                {/* Owner Stats Section */}
+                {isOwner && prStats && (
+                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mt-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                            <BarChart className="w-5 h-5 mr-2 text-indigo-600" />
+                            PR List Stats
+                        </h3>
+                        <div className="space-y-2">
+                            {Object.entries(prStats).map(([name, count]) => (
+                                <div key={name} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                                    <span className="font-medium text-gray-700">{name}</span>
+                                    <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-md text-sm font-bold">{count}</span>
+                                </div>
+                            ))}
+                            {Object.keys(prStats).length === 0 && (
+                                <p className="text-gray-500 text-sm">No sales yet.</p>
                             )}
-                        </button>
-                    )}
-                    {!isFree && !isSoldOut && (
-                        <p className="text-center text-xs text-gray-400 mt-4">
-                            Secure payment via Stripe. 
-                        </p>
-                    )}
-                </div>
+                        </div>
+                    </div>
+                )}
+
             </div>
         </div>
-
-        {isOwner && prStats && (
-            <div className="mt-12 bg-white rounded-xl shadow-sm p-8 border-t-4 border-indigo-600">
-                 <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                     <BarChart className="w-5 h-5 mr-2 text-indigo-600" />
-                     Event Statistics
-                 </h2>
-                 <div className="overflow-x-auto">
-                     <table className="w-full">
-                         <thead>
-                             <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                 <th className="px-4 py-2 rounded-l-lg">Metric</th>
-                                 <th className="px-4 py-2 rounded-r-lg text-right">Count</th>
-                             </tr>
-                         </thead>
-                         <tbody className="divide-y divide-gray-100">
-                             {Object.entries(prStats).map(([name, count]) => (
-                                 <tr key={name}>
-                                     <td className="px-4 py-3 font-medium text-gray-900">{name === 'favorites' ? 'Total Favorites' : name}</td>
-                                     <td className={`px-4 py-3 text-right font-bold ${name === 'favorites' ? 'text-pink-600' : 'text-indigo-600'}`}>
-                                         {count}
-                                     </td>
-                                 </tr>
-                             ))}
-                         </tbody>
-                         <tfoot>
-                             <tr className="border-t border-gray-200">
-                                 <td className="px-4 py-3 font-bold text-gray-900">Total Tickets Sold</td>
-                                 <td className="px-4 py-3 text-right font-bold text-indigo-600">
-                                    {Object.entries(prStats)
-                                        .filter(([key]) => key !== 'favorites') // Exclude favorites from ticket sum
-                                        .reduce((a, [, b]) => a + (b as number), 0)}
-                                 </td>
-                             </tr>
-                         </tfoot>
-                     </table>
-                 </div>
-            </div>
-        )}
       </div>
     </div>
   );
