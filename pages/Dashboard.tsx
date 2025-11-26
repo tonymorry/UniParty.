@@ -13,9 +13,9 @@ const Dashboard: React.FC = () => {
   // Event Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('0'); // Default to 0
+  const [price, setPrice] = useState('0'); // Keep as string for input
   const [date, setDate] = useState('');
-  const [time, setTime] = useState('22:00'); // Default time
+  const [time, setTime] = useState('22:00');
   const [location, setLocation] = useState('');
   const [image, setImage] = useState('');
   const [maxCapacity, setMaxCapacity] = useState('100');
@@ -37,16 +37,11 @@ const Dashboard: React.FC = () => {
   const handleStripeConnect = async () => {
     setIsConnecting(true);
     try {
-      // Call backend to get account link
       const link = await api.stripe.createConnectAccount(user._id);
-      
-      // Simulate external window/redirect
       const confirmed = window.confirm(`Simulating Redirect to Stripe: ${link}\n\nClick OK to simulate successful onboarding, Cancel to fail.`);
-      
       if(confirmed) {
-          // Simulate the return webhook logic
           await api.stripe.finalizeOnboarding(user._id);
-          refreshUser(); // Update local user state to show completed
+          refreshUser();
       }
     } catch (error) {
       console.error(error);
@@ -70,19 +65,21 @@ const Dashboard: React.FC = () => {
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // FIX: Use Math.round to force strict 2-decimal precision.
-    // Example: 15.0000004 -> 1500 -> 15.00
-    const rawPrice = parseFloat(price);
+    // FIX: Robust Price Parsing to prevent 14.99 issue
+    // 1. Normalize separator (comma to dot)
+    const cleanPriceStr = price.toString().replace(',', '.');
+    const rawPrice = parseFloat(cleanPriceStr);
+    
+    // 2. Math.round to ensure 2 decimal precision (15 -> 15.00)
+    // This scrubs any floating point artifacts
     const numericPrice = Math.round(rawPrice * 100) / 100;
     
     let numericCapacity = parseInt(maxCapacity);
 
-    // If unlimited is checked, force high capacity
     if (isUnlimited && numericPrice === 0) {
         numericCapacity = 1000000; 
     }
 
-    // Validation Logic: If price > 0, Stripe is required.
     if (numericPrice > 0 && !user.stripeOnboardingComplete) {
         alert("To create paid events, you must connect your Stripe account first.");
         return;
@@ -98,7 +95,7 @@ const Dashboard: React.FC = () => {
         await api.events.create({
             title,
             description,
-            price: numericPrice, // Sending clean integer-based float
+            price: numericPrice, // Sends perfectly rounded number
             date: new Date(date).toISOString(),
             time: time,
             location,
@@ -111,6 +108,7 @@ const Dashboard: React.FC = () => {
         navigate('/');
     } catch(e) {
         console.error(e);
+        alert("Error creating event");
     } finally {
         setCreatingEvent(false);
     }
@@ -224,21 +222,21 @@ const Dashboard: React.FC = () => {
                                 <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                                 <input 
                                     type="number" step="0.01" min="0"
-                                    className={`w-full pl-9 pr-4 py-2 border rounded-lg focus:ring-2 outline-none bg-white text-gray-900 ${!user.stripeOnboardingComplete && parseFloat(price) > 0 ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-indigo-500'}`}
+                                    className={`w-full pl-9 pr-4 py-2 border rounded-lg focus:ring-2 outline-none bg-white text-gray-900 ${!user.stripeOnboardingComplete && parseFloat(price.replace(',','.')) > 0 ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-indigo-500'}`}
                                     value={price} 
                                     onChange={e => {
                                         setPrice(e.target.value);
-                                        if(parseFloat(e.target.value) > 0) setIsUnlimited(false); // Disable unlimited if paid
+                                        if(parseFloat(e.target.value.replace(',','.')) > 0) setIsUnlimited(false); 
                                     }} 
                                     required
                                 />
                              </div>
-                             {!user.stripeOnboardingComplete && parseFloat(price) > 0 && (
+                             {!user.stripeOnboardingComplete && parseFloat(price.replace(',','.')) > 0 && (
                                 <p className="text-xs text-red-500 mt-1 font-medium">
                                     Stripe connection required for paid events. Set price to 0 for free events.
                                 </p>
                              )}
-                             {parseFloat(price) > 0 && (
+                             {parseFloat(price.replace(',','.')) > 0 && (
                                 <p className="text-xs text-gray-500 mt-1">Students will pay Price + €0.40 fee.</p>
                              )}
                         </div>
@@ -255,8 +253,7 @@ const Dashboard: React.FC = () => {
                                     disabled={isUnlimited}
                                 />
                              </div>
-                             {/* Unlimited Checkbox - Only for FREE events */}
-                             {parseFloat(price) === 0 && (
+                             {parseFloat(price.replace(',','.')) === 0 && (
                                  <div className="mt-2 flex items-center">
                                      <input 
                                         type="checkbox" 
@@ -334,7 +331,7 @@ const Dashboard: React.FC = () => {
                      <div className="pt-4">
                         <button 
                             type="submit"
-                            disabled={creatingEvent || (!user.stripeOnboardingComplete && parseFloat(price) > 0)}
+                            disabled={creatingEvent || (!user.stripeOnboardingComplete && parseFloat(price.replace(',','.')) > 0)}
                             className="w-full bg-indigo-900 hover:bg-indigo-800 text-white font-bold py-3 rounded-lg transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {creatingEvent ? 'Publishing...' : (

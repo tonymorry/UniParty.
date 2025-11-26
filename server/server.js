@@ -47,7 +47,6 @@ const cleanupExpiredEvents = async () => {
 
         for (const event of events) {
             // Calculate Hard Deletion Date: Event Date + 5 Days at 10:00 AM
-            // This implies the event stays in DB for 5 days after it occurs.
             const eventDate = new Date(event.date);
             const expirationDate = new Date(eventDate);
             expirationDate.setDate(expirationDate.getDate() + 5); // KEEP FOR 5 DAYS
@@ -180,7 +179,7 @@ app.post('/api/users/favorites/toggle', authMiddleware, async (req, res) => {
         const { eventId } = req.body;
         const user = await User.findById(req.user.userId);
         
-        // Ensure we handle ObjectId comparison correctly by converting to string
+        // FIX: Properly compare ObjectIds with String IDs using toString()
         const index = user.favorites.findIndex(fav => fav.toString() === eventId);
         
         if (index === -1) {
@@ -276,10 +275,13 @@ app.post('/api/events', authMiddleware, async (req, res) => {
             return res.status(403).json({ error: "Account not verified." });
         }
 
-        const { 
+        let { 
             title, description, longDescription, image, date, time, 
             location, price, maxCapacity, category, prLists 
         } = req.body;
+
+        // Force numeric conversion and rounding to 2 decimals on server side as well
+        price = Math.round(Number(price) * 100) / 100;
 
         if (price < 0) return res.status(400).json({ error: "Price cannot be negative" });
         if (maxCapacity <= 0) return res.status(400).json({ error: "Max capacity must be > 0" });
@@ -320,14 +322,22 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
         if (!event) return res.status(404).json({ error: "Not Found" });
         if (event.organization.toString() !== req.user.userId) return res.status(403).json({ error: "Unauthorized" });
 
-        const { 
+        let { 
             title, description, longDescription, image, date, time, 
-            location, maxCapacity, category, prLists 
+            location, maxCapacity, category, prLists, price 
         } = req.body;
+
+        // Force numeric conversion and rounding to 2 decimals
+        // Note: Price might not be editable depending on logic, but if it is, sanitize it.
+        if (price !== undefined) {
+             price = Math.round(Number(price) * 100) / 100;
+        }
 
         const updated = await Event.findByIdAndUpdate(req.params.id, {
             title, description, longDescription, image, date, time, 
-            location, maxCapacity, category, prLists
+            location, maxCapacity, category, prLists,
+            // Only update price if provided, otherwise keep existing
+            ...(price !== undefined && { price })
         }, { new: true }).populate('organization', 'name _id');
 
         res.json(updated);
@@ -361,10 +371,9 @@ app.get('/api/events/:id/stats', authMiddleware, async (req, res) => {
         const tickets = await Ticket.find({ event: eventId });
         
         // FIX: Explicitly count distinct users who have this event ID in their favorites array.
-        // This provides the "real" source of truth.
         const favoritesRealCount = await User.countDocuments({ favorites: new mongoose.Types.ObjectId(eventId) });
 
-        // Self-Healing: Update the cached count on the event document if it's wrong
+        // Self-Healing
         if (event.favoritesCount !== favoritesRealCount) {
             await Event.findByIdAndUpdate(eventId, { favoritesCount: favoritesRealCount });
         }
