@@ -1,26 +1,31 @@
 const nodemailer = require('nodemailer');
 
-// Configurazione Gmail Esplicita e Robusta per Render
+// Configurazione per Porta 587 (STARTTLS) - Più compatibile con i firewall cloud
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // Questo imposta automaticamente host='smtp.gmail.com', port=465, secure=true
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: 587, // Usiamo la porta standard
+  secure: false, // false per 587, true per 465
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  // Opzioni di rete fondamentali per evitare timeout su Render
-  family: 4, // Forza IPv4 (Risolve ETIMEDOUT causato da IPv6)
-  pool: true, // Usa connessioni riutilizzabili per performance migliori
+  tls: {
+    ciphers: 'SSLv3',
+    rejectUnauthorized: false, // Aiuta con alcuni certificati server
+  },
+  family: 4, // Manteniamo IPv4 obbligatorio
+  pool: true,
   logger: true,
   debug: true,
-  connectionTimeout: 10000 // 10 seconds
+  connectionTimeout: 10000 // 10 secondi
 });
 
-// Verifica connessione immediata
+// Verifica connessione all'avvio
 transporter.verify(function (error, success) {
   if (error) {
     console.error("❌ SMTP CONNECTION ERROR:", error);
   } else {
-    console.log("✅ SMTP Server is ready (IPv4/Gmail)");
+    console.log("✅ SMTP Server is ready (Port 587/IPv4)");
   }
 });
 
@@ -36,6 +41,8 @@ const sendWelcomeEmail = async (to, name) => {
           <h1 style="color: #4f46e5;">Welcome to UniParty, ${name}!</h1>
           <p>We are thrilled to have you on board.</p>
           <p>Start browsing events, buy tickets, or organize the next big party on campus.</p>
+          <br>
+          <p>Cheers,<br>The UniParty Team</p>
         </div>
       `,
     });
@@ -48,7 +55,9 @@ const sendWelcomeEmail = async (to, name) => {
 const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
   try {
     console.log(`📤 Attempting to send TICKETS email to: ${to}`);
-    const namesList = ticketNames.map(name => `<li><strong>${name}</strong></li>`).join('');
+    const namesList = Array.isArray(ticketNames) 
+      ? ticketNames.map(name => `<li><strong>${name}</strong></li>`).join('') 
+      : `<li>${ticketNames}</li>`;
     
     const info = await transporter.sendMail({
       from: `"UniParty Team" <${process.env.SMTP_USER}>`,
@@ -61,6 +70,8 @@ const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
           <p><strong>Ticket Holders:</strong></p>
           <ul>${namesList}</ul>
           <p>You can find your QR codes in the <a href="${process.env.FRONTEND_URL || 'https://uniparty-app.onrender.com'}/#/wallet">My Wallet</a> section.</p>
+          <br>
+          <p>See you there!</p>
         </div>
       `,
     });
