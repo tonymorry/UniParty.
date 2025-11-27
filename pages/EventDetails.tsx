@@ -412,8 +412,8 @@ const EventDetails: React.FC = () => {
             </div>
 
             <div className="lg:col-span-1">
-                {/* CHECKOUT CARD - STICKY CONTAINER */}
-                <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24 border border-gray-100 max-h-[calc(100vh-8rem)] overflow-y-auto">
+                {/* CHECKOUT CARD - REMOVED STICKY */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
                     <h3 className="text-xl font-bold text-gray-900 mb-6">{isFree ? 'Register' : 'Get Tickets'}</h3>
                     
                     {isSoldOut && (
@@ -492,7 +492,7 @@ const EventDetails: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Ticket Names Inputs - INSIDE Sticky Card */}
+                    {/* Ticket Names Inputs - INSIDE Card */}
                     {!isSoldOut && user && user.role === UserRole.STUDENTE && (
                         <div className="mb-6 space-y-3 border-t border-gray-100 pt-4">
                             <p className="text-sm font-semibold text-gray-700">Ticket Holders</p>
@@ -585,8 +585,8 @@ const EventDetails: React.FC = () => {
                         <div className="space-y-2">
                             {Object.entries(prStats).map(([name, count]) => (
                                 <div key={name} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                                    <span className="font-medium text-gray-700">{name}</span>
-                                    <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-md text-sm font-bold">{count}</span>
+                                    <span className="font-medium text-gray-700">{name === 'favorites' ? 'Favorites' : name}</span>
+                                    <span className={`px-2 py-1 rounded-md text-sm font-bold ${name === 'favorites' ? 'bg-pink-100 text-pink-800' : 'bg-indigo-100 text-indigo-800'}`}>{count}</span>
                                 </div>
                             ))}
                             {Object.keys(prStats).length === 0 && (
