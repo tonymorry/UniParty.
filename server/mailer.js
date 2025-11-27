@@ -1,37 +1,16 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// Configurazione Gmail Ottimizzata per Render (Porta 587 + IPv4)
-// L'errore ETIMEDOUT su 465 indica spesso un blocco. 587 è più affidabile.
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  // Opzioni di rete fondamentali per evitare timeout su Render
-  family: 4, // Forza IPv4 (Risolve ETIMEDOUT causato da IPv6)
-  logger: true,
-  debug: true,
-  // Timeout settings
-  connectionTimeout: 10000,
-  greetingTimeout: 5000,
-  socketTimeout: 10000
-});
+// Initialize Resend with API Key from environment variables
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Verifica connessione immediata
-transporter.verify(function (error, success) {
-  if (error) {
-    console.error("❌ SMTP CONNECTION ERROR:", error);
-  } else {
-    console.log("✅ SMTP Server is ready (IPv4/Gmail via Service)");
-  }
-});
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://uniparty-app.onrender.com';
 
 const sendWelcomeEmail = async (to, name) => {
   try {
-    console.log(`📤 Attempting to send WELCOME email to: ${to}`);
-    const info = await transporter.sendMail({
-      from: `"UniParty Team" <${process.env.SMTP_USER}>`,
+    console.log(`📤 Attempting to send WELCOME email via Resend to: ${to}`);
+    
+    const { data, error } = await resend.emails.send({
+      from: 'onboarding@resend.dev',
       to: to,
       subject: "Welcome to UniParty! 🎉",
       html: `
@@ -42,20 +21,25 @@ const sendWelcomeEmail = async (to, name) => {
         </div>
       `,
     });
-    console.log("📨 Welcome email sent ID:", info.messageId);
+
+    if (error) {
+      console.error("❌ Resend Welcome Email Error:", error);
+      return;
+    }
+
+    console.log("📨 Welcome email sent successfully. ID:", data.id);
   } catch (error) {
-    console.error("❌ Welcome email failed:", error);
-    // Non rilanciamo l'errore per non bloccare il flusso utente se l'email fallisce
+    console.error("❌ Unexpected Error sending Welcome Email:", error);
   }
 };
 
 const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
   try {
-    console.log(`📤 Attempting to send TICKETS email to: ${to}`);
+    console.log(`📤 Attempting to send TICKETS email via Resend to: ${to}`);
     const namesList = ticketNames.map(name => `<li><strong>${name}</strong></li>`).join('');
     
-    const info = await transporter.sendMail({
-      from: `"UniParty Team" <${process.env.SMTP_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from: 'onboarding@resend.dev',
       to: to,
       subject: `Your Tickets for ${eventTitle} 🎟️`,
       html: `
@@ -64,14 +48,19 @@ const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
           <p>Your payment was successful and your tickets have been issued.</p>
           <p><strong>Ticket Holders:</strong></p>
           <ul>${namesList}</ul>
-          <p>You can find your QR codes in the <a href="${process.env.FRONTEND_URL || 'https://uniparty-app.onrender.com'}/#/wallet">My Wallet</a> section.</p>
+          <p>You can find your QR codes in the <a href="${FRONTEND_URL}/#/wallet">My Wallet</a> section.</p>
         </div>
       `,
     });
-    console.log("📨 Tickets email sent ID:", info.messageId);
+
+    if (error) {
+      console.error("❌ Resend Tickets Email Error:", error);
+      return;
+    }
+
+    console.log("📨 Tickets email sent successfully. ID:", data.id);
   } catch (error) {
-    console.error("❌ Tickets email failed:", error);
-    // Qui l'errore è più critico, ma non vogliamo crashare il webhook
+    console.error("❌ Unexpected Error sending Tickets Email:", error);
   }
 };
 
