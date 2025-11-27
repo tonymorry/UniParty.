@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
-import { Ticket, PartyPopper, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart } from 'lucide-react';
+import { Ticket, PartyPopper, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2 } from 'lucide-react';
 
 const Navbar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -13,6 +13,20 @@ const Navbar: React.FC = () => {
     logout();
     setIsOpen(false);
     navigate('/');
+  };
+
+  const handleDeleteAccount = async () => {
+      const confirm = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+      if (confirm) {
+          try {
+              await deleteAccount();
+              setIsOpen(false);
+              navigate('/');
+              alert("Account deleted successfully.");
+          } catch (e) {
+              alert("Failed to delete account. Please try again.");
+          }
+      }
   };
 
   return (
@@ -144,12 +158,20 @@ const Navbar: React.FC = () => {
              </div>
 
              {user && (
-                <div className="border-t border-indigo-600 mt-2 pt-2">
+                <div className="border-t border-indigo-600 mt-2 pt-2 pb-2">
                     <button
                         onClick={handleLogout}
-                        className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-300 hover:text-white hover:bg-red-600/20 transition"
+                        className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-indigo-700 transition mb-1"
                     >
                         Logout
+                    </button>
+                    
+                    <button
+                        onClick={handleDeleteAccount}
+                        className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium text-red-300 hover:text-red-100 hover:bg-red-900/30 transition"
+                    >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Account
                     </button>
                 </div>
              )}

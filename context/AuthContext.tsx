@@ -12,6 +12,7 @@ interface AuthContextType {
   refreshUser: () => void;
   updateUserProfile: (data: Partial<User>) => Promise<void>;
   toggleFavorite: (eventId: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -116,8 +117,22 @@ export const AuthProvider = ({ children }: PropsWithChildren<{}>) => {
       }
   };
 
+  const deleteAccount = async () => {
+      if (!user) return;
+      setIsLoading(true);
+      try {
+          await api.auth.deleteAccount(user._id);
+          logout();
+      } catch (e) {
+          console.error(e);
+          throw e;
+      } finally {
+          setIsLoading(false);
+      }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout, refreshUser, updateUserProfile, toggleFavorite }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout, refreshUser, updateUserProfile, toggleFavorite, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

@@ -121,13 +121,7 @@ app.post('/api/auth/register', async (req, res) => {
 
         const token = jwt.sign({ userId: newUser._id, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-        // Send Welcome Email (Await to ensure it sends)
-        try {
-            await mailer.sendWelcomeEmail(newUser.email, name);
-        } catch (mailError) {
-            console.error("Welcome email failed:", mailError);
-            // We don't block registration if email fails, but we log it.
-        }
+        mailer.sendWelcomeEmail(newUser.email, name).catch(err => console.error("Welcome email failed", err));
 
         res.json({ token, user: newUser });
     } catch (e) {
@@ -178,6 +172,21 @@ app.put('/api/users/:id', authMiddleware, async (req, res) => {
 
     const updated = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updated);
+});
+
+// DELETE ACCOUNT ROUTE
+app.delete('/api/users/:id', authMiddleware, async (req, res) => {
+    if (req.user.userId !== req.params.id) return res.status(403).json({ error: "Unauthorized" });
+    
+    try {
+        // Optional: If association, check for active events?
+        // For now, we allow deletion and data cleanup
+        await User.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: "Account deleted" });
+    } catch (e) {
+        console.error("Delete Account Error:", e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // Toggle Favorite

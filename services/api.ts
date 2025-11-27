@@ -27,6 +27,7 @@ const mockApi = {
     login: async () => ({ token: 'mock', user: {} as any }),
     register: async () => ({ token: 'mock', user: {} as any }),
     updateUser: async () => ({} as any),
+    deleteAccount: async () => {},
     toggleFavorite: async () => [],
     getFavoriteEvents: async () => []
   },
@@ -95,6 +96,13 @@ const realApi = {
         });
         if(!res.ok) throw new Error('Update failed');
         return res.json();
+    },
+    deleteAccount: async (userId: string) => {
+        const res = await fetch(`${API_URL}/users/${userId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if(!res.ok) throw new Error('Failed to delete account');
     },
     toggleFavorite: async (userId: string, eventId: string) => {
         const res = await fetch(`${API_URL}/users/favorites/toggle`, {
