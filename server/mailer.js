@@ -1,10 +1,9 @@
 const nodemailer = require('nodemailer');
 
-// Configurazione Gmail Esplicita e Robusta per Render
+// Configurazione Gmail Ottimizzata per Render (Porta 587 + IPv4)
+// L'errore ETIMEDOUT su 465 indica spesso un blocco. 587 è più affidabile.
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // usa SSL
+  service: 'gmail',
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -13,7 +12,10 @@ const transporter = nodemailer.createTransport({
   family: 4, // Forza IPv4 (Risolve ETIMEDOUT causato da IPv6)
   logger: true,
   debug: true,
-  connectionTimeout: 10000 // 10 seconds
+  // Timeout settings
+  connectionTimeout: 10000,
+  greetingTimeout: 5000,
+  socketTimeout: 10000
 });
 
 // Verifica connessione immediata
@@ -21,7 +23,7 @@ transporter.verify(function (error, success) {
   if (error) {
     console.error("❌ SMTP CONNECTION ERROR:", error);
   } else {
-    console.log("✅ SMTP Server is ready (IPv4/Gmail)");
+    console.log("✅ SMTP Server is ready (IPv4/Gmail via Service)");
   }
 });
 
@@ -43,7 +45,7 @@ const sendWelcomeEmail = async (to, name) => {
     console.log("📨 Welcome email sent ID:", info.messageId);
   } catch (error) {
     console.error("❌ Welcome email failed:", error);
-    throw error; // Re-throw to handle in caller
+    // Non rilanciamo l'errore per non bloccare il flusso utente se l'email fallisce
   }
 };
 
@@ -69,7 +71,7 @@ const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
     console.log("📨 Tickets email sent ID:", info.messageId);
   } catch (error) {
     console.error("❌ Tickets email failed:", error);
-    throw error;
+    // Qui l'errore è più critico, ma non vogliamo crashare il webhook
   }
 };
 
