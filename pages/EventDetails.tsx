@@ -141,6 +141,7 @@ const EventDetails: React.FC = () => {
       setIsDeleting(true);
       try {
           await api.events.delete(event._id);
+          // Force navigate back to home and replace history to prevent going back
           navigate('/', { replace: true });
       } catch (e: any) {
           console.error("Delete error:", e);

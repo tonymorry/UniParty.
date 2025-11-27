@@ -312,8 +312,8 @@ app.post('/api/events', authMiddleware, async (req, res) => {
             location, price, maxCapacity, category, prLists 
         } = req.body;
 
-        // Sanitization
-        price = Math.round(Number(price) * 100) / 100;
+        // SANITIZATION: Strict Fixed Point
+        price = Number(Number(price).toFixed(2));
 
         if (price < 0) return res.status(400).json({ error: "Price cannot be negative" });
         if (maxCapacity <= 0) return res.status(400).json({ error: "Max capacity must be > 0" });
@@ -361,7 +361,8 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
         } = req.body;
 
         if (price !== undefined) {
-             price = Math.round(Number(price) * 100) / 100;
+             // SANITIZATION: Strict Fixed Point
+             price = Number(Number(price).toFixed(2));
         }
 
         const updated = await Event.findByIdAndUpdate(req.params.id, {
@@ -434,7 +435,6 @@ app.get('/api/tickets', authMiddleware, async (req, res) => {
         if (owner && owner !== req.user.userId) return res.status(403).json({ error: "Unauthorized" });
         
         // 1. Fetch tickets (exclude deleted)
-        // Allow fallback for legacy tickets without status field
         const tickets = await Ticket.find({ 
             owner: req.user.userId, 
             $or: [
@@ -457,7 +457,7 @@ app.get('/api/tickets', authMiddleware, async (req, res) => {
         const visibleTickets = tickets.filter(ticket => {
             if (!ticket.event) return false; 
             
-            // Allow active OR legacy (undefined) status
+            // Check event status
             const evStatus = ticket.event.status;
             if (evStatus === 'deleted' || evStatus === 'archived') return false; 
 

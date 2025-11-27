@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
-import { Ticket, PartyPopper, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2 } from 'lucide-react';
+import { Ticket, PartyPopper, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user, logout, deleteAccount } = useAuth();
@@ -109,7 +109,7 @@ const Navbar: React.FC = () => {
                     className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-indigo-600 bg-indigo-700 mt-1 transition shadow-inner"
                     onClick={() => setIsOpen(false)}
                  >
-                    <ScanLine className="h-5 w-5 mr-3 text-cyan-300" /> Scan Ticket
+                    <ScanLine className="h-5 w-5 mr-3 text-cyan-300" /> Scan Voucher
                  </Link>
                </>
              )}

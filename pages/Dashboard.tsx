@@ -65,14 +65,15 @@ const Dashboard: React.FC = () => {
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // FIX: Robust Price Parsing to prevent 14.99 issue
-    // 1. Normalize separator (comma to dot) just in case
+    // FIX: ABSOLUTE PRECISION PRICE PARSING
+    // 1. Normalize separator
     const cleanPriceStr = price.toString().replace(',', '.');
     const rawPrice = parseFloat(cleanPriceStr);
     
-    // 2. STRICT ROUNDING: Math.round(X * 100) / 100
-    // This forces the number to snap to the nearest cent, eliminating 14.99999 artifacts.
-    const numericPrice = Math.round(rawPrice * 100) / 100;
+    // 2. FORCE TO FIXED 2 DECIMALS STRING, THEN NUMBER
+    // This avoids Math.round(floatingPoint) errors completely.
+    // e.g., 10 -> "10.00" -> 10
+    const numericPrice = Number(rawPrice.toFixed(2));
     
     let numericCapacity = parseInt(maxCapacity);
 
@@ -95,7 +96,7 @@ const Dashboard: React.FC = () => {
         await api.events.create({
             title,
             description,
-            price: numericPrice, // Sends perfectly rounded number (e.g., 15)
+            price: numericPrice, 
             date: new Date(date).toISOString(),
             time: time,
             location,
@@ -118,7 +119,7 @@ const Dashboard: React.FC = () => {
   const handlePriceBlur = () => {
       const val = parseFloat(price.replace(',', '.'));
       if (!isNaN(val)) {
-          setPrice(val.toFixed(2)); // Shows "15.00" to user
+          setPrice(val.toFixed(2)); // Shows "10.00" to user
       }
   };
 
