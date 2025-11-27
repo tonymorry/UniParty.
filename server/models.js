@@ -49,7 +49,13 @@ const eventSchema = new mongoose.Schema({
   prLists: [String],
   
   // Favorites Counter
-  favoritesCount: { type: Number, default: 0 }
+  favoritesCount: { type: Number, default: 0 },
+
+  // Status for soft delete/archiving (Legal/Fiscal compliance)
+  // 'active': Visible to public (subject to time rules)
+  // 'archived': Hidden from public, visible to association (History)
+  // 'deleted': Deleted by user (Soft delete)
+  status: { type: String, enum: ['active', 'archived', 'deleted'], default: 'active' }
 }, { timestamps: true });
 
 // --- TICKET SCHEMA ---
@@ -67,7 +73,10 @@ const ticketSchema = new mongoose.Schema({
   
   // Stripe Data
   paymentIntentId: String,
-  sessionId: String
+  sessionId: String,
+
+  // Status for soft delete/archiving
+  status: { type: String, enum: ['active', 'archived', 'deleted'], default: 'active' }
 }, { timestamps: true });
 
 // --- ORDER SCHEMA ---

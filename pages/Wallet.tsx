@@ -32,18 +32,18 @@ const Wallet: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-indigo-900 mb-8">My Wallet</h1>
+        <h1 className="text-3xl font-bold text-indigo-900 mb-8">I Miei Voucher</h1>
         
         {loading ? (
-            <div className="text-center py-12">Loading tickets...</div>
+            <div className="text-center py-12">Caricamento voucher...</div>
         ) : tickets.length === 0 ? (
             <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-                <p className="text-gray-500 text-lg mb-4">You haven't purchased any tickets yet.</p>
+                <p className="text-gray-500 text-lg mb-4">Non hai ancora prenotato nessun evento.</p>
                 <button 
                     onClick={() => navigate('/')}
                     className="text-indigo-600 font-semibold hover:underline"
                 >
-                    Browse Events
+                    Esplora Eventi
                 </button>
             </div>
         ) : (
@@ -64,7 +64,7 @@ const Wallet: React.FC = () => {
                                     {ticket.event.location}
                                 </div>
                                 <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-md font-semibold">
-                                    PAID • {ticket.ticketHolderName}
+                                    PRENOTATO • {ticket.ticketHolderName}
                                 </span>
                             </div>
                         </div>

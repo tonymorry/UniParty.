@@ -12,8 +12,10 @@ import Profile from './pages/Profile';
 import Scanner from './pages/Scanner';
 import Support from './pages/Support';
 import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 import Favorites from './pages/Favorites';
 import Footer from './components/Footer';
+import CookieBanner from './components/CookieBanner';
 
 function App() {
   return (
@@ -33,10 +35,12 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/support" element={<Support />} />
               <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
               <Route path="/payment-success" element={<PaymentSuccess />} />
             </Routes>
           </main>
           <Footer />
+          <CookieBanner />
         </div>
       </Router>
     </AuthProvider>

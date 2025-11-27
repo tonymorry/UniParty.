@@ -85,17 +85,17 @@ const EventDetails: React.FC = () => {
     }
     
     if (user.role !== UserRole.STUDENTE) {
-        alert("Only students can buy tickets.");
+        alert("Solo gli studenti possono prenotare voucher.");
         return;
     }
 
     if (ticketNames.some(name => name.trim() === '')) {
-        alert("Please enter a name for every ticket.");
+        alert("Inserisci il nome per ogni voucher.");
         return;
     }
 
     if (event && event.prLists && event.prLists.length > 0 && selectedPrList === "") {
-        alert("Please select a PR List (or 'Nessuna lista').");
+        alert("Seleziona una Lista PR (o 'Nessuna lista').");
         return;
     }
 
@@ -108,7 +108,7 @@ const EventDetails: React.FC = () => {
         }
       } catch (error) {
         console.error("Checkout failed", error);
-        alert("Checkout failed. Please try again.");
+        alert("Prenotazione fallita. Riprova.");
       } finally {
         setPurchasing(false);
       }
@@ -141,7 +141,6 @@ const EventDetails: React.FC = () => {
       setIsDeleting(true);
       try {
           await api.events.delete(event._id);
-          // Force navigate back to home and replace history to prevent going back
           navigate('/', { replace: true });
       } catch (e: any) {
           console.error("Delete error:", e);
@@ -412,9 +411,9 @@ const EventDetails: React.FC = () => {
             </div>
 
             <div className="lg:col-span-1">
-                {/* CHECKOUT CARD - REMOVED STICKY */}
+                {/* CHECKOUT CARD */}
                 <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                    <h3 className="text-xl font-bold text-gray-900 mb-6">{isFree ? 'Register' : 'Get Tickets'}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-6">{isFree ? 'Prenota Ingresso' : 'Prenota Ingresso'}</h3>
                     
                     {isSoldOut && (
                          <div className="bg-red-100 text-red-700 p-4 rounded-lg flex items-center justify-center mb-6 font-bold">
@@ -425,10 +424,10 @@ const EventDetails: React.FC = () => {
 
                     <div className="flex items-center justify-between mb-6 bg-gray-50 p-4 rounded-lg">
                         <div>
-                            <p className="font-medium text-gray-900">{isFree ? 'Free Entry' : 'General Admission'}</p>
+                            <p className="font-medium text-gray-900">{isFree ? 'Ingresso Libero' : 'Ingresso Generale'}</p>
                             {!isFree && (
                                 <p className="text-xs text-gray-500 flex items-center mt-1">
-                                    <Info className="w-3 h-3 mr-1"/> Includes €0.40 fee
+                                    <Info className="w-3 h-3 mr-1"/> Include €0.40 fee
                                 </p>
                             )}
                              <p className="text-xs text-indigo-600 mt-1 font-semibold">
@@ -437,8 +436,8 @@ const EventDetails: React.FC = () => {
                                     : isSoldOut 
                                         ? 'Sold Out' 
                                         : isAlmostSoldOut 
-                                            ? 'Few tickets left!' 
-                                            : 'Tickets Available'
+                                            ? 'Ultimi posti!' 
+                                            : 'Voucher disponibili'
                                 }
                              </p>
                         </div>
@@ -450,7 +449,7 @@ const EventDetails: React.FC = () => {
                     </div>
 
                     <div className={`flex items-center justify-between mb-6 ${isSoldOut ? 'opacity-50 pointer-events-none' : ''}`}>
-                        <span className="text-gray-600 font-medium">Quantity</span>
+                        <span className="text-gray-600 font-medium">Quantità</span>
                         <div className="flex items-center space-x-3">
                             <button 
                                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -473,7 +472,7 @@ const EventDetails: React.FC = () => {
                     {!isSoldOut && event.prLists && event.prLists.length > 0 && (
                         <div className="mb-6">
                             <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Select PR List <span className="text-red-500">*</span>
+                                Seleziona Lista PR <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <select 
@@ -482,7 +481,7 @@ const EventDetails: React.FC = () => {
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
                                     required
                                 >
-                                    <option value="" disabled>Select a list</option>
+                                    <option value="" disabled>Seleziona una lista</option>
                                     {event.prLists.map((list, idx) => (
                                         <option key={idx} value={list}>{list}</option>
                                     ))}
@@ -495,7 +494,7 @@ const EventDetails: React.FC = () => {
                     {/* Ticket Names Inputs - INSIDE Card */}
                     {!isSoldOut && user && user.role === UserRole.STUDENTE && (
                         <div className="mb-6 space-y-3 border-t border-gray-100 pt-4">
-                            <p className="text-sm font-semibold text-gray-700">Ticket Holders</p>
+                            <p className="text-sm font-semibold text-gray-700">Intestatari Voucher</p>
                             {Array.from({ length: quantity }).map((_, idx) => (
                                 <div key={idx} className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -503,7 +502,7 @@ const EventDetails: React.FC = () => {
                                     </div>
                                     <input 
                                         type="text"
-                                        placeholder={`Name on Ticket #${idx + 1}`}
+                                        placeholder={`Nome sul Voucher #${idx + 1}`}
                                         value={ticketNames[idx] || ''}
                                         onChange={(e) => handleNameChange(idx, e.target.value)}
                                         className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -512,14 +511,14 @@ const EventDetails: React.FC = () => {
                                 </div>
                             ))}
                             <p className="text-xs text-gray-400 mt-1">
-                                Full name for each ticket holder.
+                                Inserisci nome e cognome per ogni ingresso.
                             </p>
                         </div>
                     )}
 
                     <div className="border-t border-gray-100 pt-4 mb-6">
                         <div className="flex justify-between items-center text-lg font-bold text-gray-900">
-                            <span>Total</span>
+                            <span>Totale</span>
                             <span>€{totalAmount.toFixed(2)}</span>
                         </div>
                     </div>
@@ -527,7 +526,7 @@ const EventDetails: React.FC = () => {
                     {user?.role === UserRole.ASSOCIAZIONE ? (
                          <div className="bg-yellow-50 text-yellow-700 p-4 rounded-lg flex items-start">
                             <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5"/>
-                            <span className="text-sm">Associations cannot buy tickets. Please login as a student.</span>
+                            <span className="text-sm">Le associazioni non possono acquistare. Accedi come studente.</span>
                          </div>
                     ) : (
                         <button
@@ -545,32 +544,38 @@ const EventDetails: React.FC = () => {
                             {purchasing ? (
                                 <span className="flex items-center">
                                     <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-                                    Processing...
+                                    Elaborazione...
                                 </span>
                             ) : isSoldOut ? (
                                 'Sold Out'
                             ) : (
                                 <>
                                     <CreditCard className="w-5 h-5 mr-2"/>
-                                    {isFree ? 'Get Free Ticket' : `Pay €${totalAmount.toFixed(2)}`}
+                                    {isFree ? 'Prenota Ingresso' : `Paga €${totalAmount.toFixed(2)}`}
                                 </>
                             )}
                         </button>
                     )}
+                    
+                    {/* DISCLAIMER LEGALE */}
+                    <p className="text-xs text-gray-500 mt-3 italic border-t border-gray-100 pt-2">
+                      Nota: Il QR Code generato vale come voucher di prenotazione. Il titolo di accesso fiscale (SIAE) verrà emesso dall'organizzatore all'ingresso dell'evento.
+                    </p>
+
                     {!isFree && !isSoldOut && (
-                        <p className="text-center text-xs text-gray-400 mt-4">
-                            Secure payment via Stripe. 
+                        <p className="text-center text-xs text-gray-400 mt-2">
+                            Pagamento sicuro via Stripe. 
                         </p>
                     )}
                     {!user && (
                         <p className="text-center text-xs text-gray-500 mt-4">
-                            You must be logged in to purchase tickets.
+                            Devi essere loggato per prenotare.
                         </p>
                     )}
                     
                     {user && user.role !== UserRole.STUDENTE && (
                         <p className="text-center text-xs text-red-500 mt-4">
-                            Only Student accounts can purchase tickets.
+                            Solo gli account Studente possono prenotare.
                         </p>
                     )}
                 </div>
@@ -580,17 +585,17 @@ const EventDetails: React.FC = () => {
                     <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mt-6">
                         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
                             <BarChart className="w-5 h-5 mr-2 text-indigo-600" />
-                            PR List Stats
+                            Statistiche Liste PR
                         </h3>
                         <div className="space-y-2">
                             {Object.entries(prStats).map(([name, count]) => (
                                 <div key={name} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                                    <span className="font-medium text-gray-700">{name === 'favorites' ? 'Favorites' : name}</span>
+                                    <span className="font-medium text-gray-700">{name === 'favorites' ? 'Preferiti' : name}</span>
                                     <span className={`px-2 py-1 rounded-md text-sm font-bold ${name === 'favorites' ? 'bg-pink-100 text-pink-800' : 'bg-indigo-100 text-indigo-800'}`}>{count}</span>
                                 </div>
                             ))}
                             {Object.keys(prStats).length === 0 && (
-                                <p className="text-gray-500 text-sm">No sales yet.</p>
+                                <p className="text-gray-500 text-sm">Nessuna vendita.</p>
                             )}
                         </div>
                     </div>

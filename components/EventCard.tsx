@@ -19,7 +19,6 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
 
   // FIX: Strict Cents Calculation
   // 15.00 -> 1500 cents. + 40 cents = 1540 cents. / 100 = 15.40
-  // Ensure event.price is treated as number
   const priceInCents = Math.round(Number(event.price) * 100);
   const finalPrice = (priceInCents + 40) / 100;
 
@@ -43,7 +42,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
       if (user && user.role === UserRole.STUDENTE) {
           toggleFavorite(event._id);
       } else if (!user) {
-          alert("Please login as a student to save favorites.");
+          alert("Accedi come studente per salvare i preferiti.");
       }
   };
 
@@ -110,12 +109,12 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
               <Users className="h-4 w-4 mr-2 text-indigo-400" />
               <span>
                 {showExactNumbers 
-                  ? `${event.ticketsSold}/${event.maxCapacity} Sold`
+                  ? `${event.ticketsSold}/${event.maxCapacity} Prenotati`
                   : isSoldOut 
                     ? 'Sold Out' 
                     : isAlmostSoldOut 
-                      ? 'Few tickets left!' 
-                      : 'Tickets available'}
+                      ? 'Ultimi posti!' 
+                      : 'Voucher disponibili'}
               </span>
             </div>
             {isAlmostSoldOut && !isSoldOut && (

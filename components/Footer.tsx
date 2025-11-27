@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Mail, Shield, Heart } from 'lucide-react';
+import React from 'react';
+import { Mail, Shield, Heart, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
@@ -16,6 +16,11 @@ const Footer: React.FC = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-8 text-center sm:text-left">
+            <Link to="/terms" className="text-gray-500 hover:text-indigo-600 flex items-center justify-center sm:justify-start text-sm transition-colors">
+              <FileText className="h-4 w-4 mr-2" />
+              Termini & Condizioni
+            </Link>
+
             <Link to="/privacy" className="text-gray-500 hover:text-indigo-600 flex items-center justify-center sm:justify-start text-sm transition-colors">
               <Shield className="h-4 w-4 mr-2" />
               Privacy Policy
