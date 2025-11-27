@@ -40,8 +40,13 @@ function escapeRegex(text) {
 const cleanupExpiredEvents = async () => {
     try {
         console.log("🧹 Running scheduled cleanup (Archiving Logic)...");
-        // Check only ACTIVE events. Archived/Deleted ones are already handled.
-        const events = await Event.find({ status: 'active' });
+        // Check ACTIVE events OR Legacy events (no status).
+        const events = await Event.find({
+            $or: [
+                { status: 'active' },
+                { status: { $exists: false } }
+            ]
+        });
         const now = new Date();
 
         let archivedCount = 0;
@@ -57,7 +62,6 @@ const cleanupExpiredEvents = async () => {
                 console.log(`📦 Archiving old event (5+ days passed): ${event.title}`);
                 
                 // 1. Archive associated tickets (Soft Delete / Historicize)
-                // We DO NOT DELETE data, we just mark it as archived.
                 await Ticket.updateMany(
                     { event: event._id },
                     { $set: { status: 'archived' } }
@@ -244,18 +248,22 @@ app.get('/api/events', async (req, res) => {
         let query = {};
 
         if (organization) {
-            // CASE 1: ASSOCIATION DASHBOARD / PROFILE
-            // Associations must see 'active' AND 'archived' events.
-            // We exclude only the manually 'deleted' ones.
-            // This allows them to see the history (up to 5 days or until archived).
+            // CASE 1: ASSOCIATION DASHBOARD
             query.organization = organization;
-            query.status = { $in: ['active', 'archived'] };
+            // Show 'active' OR 'archived' OR 'legacy' (no status). Exclude 'deleted'.
+            query.$or = [
+                { status: { $in: ['active', 'archived'] } },
+                { status: { $exists: false } }
+            ];
         } else {
             // CASE 2: PUBLIC / STUDENTS (Home Page)
-            // Logic: Show ONLY 'active' events.
-            // AND apply strict time filter (10:00 AM rule).
+            // Show 'active' OR 'legacy' (no status).
+            // Apply strict time filter (10:00 AM rule).
             
-            query.status = 'active';
+            query.$or = [
+                { status: 'active' },
+                { status: { $exists: false } }
+            ];
 
             const now = new Date();
             const currentHour = now.getHours();
@@ -267,7 +275,7 @@ app.get('/api/events', async (req, res) => {
                 // Before 10 AM: Show events from Yesterday onwards
                 visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); 
             } 
-            // After 10 AM: Show events from Today onwards (Yesterday is hidden)
+            // After 10 AM: Show events from Today onwards
 
             query.date = { $gte: visibilityCutoff };
         }
@@ -331,7 +339,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
             stripeAccountId: user.stripeAccountId,
             ticketsSold: 0,
             favoritesCount: 0,
-            status: 'active' // Ensure new events are active
+            status: 'active'
         });
 
         await newEvent.populate('organization', 'name _id');
@@ -374,13 +382,10 @@ app.delete('/api/events/:id', authMiddleware, async (req, res) => {
         if (!event) return res.status(404).json({ error: "Not Found" });
         if (event.organization.toString() !== req.user.userId) return res.status(403).json({ error: "Unauthorized" });
 
-        // SOFT DELETE (Legal Compliance)
-        // Manual deletion by user marks as 'deleted'.
-        // This removes it from dashboard and public view.
+        // SOFT DELETE
         event.status = 'deleted';
         await event.save();
         
-        // Also soft delete tickets
         await Ticket.updateMany({ event: req.params.id }, { $set: { status: 'deleted' } });
 
         res.json({ success: true });
@@ -399,6 +404,7 @@ app.get('/api/events/:id/stats', authMiddleware, async (req, res) => {
 
         const tickets = await Ticket.find({ event: eventId });
         
+        // FIX: Calculate favorites count dynamically
         const favoritesRealCount = await User.countDocuments({ favorites: new mongoose.Types.ObjectId(eventId) });
 
         if (event.favoritesCount !== favoritesRealCount) {
@@ -427,17 +433,17 @@ app.get('/api/tickets', authMiddleware, async (req, res) => {
         const { owner } = req.query;
         if (owner && owner !== req.user.userId) return res.status(403).json({ error: "Unauthorized" });
         
-        // 1. Fetch tickets owned by user.
-        // We ensure we only get tickets where the event is not 'deleted'.
-        // 'archived' tickets are fetched but filtered below.
+        // 1. Fetch tickets (exclude deleted)
+        // Allow fallback for legacy tickets without status field
         const tickets = await Ticket.find({ 
-            owner: req.user.userId,
-            status: { $ne: 'deleted' } 
+            owner: req.user.userId, 
+            $or: [
+                { status: { $ne: 'deleted' } },
+                { status: { $exists: false } }
+            ]
         }).populate('event');
         
         // 2. Filter tickets for Student View (10 AM rule)
-        // Tickets should disappear from wallet if the event expired (> 10 AM next day)
-        // OR if the event/ticket status is 'archived' (implicit from time check usually, but safer to enforce).
         const now = new Date();
         const currentHour = now.getHours();
         
@@ -451,12 +457,11 @@ app.get('/api/tickets', authMiddleware, async (req, res) => {
         const visibleTickets = tickets.filter(ticket => {
             if (!ticket.event) return false; 
             
-            // Public/Student should ONLY see 'active' tickets/events.
-            // If an event is archived (5 days old) or manually archived, it shouldn't show in active wallet.
-            if (ticket.event.status !== 'active') return false; 
+            // Allow active OR legacy (undefined) status
+            const evStatus = ticket.event.status;
+            if (evStatus === 'deleted' || evStatus === 'archived') return false; 
 
             const eventDate = new Date(ticket.event.date);
-            // Strict Time Check: Must be today (after 10am) or upcoming
             return eventDate >= visibilityCutoff;
         });
 
@@ -474,8 +479,6 @@ app.post('/api/tickets/validate', authMiddleware, async (req, res) => {
         const ticket = await Ticket.findOne({ qrCodeId }).populate('event');
 
         if (!ticket) return res.status(404).json({ error: "INVALID_TICKET" });
-        
-        // Ensure ticket/event is not deleted (archived is ok to scan if late entry allowed)
         if (ticket.status === 'deleted') return res.status(400).json({ error: "TICKET_INVALID_DELETED" });
 
         const orgId = typeof ticket.event.organization === 'object' ? ticket.event.organization._id.toString() : ticket.event.organization.toString();
