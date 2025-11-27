@@ -31,10 +31,18 @@ const Home: React.FC = () => {
 
   // FILTER LOGIC
   const filteredEvents = events.filter(e => {
-    // 1. Text Search
+    // 1. Text Search (Title, Location, Organization Name)
+    const lowerSearch = searchTerm.toLowerCase();
+    
+    // Safely extract organization name if it's populated
+    const orgName = typeof e.organization === 'object' && e.organization !== null && 'name' in e.organization
+      ? e.organization.name.toLowerCase() 
+      : '';
+
     const matchesSearch = 
-      e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.location.toLowerCase().includes(searchTerm.toLowerCase());
+      e.title.toLowerCase().includes(lowerSearch) ||
+      e.location.toLowerCase().includes(lowerSearch) ||
+      orgName.includes(lowerSearch);
     
     if (!matchesSearch) return false;
 
@@ -113,7 +121,7 @@ const Home: React.FC = () => {
             <div className="relative flex-grow">
                 <input
                   type="text"
-                  placeholder="Search events by name or location..."
+                  placeholder="Search events by name, location or association..."
                   className="w-full pl-6 pr-12 py-4 rounded-l-full text-gray-900 focus:outline-none shadow-lg border-r border-gray-100"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
