@@ -2,14 +2,15 @@ const nodemailer = require('nodemailer');
 
 // Configurazione Gmail Esplicita e Robusta per Render
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // Questo imposta automaticamente host='smtp.gmail.com', port=465, secure=true
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // usa SSL
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
   // Opzioni di rete fondamentali per evitare timeout su Render
   family: 4, // Forza IPv4 (Risolve ETIMEDOUT causato da IPv6)
-  pool: true, // Usa connessioni riutilizzabili per performance migliori
   logger: true,
   debug: true,
   connectionTimeout: 10000 // 10 seconds
@@ -42,6 +43,7 @@ const sendWelcomeEmail = async (to, name) => {
     console.log("📨 Welcome email sent ID:", info.messageId);
   } catch (error) {
     console.error("❌ Welcome email failed:", error);
+    throw error; // Re-throw to handle in caller
   }
 };
 
@@ -67,6 +69,7 @@ const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
     console.log("📨 Tickets email sent ID:", info.messageId);
   } catch (error) {
     console.error("❌ Tickets email failed:", error);
+    throw error;
   }
 };
 

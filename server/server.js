@@ -121,7 +121,13 @@ app.post('/api/auth/register', async (req, res) => {
 
         const token = jwt.sign({ userId: newUser._id, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-        mailer.sendWelcomeEmail(newUser.email, name).catch(err => console.error("Welcome email failed", err));
+        // Send Welcome Email (Await to ensure it sends)
+        try {
+            await mailer.sendWelcomeEmail(newUser.email, name);
+        } catch (mailError) {
+            console.error("Welcome email failed:", mailError);
+            // We don't block registration if email fails, but we log it.
+        }
 
         res.json({ token, user: newUser });
     } catch (e) {

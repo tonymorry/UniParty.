@@ -223,11 +223,11 @@ const StripeController = {
         // 4. Commit Transaction
         await dbSession.commitTransaction();
         
-        // 5. Send Email
+        // 5. Send Email (Await ensures we wait for it)
         try {
              const user = await User.findById(order.userId);
              if (user) {
-                 mailer.sendTicketsEmail(user.email, order.ticketNames, eventDoc.title);
+                 await mailer.sendTicketsEmail(user.email, order.ticketNames, eventDoc.title);
              }
         } catch(emailErr) {
              console.error("Email error:", emailErr);
@@ -286,11 +286,11 @@ const StripeController = {
 
           await dbSession.commitTransaction();
           
-          // Send Email
+          // Send Email (Await here too)
           try {
              const user = await User.findById(order.userId);
              if (user) {
-                 mailer.sendTicketsEmail(user.email, order.ticketNames, eventDoc.title);
+                 await mailer.sendTicketsEmail(user.email, order.ticketNames, eventDoc.title);
              }
           } catch(emailErr) {
               console.error("Email error:", emailErr);
