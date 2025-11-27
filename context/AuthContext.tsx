@@ -66,10 +66,14 @@ export const AuthProvider = ({ children }: PropsWithChildren<{}>) => {
   };
 
   const refreshUser = async () => {
-     // In a real app, this would fetch /api/auth/me
-     // For now we just rely on local state or re-fetching login logic if needed
-     if(user) {
-         // Placeholder for more complex refresh logic if needed
+     if(token) {
+         try {
+             const updatedUser = await api.auth.me();
+             setUser(updatedUser);
+             localStorage.setItem('uniparty_user', JSON.stringify(updatedUser));
+         } catch (e) {
+             console.error("Failed to refresh user", e);
+         }
      }
   };
 

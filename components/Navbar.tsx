@@ -149,6 +149,13 @@ const Navbar: React.FC = () => {
                     <HelpCircle className="h-4 w-4 mr-3" /> Support
                  </Link>
                  <Link 
+                    to="/terms" 
+                    className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-indigo-700 transition text-indigo-100 hover:text-white"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <FileText className="h-4 w-4 mr-3" /> Termini & Condizioni
+                 </Link>
+                 <Link 
                     to="/privacy" 
                     className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-indigo-700 transition text-indigo-100 hover:text-white"
                     onClick={() => setIsOpen(false)}

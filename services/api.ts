@@ -29,7 +29,8 @@ const mockApi = {
     updateUser: async () => ({} as any),
     deleteAccount: async () => {},
     toggleFavorite: async () => [],
-    getFavoriteEvents: async () => []
+    getFavoriteEvents: async () => [],
+    me: async () => ({}) as any
   },
   events: {
     getAll: async () => [],
@@ -118,6 +119,13 @@ const realApi = {
             headers: getHeaders()
         });
         if(!res.ok) throw new Error('Failed to fetch favorites');
+        return res.json();
+    },
+    me: async () => {
+        const res = await fetch(`${API_URL}/auth/me`, {
+            headers: getHeaders()
+        });
+        if(!res.ok) throw new Error('Failed to fetch user');
         return res.json();
     }
   },
