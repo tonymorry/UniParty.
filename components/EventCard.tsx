@@ -27,11 +27,12 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
   const isSoldOut = soldRatio >= 1;
   const isAlmostSoldOut = soldRatio >= 0.6 && !isSoldOut;
   
+  // FIX: Handle potential null organization (e.g. deleted user)
   const organizationId = typeof event.organization === 'string' 
     ? event.organization 
-    : event.organization._id;
+    : event.organization?._id;
 
-  const isOwner = user && user._id === organizationId;
+  const isOwner = user && organizationId && user._id === organizationId;
   const showExactNumbers = isOwner;
 
   const isFavorite = user?.favorites?.includes(event._id) || false;
@@ -87,7 +88,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
         
         <div className="p-5 flex-1 flex flex-col">
           <div className="text-xs font-semibold text-indigo-600 mb-2 uppercase tracking-wide">
-            {typeof event.organization === 'string' ? 'Association' : event.organization.name}
+            {typeof event.organization === 'string' ? 'Association' : (event.organization?.name || 'Association')}
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-700 transition-colors">
             {event.title}
