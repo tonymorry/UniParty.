@@ -5,7 +5,7 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const StripeController = require('./stripe');
-const { User, Event, Ticket } = require('./models');
+const { User, Event, Ticket, Order } = require('./models');
 const { authMiddleware, adminMiddleware } = require('./middleware');
 const mailer = require('./mailer'); // Import Mailer
 const path = require('path');
@@ -209,17 +209,51 @@ app.put('/api/users/:id', authMiddleware, async (req, res) => {
     res.json(updated);
 });
 
-// DELETE ACCOUNT (SOFT DELETE for GDPR/Fiscal Compliance)
+// DELETE ACCOUNT (Smart Delete: Hard if no paid history, Soft if paid history)
 app.delete('/api/users/:id', authMiddleware, async (req, res) => {
     if (req.user.userId !== req.params.id) return res.status(403).json({ error: "Unauthorized" });
     
     try {
-        await User.findByIdAndUpdate(req.params.id, {
-            isDeleted: true,
-            deletedAt: new Date()
+        // 1. Check for Paid Transaction History (Fiscal Requirement)
+        // Check if they bought something paid
+        const hasPaidOrders = await Order.exists({
+            userId: req.params.id,
+            status: 'completed',
+            totalAmountCents: { $gt: 0 }
         });
-        
-        res.json({ success: true, message: "Account deleted (soft)" });
+
+        // Check if they sold something paid (Organization) - To fully comply with Privacy Policy text
+        const hasSoldPaidEvents = await Event.exists({
+            organization: req.params.id,
+            price: { $gt: 0 },
+            ticketsSold: { $gt: 0 }
+        });
+
+        const mustRetainData = hasPaidOrders || hasSoldPaidEvents;
+
+        if (mustRetainData) {
+            // SOFT DELETE (Fiscal Retention)
+            await User.findByIdAndUpdate(req.params.id, {
+                isDeleted: true,
+                deletedAt: new Date(),
+                // We keep record as is, just flagged deleted, as required for fiscal audit (Art. 2220 CC)
+            });
+            console.log(`🔒 Soft Deleted User ${req.params.id} (Fiscal Retention Active)`);
+            return res.json({ success: true, message: "Account disattivato. I dati fiscali verranno conservati per i termini di legge." });
+        } else {
+            // HARD DELETE (GDPR Minimization - Right to be forgotten)
+            // 1. Delete Tickets owned by user
+            await Ticket.deleteMany({ owner: req.params.id });
+
+            // 2. Delete Events created by user (if any - e.g. free events)
+            await Event.deleteMany({ organization: req.params.id });
+
+            // 3. Delete User physically
+            await User.findByIdAndDelete(req.params.id);
+            
+            console.log(`🗑️ Hard Deleted User ${req.params.id} (No financial history - Full GDPR Cleanup)`);
+            return res.json({ success: true, message: "Account e tutti i dati associati cancellati definitivamente." });
+        }
     } catch (e) {
         console.error("Delete Account Error:", e);
         res.status(500).json({ error: e.message });
