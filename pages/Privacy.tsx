@@ -55,7 +55,7 @@ const Privacy: React.FC = () => {
                     <strong>Transazioni a Pagamento:</strong> Se hai acquistato Voucher a pagamento o organizzato eventi con biglietti a pagamento, i dati relativi alle transazioni e all'account verranno conservati in archivio sicuro ("Soft Delete") per <strong>10 anni</strong>, come richiesto dall'art. 2220 del Codice Civile per finalità fiscali.
                 </li>
                 <li>
-                    <strong>Transazioni Gratuite o Nessuna Transazione:</strong> Se hai utilizzato la piattaforma esclusivamente per eventi gratuiti, i tuoi dati verranno <strong>cancellati definitivamente</strong> ("Hard Delete") dai nostri sistemi poco dopo la richiesta di cancellazione o la conclusione dell'evento.
+                    <strong>Transazioni Gratuite o Nessuna Transazione:</strong> Se hai utilizzato la piattaforma esclusivamente per eventi gratuiti, i tuoi dati verranno <strong>cancellati definitivamente</strong> ("Hard Delete") dai nostri sistemi poco dopo la richiesta di cancellazione o la conclusione dell'evento, garantendo il massimo rispetto della tua privacy.
                 </li>
             </ul>
 
