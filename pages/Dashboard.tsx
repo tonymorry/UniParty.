@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { UserRole, EventCategory } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, ShieldCheck, Lock, Info } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -67,9 +67,12 @@ const Dashboard: React.FC = () => {
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Safety check: force price to 0 if stripe not connected
+    const finalPriceStr = user.stripeOnboardingComplete ? price : '0';
+
     // FIX: ABSOLUTE PRECISION PRICE PARSING
     // 1. Normalize separator (comma to dot)
-    const cleanPriceStr = price.toString().replace(',', '.');
+    const cleanPriceStr = finalPriceStr.toString().replace(',', '.');
     const rawPrice = parseFloat(cleanPriceStr);
 
     if (isNaN(rawPrice) || rawPrice < 0) {
@@ -107,31 +110,37 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
        <div className="max-w-4xl mx-auto space-y-8">
            
+           {/* Header */}
            <div className="flex items-center justify-between">
-               <h1 className="text-3xl font-bold text-gray-900">Dashboard Associazione</h1>
-               <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-semibold">
+               <div>
+                   <h1 className="text-3xl font-bold text-gray-900">Dashboard Associazione</h1>
+                   <p className="text-gray-500 text-sm mt-1">Gestisci i tuoi eventi e le tue vendite.</p>
+               </div>
+               <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-semibold flex items-center">
+                   <ShieldCheck className="w-4 h-4 mr-2"/>
                    {user.name}
                </span>
            </div>
 
-           <div className={`bg-white rounded-xl p-6 shadow-sm border-l-4 ${user.stripeOnboardingComplete ? 'border-green-500' : 'border-orange-500'}`}>
-               <div className="flex items-center justify-between">
-                   <div className="flex items-center">
+           {/* 1. SEZIONE STRIPE (Sempre Visibile) */}
+           <div className={`bg-white rounded-xl p-6 shadow-sm border-l-4 ${user.stripeOnboardingComplete ? 'border-green-500' : 'border-blue-500'}`}>
+               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                   <div className="flex items-start md:items-center">
                        {user.stripeOnboardingComplete ? (
-                           <div className="bg-green-100 p-3 rounded-full mr-4">
+                           <div className="bg-green-100 p-3 rounded-full mr-4 shrink-0">
                                <CheckCircle className="w-6 h-6 text-green-600" />
                            </div>
                        ) : (
-                           <div className="bg-orange-100 p-3 rounded-full mr-4">
-                               <AlertTriangle className="w-6 h-6 text-orange-600" />
+                           <div className="bg-blue-100 p-3 rounded-full mr-4 shrink-0">
+                               <DollarSign className="w-6 h-6 text-blue-600" />
                            </div>
                        )}
                        <div>
-                           <h2 className="text-xl font-bold text-gray-900">Stato Pagamenti</h2>
-                           <p className="text-gray-600">
+                           <h2 className="text-xl font-bold text-gray-900">Configurazione Pagamenti</h2>
+                           <p className="text-gray-600 text-sm">
                                {user.stripeOnboardingComplete 
-                                   ? "Il tuo account è connesso e pronto a ricevere pagamenti." 
-                                   : "Connetti il tuo account Stripe per vendere biglietti."}
+                                   ? "Il tuo account Stripe è attivo. Puoi ricevere pagamenti." 
+                                   : "Connetti Stripe per poter vendere Voucher a pagamento."}
                            </p>
                        </div>
                    </div>
@@ -139,7 +148,7 @@ const Dashboard: React.FC = () => {
                        <button 
                            onClick={handleStripeConnect}
                            disabled={isConnecting}
-                           className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-bold transition shadow-md disabled:opacity-50"
+                           className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-bold transition shadow-md disabled:opacity-50 whitespace-nowrap"
                        >
                            {isConnecting ? 'Connessione...' : 'Connetti Stripe'}
                        </button>
@@ -147,8 +156,27 @@ const Dashboard: React.FC = () => {
                </div>
            </div>
 
-           {user.stripeOnboardingComplete ? (
-               <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+           {/* 2. LOGICA VISIBILITÀ FORM */}
+           
+           {/* STATO A: NON VERIFICATO */}
+           {!user.isVerified ? (
+               <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center shadow-sm">
+                   <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                       <ShieldCheck className="w-8 h-8 text-yellow-600" />
+                   </div>
+                   <h2 className="text-xl font-bold text-gray-900 mb-2">Account in attesa di approvazione</h2>
+                   <p className="text-gray-600 max-w-lg mx-auto mb-6">
+                       Grazie per esserti registrato. Il nostro team sta verificando i dati della tua associazione. 
+                       Una volta approvato, potrai iniziare a pubblicare eventi.
+                   </p>
+                   <div className="inline-flex items-center text-sm text-yellow-800 bg-yellow-100 px-4 py-2 rounded-lg">
+                       <Clock className="w-4 h-4 mr-2" />
+                       Tempo stimato: 24-48 ore
+                   </div>
+               </div>
+           ) : (
+               /* STATO B & C: VERIFICATO (Mostra Form) */
+               <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
                    <div className="bg-indigo-900 p-6 text-white">
                        <h2 className="text-xl font-bold flex items-center">
                            <Plus className="w-6 h-6 mr-2" />
@@ -238,20 +266,50 @@ const Dashboard: React.FC = () => {
                        </div>
 
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                           <div>
-                               <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><DollarSign className="w-4 h-4 mr-1"/> Prezzo Biglietto (€)</label>
-                               <input 
-                                   type="number" 
-                                   value={price} 
-                                   onChange={e => setPrice(e.target.value)} 
-                                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                   required
-                                   min="0"
-                                   step="0.01"
-                                   placeholder="0.00"
-                               />
-                               <p className="text-xs text-gray-500 mt-1">Imposta 0 per eventi gratuiti.</p>
+                           
+                           {/* PRICE INPUT (CONDITIONAL) */}
+                           <div className="relative">
+                               <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                   <DollarSign className="w-4 h-4 mr-1"/> Prezzo Biglietto (€)
+                               </label>
+                               
+                               <div className="relative">
+                                    <input 
+                                        type="number" 
+                                        // Force 0 if stripe not ready
+                                        value={user.stripeOnboardingComplete ? price : '0'} 
+                                        onChange={e => {
+                                            if (user.stripeOnboardingComplete) setPrice(e.target.value);
+                                        }} 
+                                        disabled={!user.stripeOnboardingComplete}
+                                        className={`w-full px-4 py-2 border rounded-lg outline-none transition
+                                            ${!user.stripeOnboardingComplete 
+                                                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' 
+                                                : 'border-gray-300 focus:ring-2 focus:ring-indigo-500 bg-white'
+                                            }
+                                        `}
+                                        required
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                    />
+                                    {!user.stripeOnboardingComplete && (
+                                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                            <Lock className="h-4 w-4 text-gray-400" />
+                                        </div>
+                                    )}
+                               </div>
+
+                               {!user.stripeOnboardingComplete ? (
+                                   <p className="text-xs text-orange-600 mt-1 flex items-center">
+                                       <Info className="w-3 h-3 mr-1"/>
+                                       Abilita i pagamenti con Stripe per creare eventi a pagamento.
+                                   </p>
+                               ) : (
+                                   <p className="text-xs text-gray-500 mt-1">Imposta 0 per eventi gratuiti.</p>
+                               )}
                            </div>
+
                            <div>
                                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><Users className="w-4 h-4 mr-1"/> Capacità Massima</label>
                                <input 
@@ -328,11 +386,6 @@ const Dashboard: React.FC = () => {
                        </div>
 
                    </form>
-               </div>
-           ) : (
-               <div className="text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-200">
-                   <AlertTriangle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                   <p className="text-lg font-medium">Completa la configurazione Stripe per creare eventi.</p>
                </div>
            )}
        </div>
