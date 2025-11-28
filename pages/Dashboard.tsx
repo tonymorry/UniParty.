@@ -89,12 +89,12 @@ const Dashboard: React.FC = () => {
     // Safety check: force price to 0 if stripe not connected
     const finalPriceStr = user.stripeOnboardingComplete ? price : '0';
 
-    // FIX: ABSOLUTE PRECISION PRICE PARSING
-    // 1. Normalize separator (comma to dot)
-    const cleanPriceStr = finalPriceStr.toString().replace(',', '.');
-    const rawPrice = parseFloat(cleanPriceStr);
+    // Correzione matematica per evitare 9.99999
+    const rawPrice = parseFloat(finalPriceStr.toString().replace(',', '.'));
+    // Arrotonda al centesimo più vicino in modo assoluto
+    const numericPrice = Math.round((rawPrice + Number.EPSILON) * 100) / 100;
 
-    if (isNaN(rawPrice) || rawPrice < 0) {
+    if (isNaN(numericPrice) || numericPrice < 0) {
         alert("Prezzo non valido.");
         return;
     }
@@ -115,7 +115,7 @@ const Dashboard: React.FC = () => {
             location,
             image,
             maxCapacity: parseInt(maxCapacity),
-            price: rawPrice,
+            price: numericPrice,
             category,
             prLists
         }, user);

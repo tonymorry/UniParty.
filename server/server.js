@@ -439,13 +439,14 @@ app.post('/api/events', authMiddleware, async (req, res) => {
             return res.status(403).json({ error: "Account not verified." });
         }
 
+        if (req.body.price !== undefined) {
+            req.body.price = Math.round((Number(req.body.price) + Number.EPSILON) * 100) / 100;
+        }
+
         let { 
             title, description, longDescription, image, date, time, 
             location, price, maxCapacity, category, prLists 
         } = req.body;
-
-        // SANITIZATION: Strict Fixed Point
-        price = Number(Number(price).toFixed(2));
 
         if (price < 0) return res.status(400).json({ error: "Price cannot be negative" });
         if (maxCapacity <= 0) return res.status(400).json({ error: "Max capacity must be > 0" });
@@ -487,15 +488,14 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
         if (!event) return res.status(404).json({ error: "Not Found" });
         if (event.organization.toString() !== req.user.userId) return res.status(403).json({ error: "Unauthorized" });
 
+        if (req.body.price !== undefined) {
+             req.body.price = Math.round((Number(req.body.price) + Number.EPSILON) * 100) / 100;
+        }
+
         let { 
             title, description, longDescription, image, date, time, 
             location, maxCapacity, category, prLists, price 
         } = req.body;
-
-        if (price !== undefined) {
-             // SANITIZATION: Strict Fixed Point
-             price = Number(Number(price).toFixed(2));
-        }
 
         const updated = await Event.findByIdAndUpdate(req.params.id, {
             title, description, longDescription, image, date, time, 
