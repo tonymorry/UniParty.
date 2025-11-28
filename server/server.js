@@ -154,6 +154,11 @@ app.post('/api/auth/login', async (req, res) => {
 
         if (!user) return res.status(400).json({ error: "Invalid credentials" });
 
+        // COMPLIANCE CHECK: Is Soft Deleted?
+        if (user.isDeleted) {
+            return res.status(403).json({ error: "Account cancellato o sospeso." });
+        }
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
 
@@ -168,6 +173,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.userId);
+    if (!user || user.isDeleted) return res.status(404).json({ error: "User not found" });
     res.json(user);
 });
 
@@ -183,13 +189,19 @@ app.put('/api/users/:id', authMiddleware, async (req, res) => {
     res.json(updated);
 });
 
-// DELETE ACCOUNT
+// DELETE ACCOUNT (SOFT DELETE for GDPR/Fiscal Compliance)
 app.delete('/api/users/:id', authMiddleware, async (req, res) => {
     if (req.user.userId !== req.params.id) return res.status(403).json({ error: "Unauthorized" });
     
     try {
-        await User.findByIdAndDelete(req.params.id);
-        res.json({ success: true, message: "Account deleted" });
+        // We use Soft Delete instead of hard delete to preserve Order History 
+        // for 10 years as required by Italian Fiscal Law.
+        await User.findByIdAndUpdate(req.params.id, {
+            isDeleted: true,
+            deletedAt: new Date()
+        });
+        
+        res.json({ success: true, message: "Account deleted (soft)" });
     } catch (e) {
         console.error("Delete Account Error:", e);
         res.status(500).json({ error: e.message });

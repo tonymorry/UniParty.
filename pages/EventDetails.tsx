@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Event, UserRole } from '../types';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +15,9 @@ const EventDetails: React.FC = () => {
   const [purchasing, setPurchasing] = useState(false);
   const [ticketNames, setTicketNames] = useState<string[]>(['']);
   const [selectedPrList, setSelectedPrList] = useState<string>(""); 
+
+  // Consent State
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Owner Stats
   const [prStats, setPrStats] = useState<{ [key: string]: number } | null>(null);
@@ -96,6 +99,11 @@ const EventDetails: React.FC = () => {
 
     if (event && event.prLists && event.prLists.length > 0 && selectedPrList === "") {
         alert("Seleziona una Lista PR (o 'Nessuna lista').");
+        return;
+    }
+
+    if (!acceptedTerms) {
+        alert("Devi accettare i Termini del Servizio e le condizioni di rimborso per procedere.");
         return;
     }
 
@@ -525,12 +533,32 @@ const EventDetails: React.FC = () => {
                         </div>
                     )}
 
-                    <div className="border-t border-gray-100 pt-4 mb-6">
+                    <div className="border-t border-gray-100 pt-4 mb-4">
                         <div className="flex justify-between items-center text-lg font-bold text-gray-900">
                             <span>Totale</span>
                             <span>€{totalAmount.toFixed(2)}</span>
                         </div>
                     </div>
+
+                    {/* CONSENT CHECKBOX (Purchase Only) */}
+                    {!isSoldOut && user && user.role === UserRole.STUDENTE && (
+                         <div className="flex items-start mb-4">
+                             <div className="flex items-center h-5">
+                                 <input
+                                     id="purchaseTerms"
+                                     type="checkbox"
+                                     checked={acceptedTerms}
+                                     onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                     className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
+                                 />
+                             </div>
+                             <div className="ml-3 text-xs text-gray-600">
+                                 <label htmlFor="purchaseTerms">
+                                     Accetto i <Link to="/terms" className="text-indigo-600 hover:underline">Termini del Servizio</Link> e le condizioni di rimborso.
+                                 </label>
+                             </div>
+                         </div>
+                    )}
 
                     {user?.role === UserRole.ASSOCIAZIONE ? (
                          <div className="bg-yellow-50 text-yellow-700 p-4 rounded-lg flex items-start">
@@ -545,7 +573,7 @@ const EventDetails: React.FC = () => {
                                 }
                                 handlePurchase();
                             }}
-                            disabled={purchasing || isSoldOut || (event.prLists && event.prLists.length > 0 && selectedPrList === "")}
+                            disabled={purchasing || isSoldOut || (event.prLists && event.prLists.length > 0 && selectedPrList === "") || (!isSoldOut && user && !acceptedTerms)}
                             className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center ${
                                 isSoldOut ? 'bg-gray-300 text-gray-500' : ''
                             }`}

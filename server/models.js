@@ -17,6 +17,10 @@ const userSchema = new mongoose.Schema({
   // Verification Status
   isVerified: { type: Boolean, default: false },
 
+  // GDPR & Fiscal Compliance (Soft Delete)
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date },
+
   // Student specific
   surname: String,
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }], // Array of Favorite Events

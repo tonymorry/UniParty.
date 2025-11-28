@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 
@@ -16,6 +16,9 @@ const Auth: React.FC = () => {
   const [description, setDescription] = useState('');
   const [role, setRole] = useState<UserRole>(UserRole.STUDENTE);
   const [error, setError] = useState('');
+
+  // Consent State
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Validation Helpers
   const isValidEmail = (email: string) => {
@@ -57,6 +60,12 @@ const Auth: React.FC = () => {
             setError("Password must be at least 6 characters long and contain at least: 1 uppercase letter, 1 number, and 1 special character.");
             return;
         }
+
+        // 4. Terms Acceptance Check
+        if (!acceptedTerms) {
+            setError("Devi accettare i Termini e Condizioni e la Privacy Policy per registrarti.");
+            return;
+        }
     }
 
     try {
@@ -75,6 +84,12 @@ const Auth: React.FC = () => {
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
     }
+  };
+
+  const toggleMode = () => {
+      setIsLogin(!isLogin);
+      setError('');
+      setAcceptedTerms(false);
   };
 
   return (
@@ -181,9 +196,31 @@ const Auth: React.FC = () => {
                 )}
               </div>
 
+              {/* GDPR CONSENT CHECKBOX (Register Only) */}
+              {!isLogin && (
+                  <div className="flex items-start mt-4">
+                      <div className="flex items-center h-5">
+                          <input
+                              id="terms"
+                              name="terms"
+                              type="checkbox"
+                              checked={acceptedTerms}
+                              onChange={(e) => setAcceptedTerms(e.target.checked)}
+                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
+                              required
+                          />
+                      </div>
+                      <div className="ml-3 text-sm">
+                          <label htmlFor="terms" className="font-medium text-gray-700">
+                              Ho letto e accetto i <Link to="/terms" className="text-indigo-600 hover:underline">Termini e Condizioni</Link> e la <Link to="/privacy" className="text-indigo-600 hover:underline">Privacy Policy</Link>.
+                          </label>
+                      </div>
+                  </div>
+              )}
+
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || (!isLogin && !acceptedTerms)}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed mt-6"
               >
                 {isLoading ? 'Processing...' : (isLogin ? 'Login' : 'Sign Up')}
@@ -194,10 +231,7 @@ const Auth: React.FC = () => {
             <p className="text-sm text-gray-600">
                 {isLogin ? "Don't have an account? " : "Already have an account? "}
                 <button 
-                    onClick={() => {
-                        setIsLogin(!isLogin);
-                        setError('');
-                    }}
+                    onClick={toggleMode}
                     className="text-indigo-600 font-semibold hover:underline"
                 >
                     {isLogin ? 'Register' : 'Login'}
