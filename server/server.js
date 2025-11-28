@@ -499,7 +499,11 @@ app.get('/api/events/:id/stats', authMiddleware, async (req, res) => {
         const event = await Event.findById(eventId);
         
         if (!event) return res.status(404).json({ error: "Event not found" });
-        if (event.organization.toString() !== req.user.userId) return res.status(403).json({ error: "Unauthorized" });
+        
+        // CHECK: Allow if Owner OR Admin
+        if (event.organization.toString() !== req.user.userId && req.user.role !== 'admin') {
+            return res.status(403).json({ error: "Unauthorized" });
+        }
 
         const tickets = await Ticket.find({ event: eventId });
         
