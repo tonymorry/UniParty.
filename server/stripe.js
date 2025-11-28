@@ -8,7 +8,8 @@ const mailer = require('./mailer'); // Import Mailer
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
-const APPLICATION_FEE_CENTS = 40; // €0.40 fee kept by platform
+// FIX: CONSTANT FEE IN CENTS (INTEGER)
+const APPLICATION_FEE_CENTS = 40; 
 
 // Helper to process a successful order (Shared logic)
 const processSuccessfulOrder = async (order, session, dbSession) => {
@@ -115,17 +116,21 @@ const StripeController = {
           return res.status(400).json({ error: "Not enough tickets available" });
       }
 
-      // 2. Price calculation
-      const unitPriceCents = Math.round(event.price * 100);
+      // 2. PRICE CALCULATION (STRICT INTEGER MATH)
+      // Convert stored price (Euro float) to Cents (Integer) using round to fix floating point errors
+      const unitPriceCents = Math.round(Number(event.price) * 100); 
+      
+      // Fixed Fee
       const feeCents = APPLICATION_FEE_CENTS;
+      
+      // Total User Pays per ticket
       const totalPerTicketCents = unitPriceCents + feeCents;
 
       // 3. Create Pending Order in DB
-      // This solves the Stripe Metadata character limit issue.
       const newOrder = await Order.create({
           userId,
           eventId,
-          ticketNames, // Can hold unlimited names array
+          ticketNames, 
           prList: prList || "Nessuna lista",
           quantity,
           totalAmountCents: totalPerTicketCents * quantity,
@@ -142,20 +147,21 @@ const StripeController = {
               currency: 'eur',
               product_data: {
                 name: `Ticket: ${event.title}`,
-                description: `${event.date.toISOString().split('T')[0]} @ ${event.location}`,
+                description: `${new Date(event.date).toISOString().split('T')[0]} @ ${event.location}`,
               },
-              unit_amount: totalPerTicketCents, 
+              // CRITICAL: Ensure this is an integer
+              unit_amount: Math.round(totalPerTicketCents), 
             },
             quantity: quantity,
           },
         ],
         payment_intent_data: {
-          application_fee_amount: feeCents * quantity,
+          // Platform fee is exactly 40 cents * quantity
+          application_fee_amount: Math.round(feeCents * quantity),
         },
         success_url: `${FRONTEND_URL}/#/payment-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${FRONTEND_URL}/#/events/${eventId}`,
         
-        // Pass ONLY the orderId in metadata
         metadata: {
             orderId: newOrder._id.toString()
         },
@@ -176,7 +182,6 @@ const StripeController = {
 
   /**
    * 3. VERIFY PAYMENT (Called by Frontend Success Page)
-   * Forces ticket generation if webhook hasn't run yet.
    */
   verifyPayment: async (req, res) => {
     const { sessionId } = req.body;
@@ -188,7 +193,6 @@ const StripeController = {
     dbSession.startTransaction();
 
     try {
-        // 1. Find order by session ID
         const order = await Order.findOne({ stripeSessionId: sessionId }).session(dbSession);
         
         if (!order) {
@@ -196,13 +200,11 @@ const StripeController = {
             return res.status(404).json({ error: "Order not found" });
         }
 
-        // If already completed, just return success
         if (order.status === 'completed') {
             await dbSession.abortTransaction();
             return res.json({ success: true, message: "Already processed" });
         }
 
-        // 2. Retrieve Session from Stripe to confirm payment
         const event = await Event.findById(order.eventId).populate('organization');
         const stripeAccountId = event.organization.stripeAccountId;
 
@@ -216,14 +218,9 @@ const StripeController = {
         }
 
         console.log(`💰 Verifying Order ${order._id} (Force Process)...`);
-
-        // 3. Process Order (Shared Logic)
         const { eventDoc } = await processSuccessfulOrder(order, session, dbSession);
-
-        // 4. Commit Transaction
         await dbSession.commitTransaction();
         
-        // 5. Send Email (Await ensures we wait for it)
         try {
              const user = await User.findById(order.userId);
              if (user) {
@@ -281,12 +278,9 @@ const StripeController = {
           }
 
           console.log(`💰 Webhook Processing Order ${orderId}...`);
-
           const { eventDoc } = await processSuccessfulOrder(order, session, dbSession);
-
           await dbSession.commitTransaction();
           
-          // Send Email (Await here too)
           try {
              const user = await User.findById(order.userId);
              if (user) {

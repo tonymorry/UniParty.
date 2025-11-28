@@ -66,13 +66,12 @@ const Dashboard: React.FC = () => {
     e.preventDefault();
     
     // FIX: ABSOLUTE PRECISION PRICE PARSING
-    // 1. Normalize separator
+    // 1. Normalize separator (comma to dot)
     const cleanPriceStr = price.toString().replace(',', '.');
     const rawPrice = parseFloat(cleanPriceStr);
     
-    // 2. FORCE TO FIXED 2 DECIMALS STRING, THEN NUMBER
-    // This avoids Math.round(floatingPoint) errors completely.
-    // e.g., 10 -> "10.00" -> 10
+    // 2. FORCE TO FIXED 2 DECIMALS to avoid floating point weirdness
+    // Example: "10.5" -> 10.50. "10,999" -> 11.00.
     const numericPrice = Number(rawPrice.toFixed(2));
     
     let numericCapacity = parseInt(maxCapacity);
@@ -115,13 +114,16 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Handler to clean up display on blur
+  // Handler to clean up display on blur (e.g. 10 -> 10.00)
   const handlePriceBlur = () => {
-      const val = parseFloat(price.replace(',', '.'));
+      const cleanPriceStr = price.replace(',', '.');
+      const val = parseFloat(cleanPriceStr);
       if (!isNaN(val)) {
           setPrice(val.toFixed(2)); // Shows "10.00" to user
       }
   };
+
+  const currentPriceValue = parseFloat(price.replace(',', '.'));
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -231,22 +233,23 @@ const Dashboard: React.FC = () => {
                                 <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                                 <input 
                                     type="number" step="0.01" min="0"
-                                    className={`w-full pl-9 pr-4 py-2 border rounded-lg focus:ring-2 outline-none bg-white text-gray-900 ${!user.stripeOnboardingComplete && parseFloat(price.replace(',','.')) > 0 ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-indigo-500'}`}
+                                    className={`w-full pl-9 pr-4 py-2 border rounded-lg focus:ring-2 outline-none bg-white text-gray-900 ${!user.stripeOnboardingComplete && currentPriceValue > 0 ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-indigo-500'}`}
                                     value={price} 
                                     onChange={e => {
                                         setPrice(e.target.value);
-                                        if(parseFloat(e.target.value.replace(',','.')) > 0) setIsUnlimited(false); 
+                                        const val = parseFloat(e.target.value.replace(',','.'));
+                                        if(val > 0) setIsUnlimited(false); 
                                     }} 
                                     onBlur={handlePriceBlur}
                                     required
                                 />
                              </div>
-                             {!user.stripeOnboardingComplete && parseFloat(price.replace(',','.')) > 0 && (
+                             {!user.stripeOnboardingComplete && currentPriceValue > 0 && (
                                 <p className="text-xs text-red-500 mt-1 font-medium">
                                     Stripe connection required for paid events. Set price to 0 for free events.
                                 </p>
                              )}
-                             {parseFloat(price.replace(',','.')) > 0 && (
+                             {currentPriceValue > 0 && (
                                 <p className="text-xs text-gray-500 mt-1">Students will pay Price + €0.40 fee.</p>
                              )}
                         </div>
@@ -263,7 +266,7 @@ const Dashboard: React.FC = () => {
                                     disabled={isUnlimited}
                                 />
                              </div>
-                             {parseFloat(price.replace(',','.')) === 0 && (
+                             {currentPriceValue === 0 && (
                                  <div className="mt-2 flex items-center">
                                      <input 
                                         type="checkbox" 
@@ -341,7 +344,7 @@ const Dashboard: React.FC = () => {
                      <div className="pt-4">
                         <button 
                             type="submit"
-                            disabled={creatingEvent || (!user.stripeOnboardingComplete && parseFloat(price.replace(',','.')) > 0)}
+                            disabled={creatingEvent || (!user.stripeOnboardingComplete && currentPriceValue > 0)}
                             className="w-full bg-indigo-900 hover:bg-indigo-800 text-white font-bold py-3 rounded-lg transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {creatingEvent ? 'Publishing...' : (

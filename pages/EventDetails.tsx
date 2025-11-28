@@ -182,12 +182,20 @@ const EventDetails: React.FC = () => {
 
   const isFree = event.price === 0;
   
-  // FIX: Use Integer Math (Cents) to guarantee precision
+  // FIX: USE STRICT INTEGER MATH (Cents)
+  // Convert Euro price to Cents. Math.round() prevents floating point errors like 10.3999999
   const priceInCents = Math.round(Number(event.price) * 100);
-  const feeInCents = isFree ? 0 : 40; // 40 cents fee
+  
+  // Fee is strictly 40 cents
+  const feeInCents = isFree ? 0 : 40; 
+  
+  // Total Cents per ticket
   const totalPerTicketCents = priceInCents + feeInCents;
   
+  // Convert back to Euros for display
   const totalPricePerTicket = totalPerTicketCents / 100;
+  
+  // Total Amount for the whole order (in Euros)
   const totalAmount = (totalPerTicketCents * quantity) / 100;
 
   const remainingTickets = event.maxCapacity - event.ticketsSold;

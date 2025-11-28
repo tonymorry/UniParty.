@@ -17,10 +17,18 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
     month: 'short',
   });
 
-  // FIX: Strict Cents Calculation
-  // 15.00 -> 1500 cents. + 40 cents = 1540 cents. / 100 = 15.40
+  // FIX: Strict Integer Math for Price Display
+  // Base Price (Euros) -> Cents
   const priceInCents = Math.round(Number(event.price) * 100);
-  const finalPrice = (priceInCents + 40) / 100;
+  
+  // Fee is always 40 cents if price > 0
+  const feeInCents = priceInCents > 0 ? 40 : 0;
+  
+  // Total in cents
+  const totalInCents = priceInCents + feeInCents;
+  
+  // Convert back to Euros for display
+  const finalPrice = totalInCents / 100;
 
   // Logic for ticket display
   const soldRatio = event.ticketsSold / event.maxCapacity;
