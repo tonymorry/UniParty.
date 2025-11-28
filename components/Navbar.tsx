@@ -114,6 +114,17 @@ const Navbar: React.FC = () => {
                </>
              )}
 
+             {/* Admin Link */}
+             {user && user.role === UserRole.ADMIN && (
+                 <Link 
+                    to="/admin" 
+                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-indigo-600 bg-indigo-950 mt-1 transition shadow-inner border border-indigo-500"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <Shield className="h-5 w-5 mr-3 text-red-400" /> Admin Dashboard
+                 </Link>
+             )}
+
              {/* User Profile Section */}
              {user && (
                <div className="border-t border-indigo-600 mt-2 pt-2 pb-1">

@@ -7,6 +7,7 @@ import Auth from './pages/Auth';
 import EventDetails from './pages/EventDetails';
 import Wallet from './pages/Wallet';
 import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import PaymentSuccess from './pages/PaymentSuccess';
 import Profile from './pages/Profile';
 import Scanner from './pages/Scanner';
@@ -31,6 +32,7 @@ function App() {
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/scanner" element={<Scanner />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/support" element={<Support />} />

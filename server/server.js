@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const StripeController = require('./stripe');
 const { User, Event, Ticket } = require('./models');
-const authMiddleware = require('./middleware');
+const { authMiddleware, adminMiddleware } = require('./middleware');
 const mailer = require('./mailer'); // Import Mailer
 const path = require('path');
 
@@ -35,39 +35,58 @@ function escapeRegex(text) {
 }
 
 // ==========================================
-// AUTOMATIC CLEANUP (ARCHIVING - LEGAL/FISCAL)
+// AUTOMATIC CLEANUP (SMART DELETION - GDPR/FISCAL)
 // ==========================================
 const cleanupExpiredEvents = async () => {
     try {
-        console.log("🧹 Running scheduled cleanup (Archiving Logic)...");
-        // Check ACTIVE events OR Legacy events (no status).
+        console.log("🧹 Running Smart Deletion Cleanup...");
+        
+        // Calculate the cutoff date: 5 days ago
+        const fiveDaysAgo = new Date();
+        fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+        fiveDaysAgo.setHours(0, 0, 0, 0); // Normalize time
+
+        // Find events older than 5 days that are currently 'active' (or legacy with no status)
+        // We ignore already 'archived' or 'deleted' events to avoid redundant processing
         const events = await Event.find({
+            date: { $lt: fiveDaysAgo },
             $or: [
                 { status: 'active' },
                 { status: { $exists: false } }
             ]
         });
-        const now = new Date();
 
+        let hardDeletedCount = 0;
         let archivedCount = 0;
 
         for (const event of events) {
-            // Rule: Keep events active in dashboard for 5 days after execution
-            const eventDate = new Date(event.date);
-            const expirationDate = new Date(eventDate);
-            expirationDate.setDate(expirationDate.getDate() + 5); // Add 5 days
-            expirationDate.setHours(10, 0, 0, 0); // At 10:00 AM
-
-            if (now > expirationDate) {
-                console.log(`📦 Archiving old event (5+ days passed): ${event.title}`);
+            // STRATEGY 1: FREE EVENTS (price === 0) -> HARD DELETE
+            // Reason: No transaction occurred, so no fiscal requirement to keep data.
+            // Action: Remove completely to minimize GDPR data footprint.
+            if (event.price === 0) {
+                console.log(`🗑️ Hard Deleting Free Event (GDPR Minimize): ${event.title}`);
                 
-                // 1. Archive associated tickets (Soft Delete / Historicize)
+                // 1. Delete all associated tickets physically
+                await Ticket.deleteMany({ event: event._id });
+                
+                // 2. Delete the event physically
+                await Event.findByIdAndDelete(event._id);
+                
+                hardDeletedCount++;
+            } 
+            // STRATEGY 2: PAID EVENTS (price > 0) -> SOFT DELETE (ARCHIVE)
+            // Reason: Fiscal laws (Italy) and Stripe rules require keeping transaction records for 10 years.
+            // Action: Set status to 'archived'. Data remains in DB but hidden from public API.
+            else {
+                console.log(`📦 Archiving Paid Event (Fiscal Retention): ${event.title}`);
+                
+                // 1. Archive tickets (Soft Delete)
                 await Ticket.updateMany(
                     { event: event._id },
                     { $set: { status: 'archived' } }
                 );
                 
-                // 2. Archive the event itself
+                // 2. Archive event (Soft Delete)
                 event.status = 'archived';
                 await event.save();
                 
@@ -75,11 +94,11 @@ const cleanupExpiredEvents = async () => {
             }
         }
         
-        if (archivedCount > 0) {
-            console.log(`✅ Cleanup complete. Archived ${archivedCount} old events.`);
+        if (hardDeletedCount > 0 || archivedCount > 0) {
+            console.log(`✅ Smart Cleanup Complete: ${hardDeletedCount} Hard Deleted (Free), ${archivedCount} Archived (Paid).`);
         }
     } catch (error) {
-        console.error("❌ Auto-archiving error:", error);
+        console.error("❌ Auto-cleanup error:", error);
     }
 };
 
@@ -155,6 +174,7 @@ app.post('/api/auth/login', async (req, res) => {
         if (!user) return res.status(400).json({ error: "Invalid credentials" });
 
         // COMPLIANCE CHECK: Is Soft Deleted?
+        // Admin can still login if deleted? Probably not, keeping strict check.
         if (user.isDeleted) {
             return res.status(403).json({ error: "Account cancellato o sospeso." });
         }
@@ -194,8 +214,6 @@ app.delete('/api/users/:id', authMiddleware, async (req, res) => {
     if (req.user.userId !== req.params.id) return res.status(403).json({ error: "Unauthorized" });
     
     try {
-        // We use Soft Delete instead of hard delete to preserve Order History 
-        // for 10 years as required by Italian Fiscal Law.
         await User.findByIdAndUpdate(req.params.id, {
             isDeleted: true,
             deletedAt: new Date()
@@ -251,6 +269,74 @@ app.get('/api/users/:id/refresh-stripe', authMiddleware, async (req, res) => {
     await user.save();
     res.json(user);
 });
+
+
+// ==========================================
+// ADMIN ROUTES
+// ==========================================
+
+// Get All Users (Admin)
+app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const users = await User.find({}).sort({ createdAt: -1 });
+        res.json(users);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Get All Events (Admin)
+app.get('/api/admin/events', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        // Find all events regardless of status
+        const events = await Event.find({}).populate('organization', 'name email').sort({ date: -1 });
+        res.json(events);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Get User Tickets (Admin)
+app.get('/api/admin/users/:id/tickets', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const tickets = await Ticket.find({ owner: req.params.id })
+            .populate({ path: 'event', select: 'title date' })
+            .sort({ purchaseDate: -1 });
+        res.json(tickets);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Verify User (Admin - useful for Associations)
+app.put('/api/admin/users/:id/verify', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ error: "User not found" });
+        
+        user.isVerified = !user.isVerified; // Toggle
+        await user.save();
+        res.json(user);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Restore User (Admin - Reverse Soft Delete)
+app.put('/api/admin/users/:id/restore', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const user = await User.findByIdAndUpdate(req.params.id, {
+            isDeleted: false,
+            deletedAt: null
+        }, { new: true });
+        
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.json(user);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 
 // --- EVENTS ---
 

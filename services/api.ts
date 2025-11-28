@@ -53,6 +53,13 @@ const mockApi = {
     createCheckoutSession: async () => "",
     mockWebhookSuccess: async () => {},
     verifyPayment: async (sessionId: string) => { console.log("Mock verify", sessionId); }
+  },
+  admin: {
+      getAllUsers: async () => [],
+      getAllEvents: async () => [],
+      getUserTickets: async () => [],
+      verifyUser: async () => {},
+      restoreUser: async () => {}
   }
 };
 
@@ -229,6 +236,28 @@ const realApi = {
         if(!res.ok) throw new Error("Verification failed");
         return res.json();
     }
+  },
+  admin: {
+      getAllUsers: async () => {
+          const res = await fetch(`${API_URL}/admin/users`, { headers: getHeaders() });
+          return res.json();
+      },
+      getAllEvents: async () => {
+          const res = await fetch(`${API_URL}/admin/events`, { headers: getHeaders() });
+          return res.json();
+      },
+      getUserTickets: async (userId: string) => {
+          const res = await fetch(`${API_URL}/admin/users/${userId}/tickets`, { headers: getHeaders() });
+          return res.json();
+      },
+      verifyUser: async (userId: string) => {
+          const res = await fetch(`${API_URL}/admin/users/${userId}/verify`, { method: 'PUT', headers: getHeaders() });
+          return res.json();
+      },
+      restoreUser: async (userId: string) => {
+          const res = await fetch(`${API_URL}/admin/users/${userId}/restore`, { method: 'PUT', headers: getHeaders() });
+          return res.json();
+      }
   }
 };
 

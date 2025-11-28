@@ -1,6 +1,7 @@
 export enum UserRole {
   STUDENTE = 'studente',
   ASSOCIAZIONE = 'associazione',
+  ADMIN = 'admin',
 }
 
 export enum EventCategory {
@@ -24,6 +25,8 @@ export interface User {
   stripeOnboardingComplete?: boolean; // Only for associations
   favorites?: string[]; // Array of Event IDs
   isVerified?: boolean;
+  isDeleted?: boolean; // For Admin view
+  createdAt?: string;
 }
 
 export interface Event {
@@ -43,6 +46,7 @@ export interface Event {
   prLists?: string[]; // Array of PR list names
   category: EventCategory; 
   favoritesCount?: number;
+  status?: 'active' | 'archived' | 'deleted';
 }
 
 export interface Ticket {
