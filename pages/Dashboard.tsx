@@ -92,10 +92,12 @@ const Dashboard: React.FC = () => {
     // Safety check: force price to 0 if stripe not connected
     const finalPriceStr = user.stripeOnboardingComplete ? price : '0';
 
-    // Correzione matematica per evitare 9.99999
-    const rawPrice = parseFloat(finalPriceStr.toString().replace(',', '.'));
-    // Arrotonda al centesimo più vicino in modo assoluto
-    const numericPrice = Math.round((rawPrice + Number.EPSILON) * 100) / 100;
+    // 1. Normalizza la virgola
+    const cleanPriceStr = finalPriceStr.toString().replace(',', '.');
+    // 2. Converte in numero
+    const tempPrice = parseFloat(cleanPriceStr);
+    // 3. Arrotondamento robusto (Risolve il bug 9.99999)
+    const numericPrice = Math.round((tempPrice + Number.EPSILON) * 100) / 100;
 
     if (isNaN(numericPrice) || numericPrice < 0) {
         alert("Prezzo non valido.");

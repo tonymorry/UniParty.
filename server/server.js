@@ -440,6 +440,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         }
 
         if (req.body.price !== undefined) {
+            // Forza l'arrotondamento corretto anche lato server per sicurezza
             req.body.price = Math.round((Number(req.body.price) + Number.EPSILON) * 100) / 100;
         }
 
@@ -489,6 +490,7 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
         if (event.organization.toString() !== req.user.userId) return res.status(403).json({ error: "Unauthorized" });
 
         if (req.body.price !== undefined) {
+             // Forza l'arrotondamento corretto anche lato server per sicurezza
              req.body.price = Math.round((Number(req.body.price) + Number.EPSILON) * 100) / 100;
         }
 
