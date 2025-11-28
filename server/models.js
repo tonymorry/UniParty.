@@ -57,9 +57,10 @@ const eventSchema = new mongoose.Schema({
 
   // Status for soft delete/archiving (Legal/Fiscal compliance)
   // 'active': Visible to public (subject to time rules)
+  // 'draft': Visible only to organization, not published
   // 'archived': Hidden from public, visible to association (History)
   // 'deleted': Deleted by user (Soft delete)
-  status: { type: String, enum: ['active', 'archived', 'deleted'], default: 'active' }
+  status: { type: String, enum: ['active', 'draft', 'archived', 'deleted'], default: 'active' }
 }, { timestamps: true });
 
 // --- TICKET SCHEMA ---

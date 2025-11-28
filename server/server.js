@@ -48,6 +48,7 @@ const cleanupExpiredEvents = async () => {
 
         // Find events older than 5 days that are currently 'active' (or legacy with no status)
         // We ignore already 'archived' or 'deleted' events to avoid redundant processing
+        // Drafts are also ignored, they are managed manually by the user
         const events = await Event.find({
             date: { $lt: fiveDaysAgo },
             $or: [
@@ -382,16 +383,15 @@ app.get('/api/events', async (req, res) => {
         if (organization) {
             // CASE 1: ASSOCIATION DASHBOARD
             query.organization = organization;
-            // Show 'active' OR 'archived' OR 'legacy' (no status). Exclude 'deleted'.
+            // Show 'active', 'archived' OR 'draft' (Association must see drafts)
+            // Also support legacy documents with no status
             query.$or = [
-                { status: { $in: ['active', 'archived'] } },
+                { status: { $in: ['active', 'archived', 'draft'] } },
                 { status: { $exists: false } }
             ];
         } else {
             // CASE 2: PUBLIC / STUDENTS (Home Page)
-            // Show 'active' OR 'legacy' (no status).
-            // Apply strict time filter (10:00 AM rule).
-            
+            // Show only 'active' or legacy. Hide 'draft' and 'archived' and 'deleted'.
             query.$or = [
                 { status: 'active' },
                 { status: { $exists: false } }
@@ -445,7 +445,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
 
         let { 
             title, description, longDescription, image, date, time, 
-            location, price, maxCapacity, category, prLists 
+            location, price, maxCapacity, category, prLists, status 
         } = req.body;
 
         if (price < 0) return res.status(400).json({ error: "Price cannot be negative" });
@@ -472,7 +472,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
             stripeAccountId: user.stripeAccountId,
             ticketsSold: 0,
             favoritesCount: 0,
-            status: 'active'
+            status: status || 'active' // Default to active if not specified (legacy behavior)
         });
 
         await newEvent.populate('organization', 'name _id');
@@ -494,13 +494,14 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
 
         let { 
             title, description, longDescription, image, date, time, 
-            location, maxCapacity, category, prLists, price 
+            location, maxCapacity, category, prLists, price, status 
         } = req.body;
 
         const updated = await Event.findByIdAndUpdate(req.params.id, {
             title, description, longDescription, image, date, time, 
             location, maxCapacity, category, prLists,
-            ...(price !== undefined && { price })
+            ...(price !== undefined && { price }),
+            ...(status !== undefined && { status })
         }, { new: true }).populate('organization', 'name _id');
 
         res.json(updated);
@@ -596,6 +597,8 @@ app.get('/api/tickets', authMiddleware, async (req, res) => {
             // Check event status
             const evStatus = ticket.event.status;
             if (evStatus === 'deleted' || evStatus === 'archived') return false; 
+            // Also hide draft tickets if any somehow exist (shouldn't happen but safe to add)
+            if (evStatus === 'draft') return false;
 
             const eventDate = new Date(ticket.event.date);
             return eventDate >= visibilityCutoff;

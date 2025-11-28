@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { UserRole, EventCategory } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, ShieldCheck, Lock, Info, Upload } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, ShieldCheck, Lock, Info, Upload, FileText } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -26,6 +26,9 @@ const Dashboard: React.FC = () => {
   const [currentPrInput, setCurrentPrInput] = useState('');
 
   const [creatingEvent, setCreatingEvent] = useState(false);
+  
+  // Used to determine which button was clicked
+  const [targetStatus, setTargetStatus] = useState<'active' | 'draft'>('active');
 
   if (!user || user.role !== UserRole.ASSOCIAZIONE) {
     return <div className="p-8">Access Denied</div>;
@@ -106,7 +109,7 @@ const Dashboard: React.FC = () => {
 
     setCreatingEvent(true);
     try {
-        await api.events.create({
+        const newEvent = await api.events.create({
             title,
             description,
             longDescription: description,
@@ -117,11 +120,17 @@ const Dashboard: React.FC = () => {
             maxCapacity: parseInt(maxCapacity),
             price: numericPrice,
             category,
-            prLists
+            prLists,
+            status: targetStatus // 'active' or 'draft'
         }, user);
 
-        alert("Evento creato con successo!");
-        navigate('/');
+        if (targetStatus === 'draft') {
+            alert("Bozza salvata con successo!");
+            navigate(`/events/${newEvent._id}`); // Redirect to details to see draft
+        } else {
+            alert("Evento pubblicato con successo!");
+            navigate('/');
+        }
     } catch (e: any) {
         console.error(e);
         alert("Errore creazione evento: " + (e.message || "Unknown"));
@@ -394,16 +403,31 @@ const Dashboard: React.FC = () => {
                            ></textarea>
                        </div>
 
-                       <div className="pt-4">
+                       <div className="pt-4 flex gap-4">
                            <button 
                                type="submit" 
+                               onClick={() => setTargetStatus('draft')}
                                disabled={creatingEvent}
-                               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-99 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+                               className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 rounded-xl shadow-md transition transform active:scale-99 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center border border-gray-300"
                            >
-                               {creatingEvent ? (
+                               {creatingEvent && targetStatus === 'draft' ? 'Salvataggio...' : (
+                                   <>
+                                     <FileText className="w-5 h-5 mr-2" />
+                                     Salva come Bozza
+                                   </>
+                               )}
+                           </button>
+
+                           <button 
+                               type="submit" 
+                               onClick={() => setTargetStatus('active')}
+                               disabled={creatingEvent}
+                               className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-99 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+                           >
+                               {creatingEvent && targetStatus === 'active' ? (
                                    <span className="flex items-center">
                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                       Pubblicazione in corso...
+                                       Pubblicazione...
                                    </span>
                                ) : (
                                    "Pubblica Evento"

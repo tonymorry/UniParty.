@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Event, UserRole } from '../types';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Calendar, Clock, Info, CreditCard, Minus, Plus, AlertCircle, User as UserIcon, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, Flame, Heart } from 'lucide-react';
+import { MapPin, Calendar, Clock, Info, CreditCard, Minus, Plus, AlertCircle, User as UserIcon, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, Flame, Heart, FileText, CheckCircle } from 'lucide-react';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +30,9 @@ const EventDetails: React.FC = () => {
   
   // Delete State
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Publishing State
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const isOwner = user && event && (
       (typeof event.organization === 'string' && event.organization === user._id) ||
@@ -178,6 +181,23 @@ const EventDetails: React.FC = () => {
           alert("Failed to update event: " + e.message);
       } finally {
           setSaving(false);
+      }
+  };
+  
+  const handlePublish = async () => {
+      if (!event) return;
+      if (!window.confirm("Sei sicuro di voler pubblicare questo evento? Sarà visibile a tutti.")) return;
+      
+      setIsPublishing(true);
+      try {
+          const updatedEvent = await api.events.update(event._id, { status: 'active' });
+          setEvent(updatedEvent);
+          alert("Evento pubblicato con successo!");
+      } catch (e: any) {
+          console.error(e);
+          alert("Errore pubblicazione evento: " + e.message);
+      } finally {
+          setIsPublishing(false);
       }
   };
 
@@ -347,6 +367,14 @@ const EventDetails: React.FC = () => {
           </div>
       )}
 
+      {/* DRAFT BANNER (Owner Only) */}
+      {isOwner && event.status === 'draft' && (
+          <div className="bg-yellow-100 text-yellow-800 text-center py-3 font-bold sticky top-16 z-30 flex justify-center items-center shadow-md">
+              <FileText className="w-5 h-5 mr-2" />
+              Questo evento è una BOZZA e non è visibile al pubblico.
+          </div>
+      )}
+
       <div className="h-[40vh] relative w-full">
         <img 
             src={event.image} 
@@ -357,7 +385,22 @@ const EventDetails: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent"></div>
         
         {isOwner && (
-            <div className="absolute top-24 right-4 sm:right-8 flex space-x-2 z-20">
+            <div className="absolute top-24 right-4 sm:right-8 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 z-20">
+                {event.status === 'draft' && (
+                     <button
+                        type="button"
+                        onClick={handlePublish}
+                        disabled={isPublishing}
+                        className="bg-green-600/90 backdrop-blur hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition cursor-pointer"
+                     >
+                        {isPublishing ? (
+                             <>Pubblicazione...</>
+                        ) : (
+                             <><CheckCircle className="w-4 h-4 mr-2" /> PUBBLICA ORA</>
+                        )}
+                     </button>
+                )}
+                
                 <button 
                     type="button"
                     onClick={() => setIsEditing(true)}
@@ -438,6 +481,13 @@ const EventDetails: React.FC = () => {
                             Sold Out
                          </div>
                     )}
+                    
+                    {event.status === 'draft' && (
+                        <div className="bg-yellow-50 text-yellow-800 p-4 rounded-lg flex items-center mb-6 text-sm">
+                            <Info className="w-4 h-4 mr-2 flex-shrink-0" />
+                            Prenotazioni disabilitate in modalità bozza.
+                        </div>
+                    )}
 
                     <div className="flex items-center justify-between mb-6 bg-gray-50 p-4 rounded-lg">
                         <div>
@@ -465,7 +515,7 @@ const EventDetails: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className={`flex items-center justify-between mb-6 ${isSoldOut ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <div className={`flex items-center justify-between mb-6 ${isSoldOut || event.status === 'draft' ? 'opacity-50 pointer-events-none' : ''}`}>
                         <span className="text-gray-600 font-medium">Quantità</span>
                         <div className="flex items-center space-x-3">
                             <button 
@@ -486,7 +536,7 @@ const EventDetails: React.FC = () => {
                         </div>
                     </div>
 
-                    {!isSoldOut && event.prLists && event.prLists.length > 0 && (
+                    {!isSoldOut && event.prLists && event.prLists.length > 0 && event.status !== 'draft' && (
                         <div className="mb-6">
                             <label className="block text-sm font-semibold text-gray-700 mb-2">
                                 Seleziona Lista PR <span className="text-red-500">*</span>
@@ -509,7 +559,7 @@ const EventDetails: React.FC = () => {
                     )}
 
                     {/* Ticket Names Inputs - INSIDE Card */}
-                    {!isSoldOut && user && user.role === UserRole.STUDENTE && (
+                    {!isSoldOut && user && user.role === UserRole.STUDENTE && event.status !== 'draft' && (
                         <div className="mb-6 space-y-3 border-t border-gray-100 pt-4">
                             <p className="text-sm font-semibold text-gray-700">Intestatari Voucher</p>
                             {Array.from({ length: quantity }).map((_, idx) => (
@@ -541,7 +591,7 @@ const EventDetails: React.FC = () => {
                     </div>
 
                     {/* CONSENT CHECKBOX (Purchase Only) */}
-                    {!isSoldOut && user && user.role === UserRole.STUDENTE && (
+                    {!isSoldOut && user && user.role === UserRole.STUDENTE && event.status !== 'draft' && (
                          <div className="flex items-start mb-4">
                              <div className="flex items-center h-5">
                                  <input
@@ -573,9 +623,9 @@ const EventDetails: React.FC = () => {
                                 }
                                 handlePurchase();
                             }}
-                            disabled={purchasing || isSoldOut || (event.prLists && event.prLists.length > 0 && selectedPrList === "") || (!isSoldOut && user && !acceptedTerms)}
+                            disabled={purchasing || isSoldOut || event.status === 'draft' || (event.prLists && event.prLists.length > 0 && selectedPrList === "") || (!isSoldOut && user && !acceptedTerms)}
                             className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center ${
-                                isSoldOut ? 'bg-gray-300 text-gray-500' : ''
+                                isSoldOut || event.status === 'draft' ? 'bg-gray-300 text-gray-500' : ''
                             }`}
                         >
                             {purchasing ? (
@@ -585,6 +635,8 @@ const EventDetails: React.FC = () => {
                                 </span>
                             ) : isSoldOut ? (
                                 'Sold Out'
+                            ) : event.status === 'draft' ? (
+                                'Bozza (Non acquistabile)'
                             ) : (
                                 <>
                                     <CreditCard className="w-5 h-5 mr-2"/>

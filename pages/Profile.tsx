@@ -334,7 +334,14 @@ const Profile: React.FC = () => {
                                             <img src={event.image} className="w-full h-full object-cover" alt=""/>
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition">{event.title}</h3>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition">{event.title}</h3>
+                                                {event.status === 'draft' && (
+                                                    <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded font-bold">
+                                                        BOZZA
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div className="flex items-center text-xs text-gray-500 mt-1">
                                                 <Calendar className="w-3 h-3 mr-1" />
                                                 {new Date(event.date).toLocaleDateString()}

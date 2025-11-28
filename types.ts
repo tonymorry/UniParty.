@@ -46,7 +46,7 @@ export interface Event {
   prLists?: string[]; // Array of PR list names
   category: EventCategory; 
   favoritesCount?: number;
-  status?: 'active' | 'archived' | 'deleted';
+  status?: 'active' | 'draft' | 'archived' | 'deleted';
 }
 
 export interface Ticket {
