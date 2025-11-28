@@ -282,7 +282,7 @@ const Profile: React.FC = () => {
                             <Ticket className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-gray-500 text-sm font-medium">Tickets Sold</p>
+                            <p className="text-gray-500 text-sm font-medium">Vouchers Sold</p>
                             <p className="text-2xl font-bold text-gray-900">{totalTicketsSold}</p>
                         </div>
                     </div>

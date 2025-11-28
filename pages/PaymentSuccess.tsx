@@ -56,7 +56,7 @@ const PaymentSuccess: React.FC = () => {
                     </div>
                     <div>
                         <h2 className="text-3xl font-bold text-gray-900 mb-2">Success!</h2>
-                        <p className="text-gray-600">Your tickets have been issued and sent to your email.</p>
+                        <p className="text-gray-600">Your vouchers have been issued and sent to your email.</p>
                     </div>
                     <button 
                         onClick={() => navigate('/wallet')}

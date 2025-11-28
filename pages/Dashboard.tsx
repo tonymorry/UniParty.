@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { UserRole, EventCategory } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, Infinity as InfinityIcon } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -21,9 +21,6 @@ const Dashboard: React.FC = () => {
   const [maxCapacity, setMaxCapacity] = useState('100');
   const [category, setCategory] = useState<EventCategory>(EventCategory.PARTY);
   
-  // Unlimited Logic
-  const [isUnlimited, setIsUnlimited] = useState(false);
-  
   // PR Lists State
   const [prLists, setPrLists] = useState<string[]>([]);
   const [currentPrInput, setCurrentPrInput] = useState('');
@@ -38,10 +35,15 @@ const Dashboard: React.FC = () => {
     setIsConnecting(true);
     try {
       const link = await api.stripe.createConnectAccount(user._id);
-      const confirmed = window.confirm(`Simulating Redirect to Stripe: ${link}\n\nClick OK to simulate successful onboarding, Cancel to fail.`);
-      if(confirmed) {
-          await api.stripe.finalizeOnboarding(user._id);
-          refreshUser();
+      if (link) {
+          window.location.href = link;
+      } else {
+           // Mock simulation
+           const confirmed = window.confirm("Simulating Stripe Onboarding. Click OK to finish.");
+           if(confirmed) {
+               await api.stripe.finalizeOnboarding(user._id);
+               refreshUser();
+           }
       }
     } catch (error) {
       console.error(error);
@@ -69,24 +71,9 @@ const Dashboard: React.FC = () => {
     // 1. Normalize separator (comma to dot)
     const cleanPriceStr = price.toString().replace(',', '.');
     const rawPrice = parseFloat(cleanPriceStr);
-    
-    // 2. FORCE TO FIXED 2 DECIMALS to avoid floating point weirdness
-    // Example: "10.5" -> 10.50. "10,999" -> 11.00.
-    const numericPrice = Number(rawPrice.toFixed(2));
-    
-    let numericCapacity = parseInt(maxCapacity);
 
-    if (isUnlimited && numericPrice === 0) {
-        numericCapacity = 1000000; 
-    }
-
-    if (numericPrice > 0 && !user.stripeOnboardingComplete) {
-        alert("To create paid events, you must connect your Stripe account first.");
-        return;
-    }
-
-    if (numericCapacity <= 0) {
-        alert("Max capacity must be at least 1.");
+    if (isNaN(rawPrice) || rawPrice < 0) {
+        alert("Prezzo non valido.");
         return;
     }
 
@@ -95,270 +82,260 @@ const Dashboard: React.FC = () => {
         await api.events.create({
             title,
             description,
-            price: numericPrice, 
-            date: new Date(date).toISOString(),
-            time: time,
+            longDescription: description,
+            date,
+            time,
             location,
-            image: image.trim() !== '' ? image : "https://picsum.photos/800/400?random=" + Date.now(),
-            maxCapacity: numericCapacity,
-            prLists: prLists,
-            category: category
+            image,
+            maxCapacity: parseInt(maxCapacity),
+            price: rawPrice,
+            category,
+            prLists
         }, user);
-        alert("Event created successfully!");
+
+        alert("Evento creato con successo!");
         navigate('/');
-    } catch(e) {
+    } catch (e: any) {
         console.error(e);
-        alert("Error creating event");
+        alert("Errore creazione evento: " + (e.message || "Unknown"));
     } finally {
         setCreatingEvent(false);
     }
   };
 
-  // Handler to clean up display on blur (e.g. 10 -> 10.00)
-  const handlePriceBlur = () => {
-      const cleanPriceStr = price.replace(',', '.');
-      const val = parseFloat(cleanPriceStr);
-      if (!isNaN(val)) {
-          setPrice(val.toFixed(2)); // Shows "10.00" to user
-      }
-  };
-
-  const currentPriceValue = parseFloat(price.replace(',', '.'));
-
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Association Dashboard</h1>
-            <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
-                {user.name}
-            </span>
-        </div>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+       <div className="max-w-4xl mx-auto space-y-8">
+           
+           <div className="flex items-center justify-between">
+               <h1 className="text-3xl font-bold text-gray-900">Dashboard Associazione</h1>
+               <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-semibold">
+                   {user.name}
+               </span>
+           </div>
 
-        {/* Stripe Onboarding Status */}
-        <div className={`rounded-xl p-6 mb-8 border ${user.stripeOnboardingComplete ? 'bg-green-50 border-green-200' : 'bg-white border-orange-200 shadow-sm'}`}>
-            <div className="flex items-start">
-                <div className={`p-3 rounded-full mr-4 ${user.stripeOnboardingComplete ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
-                    {user.stripeOnboardingComplete ? <CheckCircle className="w-6 h-6" /> : <AlertTriangle className="w-6 h-6" />}
-                </div>
-                <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">
-                        {user.stripeOnboardingComplete ? 'Payments Active' : 'Setup Payments'}
-                    </h3>
-                    <p className="text-gray-600 mb-4 text-sm">
-                        {user.stripeOnboardingComplete 
-                            ? 'Your Stripe account is connected. You can create paid events and receive payouts.' 
-                            : 'Connect Stripe to sell paid tickets. You can still publish free events without connecting.'}
-                    </p>
-                    
-                    {!user.stripeOnboardingComplete && (
-                        <button 
-                            onClick={handleStripeConnect}
-                            disabled={isConnecting}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center transition disabled:opacity-50"
-                        >
-                            <DollarSign className="w-4 h-4 mr-2" />
-                            {isConnecting ? 'Connecting...' : 'Connect with Stripe'}
-                        </button>
-                    )}
-                </div>
-            </div>
-        </div>
+           <div className={`bg-white rounded-xl p-6 shadow-sm border-l-4 ${user.stripeOnboardingComplete ? 'border-green-500' : 'border-orange-500'}`}>
+               <div className="flex items-center justify-between">
+                   <div className="flex items-center">
+                       {user.stripeOnboardingComplete ? (
+                           <div className="bg-green-100 p-3 rounded-full mr-4">
+                               <CheckCircle className="w-6 h-6 text-green-600" />
+                           </div>
+                       ) : (
+                           <div className="bg-orange-100 p-3 rounded-full mr-4">
+                               <AlertTriangle className="w-6 h-6 text-orange-600" />
+                           </div>
+                       )}
+                       <div>
+                           <h2 className="text-xl font-bold text-gray-900">Stato Pagamenti</h2>
+                           <p className="text-gray-600">
+                               {user.stripeOnboardingComplete 
+                                   ? "Il tuo account è connesso e pronto a ricevere pagamenti." 
+                                   : "Connetti il tuo account Stripe per vendere biglietti."}
+                           </p>
+                       </div>
+                   </div>
+                   {!user.stripeOnboardingComplete && (
+                       <button 
+                           onClick={handleStripeConnect}
+                           disabled={isConnecting}
+                           className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-bold transition shadow-md disabled:opacity-50"
+                       >
+                           {isConnecting ? 'Connessione...' : 'Connetti Stripe'}
+                       </button>
+                   )}
+               </div>
+           </div>
 
-        {/* Create Event Form */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-             <div className="p-6 border-b border-gray-100">
-                 <h2 className="text-xl font-bold text-gray-900">Create New Event</h2>
-             </div>
-             <div className="p-6">
-                 <form onSubmit={handleCreateEvent} className="space-y-4">
-                     <div>
-                         <label className="block text-sm font-medium text-gray-700 mb-1">Event Title</label>
-                         <input 
-                            type="text" 
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-gray-900"
-                            value={title} onChange={e => setTitle(e.target.value)} required
-                        />
-                     </div>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="md:col-span-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                            <input 
-                                type="date" 
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-gray-900"
-                                value={date} onChange={e => setDate(e.target.value)} required
-                            />
-                        </div>
-                        <div className="md:col-span-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-                            <div className="relative">
-                                <Clock className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                                <input 
-                                    type="time" 
-                                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-gray-900"
-                                    value={time} onChange={e => setTime(e.target.value)} required
-                                />
-                            </div>
-                        </div>
-                        <div className="md:col-span-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <div className="relative">
-                                <Tag className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                                <select 
-                                    value={category}
-                                    onChange={(e) => setCategory(e.target.value as EventCategory)}
-                                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-gray-900 appearance-none"
-                                >
-                                    {Object.values(EventCategory).map((cat) => (
-                                        <option key={cat} value={cat}>{cat}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                     </div>
-                     
-                     <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                            <input 
-                                type="text" 
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-gray-900"
-                                value={location} onChange={e => setLocation(e.target.value)} required
-                            />
-                     </div>
-                     
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div>
-                             <label className="block text-sm font-medium text-gray-700 mb-1">Ticket Price (€)</label>
-                             <div className="relative">
-                                <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                                <input 
-                                    type="number" step="0.01" min="0"
-                                    className={`w-full pl-9 pr-4 py-2 border rounded-lg focus:ring-2 outline-none bg-white text-gray-900 ${!user.stripeOnboardingComplete && currentPriceValue > 0 ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-indigo-500'}`}
-                                    value={price} 
-                                    onChange={e => {
-                                        setPrice(e.target.value);
-                                        const val = parseFloat(e.target.value.replace(',','.'));
-                                        if(val > 0) setIsUnlimited(false); 
-                                    }} 
-                                    onBlur={handlePriceBlur}
-                                    required
-                                />
-                             </div>
-                             {!user.stripeOnboardingComplete && currentPriceValue > 0 && (
-                                <p className="text-xs text-red-500 mt-1 font-medium">
-                                    Stripe connection required for paid events. Set price to 0 for free events.
-                                </p>
-                             )}
-                             {currentPriceValue > 0 && (
-                                <p className="text-xs text-gray-500 mt-1">Students will pay Price + €0.40 fee.</p>
-                             )}
-                        </div>
-                        <div>
-                             <label className="block text-sm font-medium text-gray-700 mb-1">Max Tickets (Capacity)</label>
-                             <div className="relative">
-                                <Users className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                                <input 
-                                    type="number" min="1" step="1"
-                                    className={`w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-gray-900 ${isUnlimited ? 'bg-gray-100 text-gray-500' : ''}`}
-                                    value={isUnlimited ? 1000000 : maxCapacity} 
-                                    onChange={e => setMaxCapacity(e.target.value)} 
-                                    required
-                                    disabled={isUnlimited}
-                                />
-                             </div>
-                             {currentPriceValue === 0 && (
-                                 <div className="mt-2 flex items-center">
-                                     <input 
-                                        type="checkbox" 
-                                        id="unlimited"
-                                        checked={isUnlimited}
-                                        onChange={(e) => setIsUnlimited(e.target.checked)}
-                                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                     />
-                                     <label htmlFor="unlimited" className="ml-2 block text-sm text-gray-900 flex items-center">
-                                         <InfinityIcon className="w-4 h-4 mr-1" /> Unlimited Capacity
-                                     </label>
-                                 </div>
-                             )}
-                        </div>
-                     </div>
+           {user.stripeOnboardingComplete ? (
+               <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                   <div className="bg-indigo-900 p-6 text-white">
+                       <h2 className="text-xl font-bold flex items-center">
+                           <Plus className="w-6 h-6 mr-2" />
+                           Crea Nuovo Evento
+                       </h2>
+                       <p className="text-indigo-200 text-sm mt-1">Compila i dettagli del tuo prossimo evento.</p>
+                   </div>
+                   
+                   <form onSubmit={handleCreateEvent} className="p-8 space-y-6">
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                           <div className="md:col-span-2">
+                               <label className="block text-sm font-medium text-gray-700 mb-1">Titolo Evento</label>
+                               <input 
+                                   type="text" 
+                                   value={title} 
+                                   onChange={e => setTitle(e.target.value)} 
+                                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                   required
+                                   placeholder="Es. Halloween Party 2025"
+                               />
+                           </div>
+                           <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><Tag className="w-4 h-4 mr-1"/> Categoria</label>
+                               <select 
+                                   value={category}
+                                   onChange={e => setCategory(e.target.value as EventCategory)}
+                                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                               >
+                                   {Object.values(EventCategory).map(c => (
+                                       <option key={c} value={c}>{c}</option>
+                                   ))}
+                               </select>
+                           </div>
+                       </div>
 
-                     <div>
-                         <label className="block text-sm font-medium text-gray-700 mb-1">PR Lists (Optional)</label>
-                         <div className="flex gap-2 mb-2">
-                             <input 
-                                 type="text" 
-                                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-gray-900"
-                                 placeholder="Enter list name (e.g. Marco's List)"
-                                 value={currentPrInput}
-                                 onChange={e => setCurrentPrInput(e.target.value)}
-                                 onKeyDown={e => { if(e.key === 'Enter') { e.preventDefault(); handleAddPrList(); }}}
-                             />
-                             <button 
-                                 type="button" 
-                                 onClick={handleAddPrList}
-                                 className="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition"
-                             >
-                                 Add
-                             </button>
-                         </div>
-                         {prLists.length > 0 && (
-                             <div className="flex flex-wrap gap-2 mt-2">
-                                 {prLists.map((list, idx) => (
-                                     <span key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm flex items-center">
-                                         <List className="w-3 h-3 mr-1" />
-                                         {list}
-                                         <button type="button" onClick={() => handleRemovePrList(list)} className="ml-2 hover:text-red-600">
-                                             <X className="w-3 h-3" />
-                                         </button>
-                                     </span>
-                                 ))}
-                             </div>
-                         )}
-                         <p className="text-xs text-gray-500 mt-1">Students will be asked to select one of these lists at checkout.</p>
-                     </div>
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                           <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><Clock className="w-4 h-4 mr-1"/> Data</label>
+                               <input 
+                                   type="date" 
+                                   value={date} 
+                                   onChange={e => setDate(e.target.value)} 
+                                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                   required
+                               />
+                           </div>
+                           <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-1">Ora</label>
+                               <input 
+                                   type="time" 
+                                   value={time} 
+                                   onChange={e => setTime(e.target.value)} 
+                                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                   required
+                               />
+                           </div>
+                           <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-1">Luogo</label>
+                               <input 
+                                   type="text" 
+                                   value={location} 
+                                   onChange={e => setLocation(e.target.value)} 
+                                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                   required
+                                   placeholder="Nome del locale o indirizzo"
+                               />
+                           </div>
+                       </div>
 
-                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Event Image URL (Optional)</label>
-                        <div className="relative">
-                            <ImageIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input 
-                                type="url"
-                                placeholder="https://example.com/image.jpg" 
-                                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-gray-900"
-                                value={image} onChange={e => setImage(e.target.value)}
-                            />
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">Leave blank to generate a random party image.</p>
-                     </div>
+                       <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><ImageIcon className="w-4 h-4 mr-1"/> Immagine (URL)</label>
+                           <div className="flex gap-4">
+                               <input 
+                                   type="url" 
+                                   value={image} 
+                                   onChange={e => setImage(e.target.value)} 
+                                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                   required
+                                   placeholder="https://example.com/image.jpg"
+                               />
+                               {image && (
+                                   <div className="w-16 h-10 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
+                                       <img src={image} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                   </div>
+                               )}
+                           </div>
+                       </div>
 
-                     <div>
-                         <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                         <textarea 
-                            rows={3}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-gray-900"
-                            value={description} onChange={e => setDescription(e.target.value)} required
-                        />
-                     </div>
-                     
-                     <div className="pt-4">
-                        <button 
-                            type="submit"
-                            disabled={creatingEvent || (!user.stripeOnboardingComplete && currentPriceValue > 0)}
-                            className="w-full bg-indigo-900 hover:bg-indigo-800 text-white font-bold py-3 rounded-lg transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {creatingEvent ? 'Publishing...' : (
-                                <>
-                                    <Plus className="w-5 h-5 mr-2" />
-                                    Publish Event
-                                </>
-                            )}
-                        </button>
-                     </div>
-                 </form>
-             </div>
-        </div>
-      </div>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                           <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><DollarSign className="w-4 h-4 mr-1"/> Prezzo Biglietto (€)</label>
+                               <input 
+                                   type="number" 
+                                   value={price} 
+                                   onChange={e => setPrice(e.target.value)} 
+                                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                   required
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="0.00"
+                               />
+                               <p className="text-xs text-gray-500 mt-1">Imposta 0 per eventi gratuiti.</p>
+                           </div>
+                           <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><Users className="w-4 h-4 mr-1"/> Capacità Massima</label>
+                               <input 
+                                   type="number" 
+                                   value={maxCapacity} 
+                                   onChange={e => setMaxCapacity(e.target.value)} 
+                                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                   required
+                                   min="1"
+                               />
+                           </div>
+                       </div>
+                       
+                       <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><List className="w-4 h-4 mr-1"/> Liste PR (Opzionale)</label>
+                           <div className="flex gap-2 mb-2">
+                               <input 
+                                   type="text" 
+                                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                   placeholder="Nome lista (es. Lista Marco)"
+                                   value={currentPrInput}
+                                   onChange={e => setCurrentPrInput(e.target.value)}
+                                   onKeyDown={e => { if(e.key === 'Enter') { e.preventDefault(); handleAddPrList(); }}}
+                               />
+                               <button 
+                                   type="button" 
+                                   onClick={handleAddPrList}
+                                   className="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition"
+                               >
+                                   Aggiungi
+                               </button>
+                           </div>
+                           {prLists.length > 0 && (
+                               <div className="flex flex-wrap gap-2 mt-2">
+                                   {prLists.map((list, idx) => (
+                                       <span key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm flex items-center">
+                                           {list}
+                                           <button type="button" onClick={() => handleRemovePrList(list)} className="ml-2 hover:text-red-600">
+                                               <X className="w-3 h-3" />
+                                           </button>
+                                       </span>
+                                   ))}
+                               </div>
+                           )}
+                           <p className="text-xs text-gray-500 mt-1">Gli studenti dovranno selezionare una di queste liste al momento dell'acquisto.</p>
+                       </div>
+
+                       <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione Completa</label>
+                           <textarea 
+                               value={description} 
+                               onChange={e => setDescription(e.target.value)} 
+                               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-32"
+                               required
+                               placeholder="Dettagli dell'evento, lineup, dress code..."
+                           ></textarea>
+                       </div>
+
+                       <div className="pt-4">
+                           <button 
+                               type="submit" 
+                               disabled={creatingEvent}
+                               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-99 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+                           >
+                               {creatingEvent ? (
+                                   <span className="flex items-center">
+                                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                       Pubblicazione in corso...
+                                   </span>
+                               ) : (
+                                   "Pubblica Evento"
+                               )}
+                           </button>
+                       </div>
+
+                   </form>
+               </div>
+           ) : (
+               <div className="text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-200">
+                   <AlertTriangle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                   <p className="text-lg font-medium">Completa la configurazione Stripe per creare eventi.</p>
+               </div>
+           )}
+       </div>
     </div>
   );
 };

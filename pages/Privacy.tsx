@@ -48,13 +48,16 @@ const Privacy: React.FC = () => {
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">4. Conservazione dei Dati (Data Retention)</h2>
             <p>
-                I tuoi dati sono conservati per tutto il tempo in cui il tuo account è attivo.
+                I tuoi dati sono conservati per il tempo necessario all'erogazione del servizio. In caso di cancellazione dell'account o di eventi passati, applichiamo criteri differenziati in base alla normativa fiscale:
             </p>
-            <h3 className="text-lg font-bold text-gray-900 mt-4">Cancellazione Account e "Soft Delete"</h3>
-            <p>
-                Se richiedi la cancellazione del tuo account, i tuoi dati personali visibili verranno rimossi dal front-end della piattaforma ("Soft Delete").
-                Tuttavia, <strong>i dati relativi alle transazioni economiche e ai Voucher emessi NON saranno cancellati definitivamente</strong> ma verranno archiviati in modalità sicura e conservati per <strong>10 anni</strong>, come obbligatoriamente richiesto dall'art. 2220 del Codice Civile italiano per fini fiscali e di accertamento.
-            </p>
+            <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li>
+                    <strong>Transazioni a Pagamento:</strong> Se hai acquistato Voucher a pagamento o organizzato eventi con biglietti a pagamento, i dati relativi alle transazioni e all'account verranno conservati in archivio sicuro ("Soft Delete") per <strong>10 anni</strong>, come obbligatoriamente richiesto dall'art. 2220 del Codice Civile per finalità fiscali e di accertamento.
+                </li>
+                <li>
+                    <strong>Transazioni Gratuite:</strong> Se hai utilizzato la piattaforma esclusivamente per eventi gratuiti (senza transazioni economiche), i tuoi dati e quelli relativi agli eventi verranno <strong>cancellati definitivamente</strong> ("Hard Delete") dai nostri sistemi poco dopo la conclusione dell'evento o la richiesta di cancellazione account, nel pieno rispetto del diritto all'oblio.
+                </li>
+            </ul>
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">5. Condivisione dei dati</h2>
             <p>Condividiamo i tuoi dati strettamente necessari con:</p>

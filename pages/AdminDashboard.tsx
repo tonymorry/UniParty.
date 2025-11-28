@@ -239,7 +239,7 @@ const AdminDashboard: React.FC = () => {
                                                <button 
                                                     onClick={() => handleViewTickets(u._id, u.name)}
                                                     className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 p-2 rounded-full"
-                                                    title="Vedi Biglietti"
+                                                    title="Vedi Voucher"
                                                 >
                                                     <TicketIcon className="w-4 h-4" />
                                                </button>
@@ -337,16 +337,16 @@ const AdminDashboard: React.FC = () => {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
               <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col">
                   <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                      <h3 className="text-xl font-bold text-gray-900">Biglietti di {selectedUserName}</h3>
+                      <h3 className="text-xl font-bold text-gray-900">Voucher di {selectedUserName}</h3>
                       <button onClick={() => setIsTicketModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                           <XCircle className="w-6 h-6" />
                       </button>
                   </div>
                   <div className="p-6 overflow-y-auto flex-1">
                       {modalLoading ? (
-                          <div className="text-center py-8">Caricamento biglietti...</div>
+                          <div className="text-center py-8">Caricamento voucher...</div>
                       ) : selectedUserTickets.length === 0 ? (
-                          <div className="text-center py-8 text-gray-500">Nessun biglietto trovato per questo utente.</div>
+                          <div className="text-center py-8 text-gray-500">Nessun voucher trovato per questo utente.</div>
                       ) : (
                           <div className="space-y-4">
                               {selectedUserTickets.map(ticket => (
@@ -428,7 +428,7 @@ const AdminDashboard: React.FC = () => {
                                           <TicketIcon className="w-8 h-8" />
                                       </div>
                                       <div>
-                                          <p className="text-sm text-blue-800 font-medium uppercase tracking-wide">Biglietti Venduti</p>
+                                          <p className="text-sm text-blue-800 font-medium uppercase tracking-wide">Voucher Venduti</p>
                                           <p className="text-2xl font-bold text-gray-900">
                                               {selectedEvent.ticketsSold} <span className="text-sm text-gray-400 font-normal">/ {selectedEvent.maxCapacity}</span>
                                           </p>

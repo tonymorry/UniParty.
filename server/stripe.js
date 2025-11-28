@@ -146,7 +146,7 @@ const StripeController = {
             price_data: {
               currency: 'eur',
               product_data: {
-                name: `Ticket: ${event.title}`,
+                name: `Voucher: ${event.title}`,
                 description: `${new Date(event.date).toISOString().split('T')[0]} @ ${event.location}`,
               },
               // CRITICAL: Ensure this is an integer

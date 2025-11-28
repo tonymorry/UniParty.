@@ -100,7 +100,7 @@ const Auth: React.FC = () => {
               {isLogin ? 'Welcome Back' : 'Join UniParty'}
             </h2>
             <p className="text-center text-gray-500 mb-8">
-              {isLogin ? 'Login to access your tickets' : 'Create an account to start partying'}
+              {isLogin ? 'Login to access your vouchers' : 'Create an account to start partying'}
             </p>
 
             {error && (
