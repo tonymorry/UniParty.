@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, Event } from '../types';
 import { api } from '../services/api';
-import { User, Mail, Briefcase, CheckCircle, AlertTriangle, Calendar, Globe, Camera, X, Save, TrendingUp, Ticket } from 'lucide-react';
+import { User, Mail, Briefcase, CheckCircle, AlertTriangle, Calendar, Globe, Camera, X, Save, TrendingUp, Ticket, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Profile: React.FC = () => {
@@ -40,6 +40,25 @@ const Profile: React.FC = () => {
         .finally(() => setLoadingEvents(false));
     }
   }, [user]);
+
+  const handleProfileImageUpload = () => {
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: 'db3bj2bgg',
+        uploadPreset: 'wii81qid',
+        sources: ['local', 'url', 'camera', 'instagram'],
+        multiple: false,
+        maxFiles: 1,
+        clientAllowedFormats: ["image"],
+      },
+      (error: any, result: any) => {
+        if (!error && result && result.event === "success") {
+          setEditForm(prev => ({ ...prev, profileImage: result.info.secure_url }));
+        }
+      }
+    );
+    widget.open();
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -83,17 +102,18 @@ const Profile: React.FC = () => {
                   </div>
                   <form onSubmit={handleUpdateProfile} className="p-6 space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Profile Image URL</label>
-                            <div className="flex gap-2 items-center">
-                                <input 
-                                    type="url" 
-                                    value={editForm.profileImage}
-                                    onChange={e => setEditForm({...editForm, profileImage: e.target.value})}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    placeholder="https://example.com/me.jpg"
-                                />
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Profile Image</label>
+                            <div className="flex gap-4 items-center">
+                                <button
+                                    type="button"
+                                    onClick={handleProfileImageUpload}
+                                    className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium border border-gray-300 w-full justify-center"
+                                >
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Carica Immagine
+                                </button>
                                 {editForm.profileImage && (
-                                    <img src={editForm.profileImage} alt="Preview" className="w-10 h-10 rounded-full object-cover border" />
+                                    <img src={editForm.profileImage} alt="Preview" className="w-10 h-10 rounded-full object-cover border flex-shrink-0" />
                                 )}
                             </div>
                         </div>

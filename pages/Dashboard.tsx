@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { UserRole, EventCategory } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, ShieldCheck, Lock, Info } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, ShieldCheck, Lock, Info, Upload } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -64,6 +64,25 @@ const Dashboard: React.FC = () => {
       setPrLists(prLists.filter(list => list !== listToRemove));
   };
 
+  const handleImageUpload = () => {
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: 'db3bj2bgg',
+        uploadPreset: 'wii81qid',
+        sources: ['local', 'url', 'camera', 'instagram'],
+        multiple: false,
+        maxFiles: 1,
+        clientAllowedFormats: ["image"],
+      },
+      (error: any, result: any) => {
+        if (!error && result && result.event === "success") {
+          setImage(result.info.secure_url);
+        }
+      }
+    );
+    widget.open();
+  };
+
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -77,6 +96,11 @@ const Dashboard: React.FC = () => {
 
     if (isNaN(rawPrice) || rawPrice < 0) {
         alert("Prezzo non valido.");
+        return;
+    }
+
+    if (!image) {
+        alert("Per favore carica un'immagine per l'evento.");
         return;
     }
 
@@ -247,20 +271,22 @@ const Dashboard: React.FC = () => {
                        </div>
 
                        <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><ImageIcon className="w-4 h-4 mr-1"/> Immagine (URL)</label>
-                           <div className="flex gap-4">
-                               <input 
-                                   type="url" 
-                                   value={image} 
-                                   onChange={e => setImage(e.target.value)} 
-                                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                   required
-                                   placeholder="https://example.com/image.jpg"
-                               />
-                               {image && (
-                                   <div className="w-16 h-10 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
+                           <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><ImageIcon className="w-4 h-4 mr-1"/> Immagine Evento</label>
+                           <div className="flex gap-4 items-center">
+                               <button
+                                   type="button"
+                                   onClick={handleImageUpload}
+                                   className="flex items-center px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium border border-gray-300"
+                               >
+                                   <Upload className="w-4 h-4 mr-2" />
+                                   Carica Immagine
+                               </button>
+                               {image ? (
+                                   <div className="w-16 h-10 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0 relative group">
                                        <img src={image} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
                                    </div>
+                               ) : (
+                                   <span className="text-sm text-gray-400">Nessuna immagine selezionata</span>
                                )}
                            </div>
                        </div>

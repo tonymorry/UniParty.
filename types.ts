@@ -70,3 +70,9 @@ export interface CartItem {
   eventId: string;
   quantity: number;
 }
+
+declare global {
+  interface Window {
+    cloudinary: any;
+  }
+}
