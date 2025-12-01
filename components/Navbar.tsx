@@ -39,8 +39,9 @@ const Navbar: React.FC = () => {
             <span className="text-xl font-bold tracking-wider">UniParty</span>
           </Link>
 
-          {/* HAMBURGER MENU TOGGLE BUTTON (Visible on ALL screens) */}
-          <div className="flex">
+          {/* HAMBURGER MENU TOGGLE BUTTON (Visible only on DESKTOP now, hidden on mobile due to BottomNav) */}
+          {/* Change: 'flex' -> 'hidden md:flex' */}
+          <div className="hidden md:flex">
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-700 focus:outline-none transition-colors"
@@ -52,9 +53,9 @@ const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* DROPDOWN MENU (Visible on ALL screens when toggled) */}
+      {/* DROPDOWN MENU (Visible on DESKTOP when toggled) */}
       {isOpen && (
-        <div className="absolute top-16 right-0 w-full sm:w-80 z-50 bg-indigo-800 border-b-2 border-l-2 border-indigo-700 shadow-2xl animate-in slide-in-from-top-2 duration-200 sm:rounded-bl-xl">
+        <div className="hidden md:block absolute top-16 right-0 w-80 z-50 bg-indigo-800 border-b-2 border-l-2 border-indigo-700 shadow-2xl animate-in slide-in-from-top-2 duration-200 rounded-bl-xl">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             
             <Link 

@@ -2,6 +2,7 @@ import React from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import BottomNav from './components/BottomNav';
 import Home from './pages/Home';
 import Auth from './pages/Auth';
 import EventDetails from './pages/EventDetails';
@@ -24,7 +25,8 @@ function App() {
       <Router>
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
           <Navbar />
-          <main className="flex-grow">
+          {/* Add padding bottom on mobile to account for BottomNav */}
+          <main className="flex-grow pb-20 md:pb-0">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/auth" element={<Auth />} />
@@ -42,6 +44,7 @@ function App() {
             </Routes>
           </main>
           <Footer />
+          <BottomNav />
           <CookieBanner />
         </div>
       </Router>
