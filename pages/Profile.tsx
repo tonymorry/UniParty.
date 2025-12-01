@@ -2,18 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, Event } from '../types';
 import { api } from '../services/api';
-import { User, Mail, Briefcase, CheckCircle, AlertTriangle, Calendar, Globe, Camera, X, Save, TrendingUp, Ticket, Upload, Settings, LogOut, Trash2, FileText, Shield, HelpCircle } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { User, Mail, Briefcase, CheckCircle, AlertTriangle, Calendar, Globe, Camera, X, Save, TrendingUp, Ticket, Upload } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Profile: React.FC = () => {
-  const { user, updateUserProfile, logout, deleteAccount } = useAuth();
-  const navigate = useNavigate();
+  const { user, updateUserProfile } = useAuth();
   const [assocEvents, setAssocEvents] = useState<Event[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  
-  // Settings Dropdown State (Mobile)
-  const [showSettings, setShowSettings] = useState(false);
   
   // Edit Form State
   const [editForm, setEditForm] = useState({
@@ -84,22 +80,6 @@ const Profile: React.FC = () => {
       }
   };
 
-  const handleLogout = () => {
-      logout();
-      navigate('/');
-  };
-
-  const handleDeleteAccount = async () => {
-      if(window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-          try {
-              await deleteAccount();
-              navigate('/');
-          } catch(e) {
-              alert("Error deleting account.");
-          }
-      }
-  };
-
   // Calculate Dashboard Stats
   const totalEvents = assocEvents.length;
   const totalTicketsSold = assocEvents.reduce((acc, curr) => acc + curr.ticketsSold, 0);
@@ -110,39 +90,6 @@ const Profile: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12 relative">
       
-      {/* MOBILE SETTINGS BUTTON & DROPDOWN */}
-      <div className="absolute top-4 right-4 z-20 md:hidden">
-          <button 
-             onClick={() => setShowSettings(!showSettings)}
-             className="bg-white p-2 rounded-full shadow-md text-gray-600 hover:text-indigo-600"
-          >
-             <Settings className="w-6 h-6" />
-          </button>
-          
-          {showSettings && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="py-2">
-                      <Link to="/support" className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600">
-                          <HelpCircle className="w-4 h-4 mr-3" /> Supporto
-                      </Link>
-                      <Link to="/terms" className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600">
-                          <FileText className="w-4 h-4 mr-3" /> Termini & Condizioni
-                      </Link>
-                      <Link to="/privacy" className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600">
-                          <Shield className="w-4 h-4 mr-3" /> Privacy Policy
-                      </Link>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <button onClick={handleLogout} className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 text-left">
-                          <LogOut className="w-4 h-4 mr-3" /> Logout
-                      </button>
-                      <button onClick={handleDeleteAccount} className="w-full flex items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 text-left">
-                          <Trash2 className="w-4 h-4 mr-3" /> Elimina Account
-                      </button>
-                  </div>
-              </div>
-          )}
-      </div>
-
       {/* EDIT PROFILE MODAL */}
       {isEditing && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
