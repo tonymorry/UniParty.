@@ -13,14 +13,13 @@ import {
   LayoutDashboard, 
   Users, 
   Shield, 
-  Calendar 
+  Calendar,
+  LogIn 
 } from 'lucide-react';
 
 const BottomNav: React.FC = () => {
   const { user } = useAuth();
   const location = useLocation();
-
-  if (!user) return null;
 
   // Helper per determinare se un link è attivo
   const isActive = (path: string) => location.pathname === path;
@@ -29,9 +28,33 @@ const BottomNav: React.FC = () => {
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-16 z-50 md:hidden flex justify-around items-center px-2 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
       
       {/* ==========================================
+          GUEST (Non Loggato)
+         ========================================== */}
+      {!user && (
+        <>
+          <Link to="/" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/') ? 'text-indigo-600' : 'text-gray-400'}`}>
+            <Home className="w-6 h-6" />
+            <span className="text-[10px] font-medium mt-1">Home</span>
+          </Link>
+
+          {/* CENTRALE - LOGIN / JOIN */}
+          <Link to="/auth" className="relative -top-5">
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-gray-50 transition-transform active:scale-95 ${isActive('/auth') ? 'bg-indigo-700' : 'bg-indigo-600'}`}>
+              <LogIn className="w-7 h-7 text-white pl-1" />
+            </div>
+          </Link>
+
+          <Link to="/support" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/support') ? 'text-indigo-600' : 'text-gray-400'}`}>
+            <HelpCircle className="w-6 h-6" />
+            <span className="text-[10px] font-medium mt-1">Supporto</span>
+          </Link>
+        </>
+      )}
+
+      {/* ==========================================
           RUOLO: STUDENTE
          ========================================== */}
-      {user.role === UserRole.STUDENTE && (
+      {user && user.role === UserRole.STUDENTE && (
         <>
           <Link to="/wallet" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/wallet') ? 'text-indigo-600' : 'text-gray-400'}`}>
             <Ticket className="w-6 h-6" />
@@ -65,7 +88,7 @@ const BottomNav: React.FC = () => {
       {/* ==========================================
           RUOLO: ASSOCIAZIONE
          ========================================== */}
-      {user.role === UserRole.ASSOCIAZIONE && (
+      {user && user.role === UserRole.ASSOCIAZIONE && (
         <>
           <Link to="/" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/') ? 'text-indigo-600' : 'text-gray-400'}`}>
             <Home className="w-6 h-6" />
@@ -99,7 +122,7 @@ const BottomNav: React.FC = () => {
       {/* ==========================================
           RUOLO: ADMIN
          ========================================== */}
-      {user.role === UserRole.ADMIN && (
+      {user && user.role === UserRole.ADMIN && (
         <>
           <Link to="/" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/') ? 'text-indigo-600' : 'text-gray-400'}`}>
             <Home className="w-6 h-6" />
