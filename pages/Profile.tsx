@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { UserRole, Event } from '../types';
-import { api } from '../services/api';
-import { User, Mail, Briefcase, CheckCircle, AlertTriangle, Calendar, Globe, Camera, X, Save, TrendingUp, Ticket, Upload } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { UserRole } from '../types';
+import { User, Mail, Globe, Camera, X, Save, Upload, Settings, FileText, Shield, HelpCircle, LogOut, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Profile: React.FC = () => {
-  const { user, updateUserProfile } = useAuth();
-  const [assocEvents, setAssocEvents] = useState<Event[]>([]);
-  const [loadingEvents, setLoadingEvents] = useState(false);
+  const { user, updateUserProfile, logout } = useAuth();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
+  const [showMobileSettings, setShowMobileSettings] = useState(false);
   
   // Edit Form State
   const [editForm, setEditForm] = useState({
@@ -32,12 +31,6 @@ const Profile: React.FC = () => {
             socialLinks: user.socialLinks || '',
             profileImage: user.profileImage || ''
         });
-    }
-    if (user?.role === UserRole.ASSOCIAZIONE) {
-      setLoadingEvents(true);
-      api.events.getByOrgId(user._id)
-        .then(setAssocEvents)
-        .finally(() => setLoadingEvents(false));
     }
   }, [user]);
 
@@ -80,21 +73,43 @@ const Profile: React.FC = () => {
       }
   };
 
-  // Calculate Dashboard Stats
-  const totalEvents = assocEvents.length;
-  const totalTicketsSold = assocEvents.reduce((acc, curr) => acc + curr.ticketsSold, 0);
-  const totalRevenue = assocEvents.reduce((acc, curr) => acc + (curr.ticketsSold * curr.price), 0);
+  const handleLogout = () => {
+      logout();
+      navigate('/');
+  };
 
   if (!user) return <div className="p-8 text-center">Please login to view profile.</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 relative">
+    <div className="min-h-screen bg-gray-50 py-4 md:py-12 relative">
       
+      {/* MOBILE SETTINGS OVERLAY */}
+      {showMobileSettings && (
+          <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm md:hidden" onClick={() => setShowMobileSettings(false)}>
+              <div className="absolute top-16 right-4 w-64 bg-white rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-top-4 duration-200" onClick={e => e.stopPropagation()}>
+                  <div className="p-4 border-b border-gray-100 font-bold text-gray-900">Impostazioni</div>
+                  <Link to="/privacy" className="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700">
+                      <Shield className="w-5 h-5 mr-3 text-gray-500" /> Privacy Policy
+                  </Link>
+                  <Link to="/terms" className="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700">
+                      <FileText className="w-5 h-5 mr-3 text-gray-500" /> Termini & Condizioni
+                  </Link>
+                  <Link to="/support" className="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700">
+                      <HelpCircle className="w-5 h-5 mr-3 text-gray-500" /> Supporto
+                  </Link>
+                  <div className="border-t border-gray-100 my-1"></div>
+                  <button onClick={handleLogout} className="w-full flex items-center px-4 py-3 hover:bg-red-50 text-red-600 font-medium">
+                      <LogOut className="w-5 h-5 mr-3" /> Logout
+                  </button>
+              </div>
+          </div>
+      )}
+
       {/* EDIT PROFILE MODAL */}
       {isEditing && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
-                  <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto">
+                  <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 sticky top-0">
                       <h2 className="text-lg font-bold text-gray-900">Edit Profile</h2>
                       <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600">
                           <X className="w-6 h-6" />
@@ -191,6 +206,17 @@ const Profile: React.FC = () => {
 
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* MOBILE SETTINGS BUTTON (MD:HIDDEN) */}
+        <div className="flex justify-end mb-4 md:hidden">
+            <button 
+                onClick={() => setShowMobileSettings(!showMobileSettings)}
+                className="p-2 bg-white rounded-full shadow-sm text-gray-600 hover:text-indigo-600"
+            >
+                <Settings className="w-6 h-6" />
+            </button>
+        </div>
+
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-8">
             <div className="bg-indigo-900 h-32 relative">
                 <div className="absolute -bottom-12 left-8">
@@ -264,7 +290,7 @@ const Profile: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Stripe Status */}
+                            {/* Stripe Status for Association */}
                             {user.role === UserRole.ASSOCIAZIONE && (
                                 <div className={`flex items-center p-3 rounded-lg mt-2 border ${user.stripeOnboardingComplete ? 'bg-green-50 text-green-800 border-green-100' : 'bg-orange-50 text-orange-800 border-orange-100'}`}>
                                     {user.stripeOnboardingComplete ? (
@@ -282,93 +308,6 @@ const Profile: React.FC = () => {
                 </div>
             </div>
         </div>
-
-        {/* Association Events List & Dashboard */}
-        {user.role === UserRole.ASSOCIAZIONE && (
-            <>
-                {/* Dashboard Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
-                        <div className="p-3 rounded-full bg-indigo-50 text-indigo-600 mr-4">
-                            <TrendingUp className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <p className="text-gray-500 text-sm font-medium">Total Revenue</p>
-                            <p className="text-2xl font-bold text-gray-900">€{totalRevenue.toFixed(2)}</p>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
-                        <div className="p-3 rounded-full bg-green-50 text-green-600 mr-4">
-                            <Ticket className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <p className="text-gray-500 text-sm font-medium">Vouchers Sold</p>
-                            <p className="text-2xl font-bold text-gray-900">{totalTicketsSold}</p>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
-                        <div className="p-3 rounded-full bg-orange-50 text-orange-600 mr-4">
-                            <Briefcase className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <p className="text-gray-500 text-sm font-medium">Events Created</p>
-                            <p className="text-2xl font-bold text-gray-900">{totalEvents}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Events List */}
-                <div className="bg-white rounded-2xl shadow-sm p-8">
-                    <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                        <Briefcase className="w-6 h-6 mr-2 text-indigo-600" />
-                        Your Events
-                    </h2>
-                    {loadingEvents ? (
-                        <div>Loading events...</div>
-                    ) : assocEvents.length > 0 ? (
-                        <div className="divide-y divide-gray-100">
-                            {assocEvents.map(event => (
-                                <div key={event._id} className="py-4 flex items-center justify-between group">
-                                    <div className="flex items-center">
-                                        <div className="w-12 h-12 bg-gray-100 rounded-lg mr-4 overflow-hidden">
-                                            <img src={event.image} className="w-full h-full object-cover" alt=""/>
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition">{event.title}</h3>
-                                                {event.status === 'draft' && (
-                                                    <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded font-bold">
-                                                        BOZZA
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center text-xs text-gray-500 mt-1">
-                                                <Calendar className="w-3 h-3 mr-1" />
-                                                {new Date(event.date).toLocaleDateString()}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="font-mono font-medium text-gray-900">
-                                            {/* Association ALWAYS sees their own stats here because it's their profile */}
-                                            {event.ticketsSold} / {event.maxCapacity} sold
-                                        </div>
-                                        <div className="text-xs text-green-600 font-semibold mt-1">
-                                            +€{(event.ticketsSold * event.price).toFixed(2)}
-                                        </div>
-                                        <Link to={`/events/${event._id}`} className="text-xs text-indigo-600 hover:underline block mt-1">
-                                            Manage Event
-                                        </Link>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-gray-500 text-center py-4">You haven't created any events yet.</p>
-                    )}
-                </div>
-            </>
-        )}
       </div>
     </div>
   );
