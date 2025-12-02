@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -446,7 +447,8 @@ app.post('/api/events', authMiddleware, async (req, res) => {
 
         let { 
             title, description, longDescription, image, date, time, 
-            location, price, maxCapacity, category, prLists, status 
+            location, price, maxCapacity, category, prLists, status,
+            requiresMatricola, scanType
         } = req.body;
 
         if (price < 0) return res.status(400).json({ error: "Price cannot be negative" });
@@ -473,7 +475,9 @@ app.post('/api/events', authMiddleware, async (req, res) => {
             stripeAccountId: user.stripeAccountId,
             ticketsSold: 0,
             favoritesCount: 0,
-            status: status || 'active' // Default to active if not specified (legacy behavior)
+            status: status || 'active',
+            requiresMatricola: !!requiresMatricola,
+            scanType: scanType || 'entry_only'
         });
 
         await newEvent.populate('organization', 'name _id');
@@ -496,14 +500,17 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
 
         let { 
             title, description, longDescription, image, date, time, 
-            location, maxCapacity, category, prLists, price, status 
+            location, maxCapacity, category, prLists, price, status,
+            requiresMatricola, scanType
         } = req.body;
 
         const updated = await Event.findByIdAndUpdate(req.params.id, {
             title, description, longDescription, image, date, time, 
             location, maxCapacity, category, prLists,
             ...(price !== undefined && { price }),
-            ...(status !== undefined && { status })
+            ...(status !== undefined && { status }),
+            ...(requiresMatricola !== undefined && { requiresMatricola }),
+            ...(scanType !== undefined && { scanType })
         }, { new: true }).populate('organization', 'name _id');
 
         res.json(updated);
@@ -562,6 +569,28 @@ app.get('/api/events/:id/stats', authMiddleware, async (req, res) => {
         res.json(stats);
     } catch (e) {
         console.error("Stats Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// New Route: Get Attendees List
+app.get('/api/events/:id/attendees', authMiddleware, async (req, res) => {
+    try {
+        const eventId = req.params.id;
+        const event = await Event.findById(eventId);
+        
+        if (!event) return res.status(404).json({ error: "Event not found" });
+        
+        if (event.organization.toString() !== req.user.userId && req.user.role !== 'admin') {
+            return res.status(403).json({ error: "Unauthorized" });
+        }
+
+        const tickets = await Ticket.find({ event: eventId, status: { $ne: 'deleted' } })
+            .select('ticketHolderName matricola status entryTime exitTime prList purchaseDate')
+            .sort({ ticketHolderName: 1 });
+            
+        res.json(tickets);
+    } catch (e) {
         res.status(500).json({ error: e.message });
     }
 });
@@ -625,13 +654,52 @@ app.post('/api/tickets/validate', authMiddleware, async (req, res) => {
         const orgId = typeof ticket.event.organization === 'object' ? ticket.event.organization._id.toString() : ticket.event.organization.toString();
         
         if (orgId !== req.user.userId) return res.status(403).json({ error: "WRONG_EVENT_ORGANIZER" });
-        if (ticket.used) return res.status(400).json({ error: "ALREADY_USED" });
 
-        ticket.used = true;
-        ticket.checkInDate = new Date();
+        const event = ticket.event;
+        const scanType = event.scanType || 'entry_only';
+
+        let message = "Voucher Valid";
+        let action = "check-in";
+
+        if (scanType === 'entry_only') {
+             // Classic behavior
+             if (ticket.used || ticket.status === 'completed') {
+                 return res.status(400).json({ error: "ALREADY_USED" });
+             }
+             ticket.used = true;
+             ticket.status = 'completed';
+             ticket.checkInDate = new Date();
+             ticket.entryTime = new Date(); // Set entry time as well for consistency
+             message = "Ingresso Registrato";
+        } else {
+            // Entry/Exit Logic
+            // Legacy 'active' or 'valid' -> Entered
+            if (ticket.status === 'valid' || ticket.status === 'active' || !ticket.status) {
+                ticket.status = 'entered';
+                ticket.entryTime = new Date();
+                message = "Ingresso Registrato";
+                action = "entry";
+            } 
+            else if (ticket.status === 'entered') {
+                ticket.status = 'completed';
+                ticket.exitTime = new Date();
+                ticket.used = true; // Mark used when cycle complete
+                message = "Uscita Registrata";
+                action = "exit";
+            }
+            else if (ticket.status === 'completed') {
+                return res.status(400).json({ error: "ALREADY_USED" }); // Already exited
+            }
+        }
+
         await ticket.save();
 
-        res.json(ticket);
+        // Attach action and message to response
+        const response = ticket.toObject();
+        response.scanAction = action; 
+        response.scanMessage = message;
+
+        res.json(response);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

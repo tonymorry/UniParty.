@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -16,6 +17,7 @@ import Support from './pages/Support';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import Favorites from './pages/Favorites';
+import EventAttendees from './pages/EventAttendees'; // Import new page
 import Footer from './components/Footer';
 import CookieBanner from './components/CookieBanner';
 
@@ -31,6 +33,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/events/:id" element={<EventDetails />} />
+              <Route path="/events/:id/attendees" element={<EventAttendees />} /> {/* New Route */}
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/dashboard" element={<Dashboard />} />

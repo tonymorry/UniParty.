@@ -1,3 +1,4 @@
+
 const Stripe = require('stripe');
 const { User, Event, Ticket, Order } = require('./models');
 const mongoose = require('mongoose');
@@ -26,14 +27,19 @@ const processSuccessfulOrder = async (order, session, dbSession) => {
 
     // 2. Generate Tickets
     const ticketsToCreate = [];
-    for (let name of order.ticketNames) {
+    for (let i = 0; i < order.ticketNames.length; i++) {
+        const name = order.ticketNames[i];
+        const matricola = order.ticketMatricolas && order.ticketMatricolas[i] ? order.ticketMatricolas[i] : undefined;
+
         ticketsToCreate.push({
             event: order.eventId,
             owner: order.userId,
             ticketHolderName: name || "Guest",
+            matricola: matricola,
             qrCodeId: uuidv4(), 
             prList: order.prList,
             used: false,
+            status: 'valid',
             sessionId: session.id,
             paymentIntentId: session.payment_intent
         });
@@ -95,7 +101,7 @@ const StripeController = {
    */
   createCheckoutSession: async (req, res) => {
     try {
-      const { eventId, quantity, ticketNames, prList, userId } = req.body;
+      const { eventId, quantity, ticketNames, ticketMatricolas, prList, userId } = req.body;
 
       // 1. Validations
       if (!ticketNames || ticketNames.length !== quantity) {
@@ -130,7 +136,8 @@ const StripeController = {
       const newOrder = await Order.create({
           userId,
           eventId,
-          ticketNames, 
+          ticketNames,
+          ticketMatricolas: ticketMatricolas || [], // Save matricolas
           prList: prList || "Nessuna lista",
           quantity,
           totalAmountCents: totalPerTicketCents * quantity,

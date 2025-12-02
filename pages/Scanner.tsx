@@ -5,12 +5,12 @@ import { api } from '../services/api';
 import { Ticket, UserRole } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, AlertTriangle, RefreshCw, Search, ScanLine, Camera } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, RefreshCw, Search, ScanLine, Camera, Clock, LogOut, LogIn } from 'lucide-react';
 
 const Scanner: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [scanResult, setScanResult] = useState<Ticket | null>(null);
+  const [scanResult, setScanResult] = useState<Ticket & { scanAction?: string, scanMessage?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [manualCode, setManualCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -124,7 +124,7 @@ const Scanner: React.FC = () => {
           if (err.message === "INVALID_TICKET") {
               setError("Voucher Non Valido. Codice non trovato.");
           } else if (err.message === "ALREADY_USED") {
-              setError("Voucher GIÀ USATO! Ingresso negato.");
+              setError("Voucher GIÀ USATO (Uscita già registrata).");
           } else if (err.message === "WRONG_EVENT_ORGANIZER") {
               setError("Questo voucher appartiene a un'altra associazione.");
           } else if (err.message === "TICKET_INVALID_DELETED") {
@@ -199,16 +199,41 @@ const Scanner: React.FC = () => {
           {/* SUCCESS RESULT */}
           {scanResult && (
               <div className="bg-white text-gray-900 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl animate-in zoom-in duration-300">
-                  <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <CheckCircle className="w-12 h-12 text-green-600" />
-                  </div>
-                  <h2 className="text-3xl font-bold text-green-600 mb-2">Voucher Valido</h2>
+                  {scanResult.scanAction === 'exit' ? (
+                      <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                           <LogOut className="w-12 h-12 text-blue-600" />
+                      </div>
+                  ) : (
+                      <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                           <CheckCircle className="w-12 h-12 text-green-600" />
+                      </div>
+                  )}
+                  
+                  <h2 className={`text-3xl font-bold mb-2 ${scanResult.scanAction === 'exit' ? 'text-blue-600' : 'text-green-600'}`}>
+                      {scanResult.scanMessage || "Voucher Valido"}
+                  </h2>
+
                   <div className="bg-gray-100 rounded-lg p-4 mb-6 text-left border border-gray-200">
                       <p className="text-lg font-bold text-indigo-900 mb-1">{scanResult.event.title}</p>
                       <div className="border-t border-gray-200 my-2"></div>
                       <p className="text-sm text-gray-500 uppercase font-bold">Intestatario</p>
                       <p className="text-xl font-bold text-gray-900 mb-2">{scanResult.ticketHolderName}</p>
-                      <p className="text-sm text-gray-500 uppercase font-bold">Lista PR</p>
+                      
+                      {scanResult.matricola && (
+                          <>
+                            <p className="text-sm text-gray-500 uppercase font-bold">Matricola</p>
+                            <p className="text-lg font-bold text-gray-900 mb-2">{scanResult.matricola}</p>
+                          </>
+                      )}
+
+                      {scanResult.scanAction === 'exit' && scanResult.entryTime && (
+                           <div className="mt-2 text-sm bg-blue-50 p-2 rounded text-blue-800">
+                               <Clock className="w-3 h-3 inline mr-1" />
+                               Entrato alle: {new Date(scanResult.entryTime).toLocaleTimeString()}
+                           </div>
+                      )}
+
+                      <p className="text-sm text-gray-500 uppercase font-bold mt-2">Lista PR</p>
                       <p className="text-lg font-bold text-indigo-600">{scanResult.prList || "Nessuna"}</p>
                   </div>
                   <button onClick={resetScanner} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl flex items-center justify-center transition-transform active:scale-95">

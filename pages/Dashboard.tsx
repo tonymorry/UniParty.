@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -5,7 +6,7 @@ import { UserRole, EventCategory, Event } from '../types';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { 
     AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, 
-    ShieldCheck, Lock, Info, Upload, FileText, TrendingUp, Briefcase, Ticket, LayoutDashboard, Calendar
+    ShieldCheck, Lock, Info, Upload, FileText, TrendingUp, Briefcase, Ticket, LayoutDashboard, Calendar, Settings
 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
@@ -33,6 +34,10 @@ const Dashboard: React.FC = () => {
   const [maxCapacity, setMaxCapacity] = useState('100');
   const [category, setCategory] = useState<EventCategory>(EventCategory.PARTY);
   
+  // Advanced Options
+  const [requiresMatricola, setRequiresMatricola] = useState(false);
+  const [scanType, setScanType] = useState<'entry_only' | 'entry_exit'>('entry_only');
+
   // PR Lists State
   const [prLists, setPrLists] = useState<string[]>([]);
   const [currentPrInput, setCurrentPrInput] = useState('');
@@ -158,7 +163,9 @@ const Dashboard: React.FC = () => {
             price: numericPrice,
             category,
             prLists,
-            status: targetStatus
+            status: targetStatus,
+            requiresMatricola,
+            scanType
         }, user);
 
         if (targetStatus === 'draft') {
@@ -294,9 +301,9 @@ const Dashboard: React.FC = () => {
                         ) : assocEvents.length > 0 ? (
                             <div className="divide-y divide-gray-100">
                                 {assocEvents.map(event => (
-                                    <div key={event._id} className="py-4 flex items-center justify-between group">
+                                    <div key={event._id} className="py-4 flex flex-col md:flex-row md:items-center justify-between group gap-4">
                                         <div className="flex items-center">
-                                            <div className="w-12 h-12 bg-gray-100 rounded-lg mr-4 overflow-hidden">
+                                            <div className="w-12 h-12 bg-gray-100 rounded-lg mr-4 overflow-hidden flex-shrink-0">
                                                 <img src={event.image} className="w-full h-full object-cover" alt="" onError={(e) => (e.currentTarget.style.display = 'none')}/>
                                             </div>
                                             <div>
@@ -314,16 +321,30 @@ const Dashboard: React.FC = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="text-right pl-2">
-                                            <div className="font-mono font-medium text-gray-900 text-sm">
-                                                {event.ticketsSold}/{event.maxCapacity}
+                                        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
+                                            <div className="text-right">
+                                                <div className="font-mono font-medium text-gray-900 text-sm">
+                                                    {event.ticketsSold}/{event.maxCapacity}
+                                                </div>
+                                                <div className="text-xs text-green-600 font-semibold mt-1">
+                                                    +€{(event.ticketsSold * event.price).toFixed(2)}
+                                                </div>
                                             </div>
-                                            <div className="text-xs text-green-600 font-semibold mt-1">
-                                                +€{(event.ticketsSold * event.price).toFixed(2)}
+                                            <div className="flex gap-2">
+                                                <Link 
+                                                    to={`/events/${event._id}/attendees`}
+                                                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-bold transition flex items-center"
+                                                >
+                                                    <Users className="w-3 h-3 mr-1" />
+                                                    Lista
+                                                </Link>
+                                                <Link 
+                                                    to={`/events/${event._id}`} 
+                                                    className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition"
+                                                >
+                                                    Gestisci
+                                                </Link>
                                             </div>
-                                            <Link to={`/events/${event._id}`} className="text-xs text-indigo-600 hover:underline block mt-1">
-                                                Gestisci
-                                            </Link>
                                         </div>
                                     </div>
                                 ))}
@@ -504,6 +525,37 @@ const Dashboard: React.FC = () => {
                                    </div>
                                </div>
                                
+                               {/* ADVANCED OPTIONS */}
+                               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                   <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center">
+                                       <Settings className="w-4 h-4 mr-2" /> Opzioni Avanzate (Seminari / Accademico)
+                                   </h3>
+                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                       <div className="flex items-center space-x-3 bg-white p-3 rounded-lg border border-gray-200">
+                                           <input 
+                                               type="checkbox" 
+                                               id="reqMatricola"
+                                               checked={requiresMatricola}
+                                               onChange={e => setRequiresMatricola(e.target.checked)}
+                                               className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                           />
+                                           <label htmlFor="reqMatricola" className="text-sm text-gray-700 font-medium">Richiedi Numero Matricola</label>
+                                       </div>
+                                       
+                                       <div className="bg-white p-3 rounded-lg border border-gray-200">
+                                           <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Tipo Scansione</label>
+                                           <select 
+                                               value={scanType}
+                                               onChange={e => setScanType(e.target.value as any)}
+                                               className="w-full text-sm bg-transparent outline-none font-medium text-gray-700"
+                                           >
+                                               <option value="entry_only">Solo Ingresso (Standard)</option>
+                                               <option value="entry_exit">Ingresso & Uscita (Tracciamento ore)</option>
+                                           </select>
+                                       </div>
+                                   </div>
+                               </div>
+
                                <div>
                                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><List className="w-4 h-4 mr-1"/> Liste PR (Opzionale)</label>
                                    <div className="flex gap-2 mb-2">

@@ -1,9 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Event, UserRole } from '../types';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Calendar, Clock, Info, CreditCard, Minus, Plus, AlertCircle, User as UserIcon, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, Flame, Heart, FileText, CheckCircle } from 'lucide-react';
+import { MapPin, Calendar, Clock, Info, CreditCard, Minus, Plus, AlertCircle, User as UserIcon, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, Flame, Heart, FileText, CheckCircle, GraduationCap } from 'lucide-react';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,7 +14,10 @@ const EventDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [purchasing, setPurchasing] = useState(false);
+  
+  // Ticket Data States
   const [ticketNames, setTicketNames] = useState<string[]>(['']);
+  const [ticketMatricolas, setTicketMatricolas] = useState<string[]>(['']);
   const [selectedPrList, setSelectedPrList] = useState<string>(""); 
 
   // Consent State
@@ -76,12 +80,29 @@ const EventDetails: React.FC = () => {
         }
         return newNames;
     });
+
+    // Also sync matricolas array length
+    setTicketMatricolas(prev => {
+        const newMats = [...prev];
+        if (quantity > prev.length) {
+            for (let i = prev.length; i < quantity; i++) newMats.push('');
+        } else {
+            return newMats.slice(0, quantity);
+        }
+        return newMats;
+    });
   }, [quantity]);
 
   const handleNameChange = (index: number, value: string) => {
       const newNames = [...ticketNames];
       newNames[index] = value;
       setTicketNames(newNames);
+  };
+
+  const handleMatricolaChange = (index: number, value: string) => {
+      const newMats = [...ticketMatricolas];
+      newMats[index] = value;
+      setTicketMatricolas(newMats);
   };
 
   const handlePurchase = async () => {
@@ -100,6 +121,11 @@ const EventDetails: React.FC = () => {
         return;
     }
 
+    if (event?.requiresMatricola && ticketMatricolas.some(m => m.trim() === '')) {
+        alert("Inserisci la matricola per ogni voucher.");
+        return;
+    }
+
     if (event && event.prLists && event.prLists.length > 0 && selectedPrList === "") {
         alert("Seleziona una Lista PR (o 'Nessuna lista').");
         return;
@@ -113,7 +139,14 @@ const EventDetails: React.FC = () => {
     if (event) {
       setPurchasing(true);
       try {
-        const redirectUrl = await api.payments.createCheckoutSession(event._id, quantity, user._id, ticketNames, selectedPrList || "Nessuna lista");
+        const redirectUrl = await api.payments.createCheckoutSession(
+            event._id, 
+            quantity, 
+            user._id, 
+            ticketNames, 
+            selectedPrList || "Nessuna lista",
+            event.requiresMatricola ? ticketMatricolas : undefined // Send matricolas if required
+        );
         if (redirectUrl) {
             window.location.hash = redirectUrl;
         }
@@ -558,27 +591,45 @@ const EventDetails: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Ticket Names Inputs - INSIDE Card */}
+                    {/* Ticket Names & Matricola Inputs - INSIDE Card */}
                     {!isSoldOut && user && user.role === UserRole.STUDENTE && event.status !== 'draft' && (
                         <div className="mb-6 space-y-3 border-t border-gray-100 pt-4">
-                            <p className="text-sm font-semibold text-gray-700">Intestatari Voucher</p>
+                            <p className="text-sm font-semibold text-gray-700">Dettagli Partecipanti</p>
                             {Array.from({ length: quantity }).map((_, idx) => (
-                                <div key={idx} className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <UserIcon className="h-4 w-4 text-gray-400" />
+                                <div key={idx} className="space-y-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                                    <p className="text-xs font-bold text-gray-400">Voucher #{idx + 1}</p>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <UserIcon className="h-4 w-4 text-gray-400" />
+                                        </div>
+                                        <input 
+                                            type="text"
+                                            placeholder="Nome e Cognome"
+                                            value={ticketNames[idx] || ''}
+                                            onChange={(e) => handleNameChange(idx, e.target.value)}
+                                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            required
+                                        />
                                     </div>
-                                    <input 
-                                        type="text"
-                                        placeholder={`Nome sul Voucher #${idx + 1}`}
-                                        value={ticketNames[idx] || ''}
-                                        onChange={(e) => handleNameChange(idx, e.target.value)}
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        required
-                                    />
+                                    {event.requiresMatricola && (
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <GraduationCap className="h-4 w-4 text-gray-400" />
+                                            </div>
+                                            <input 
+                                                type="text"
+                                                placeholder="Numero Matricola"
+                                                value={ticketMatricolas[idx] || ''}
+                                                onChange={(e) => handleMatricolaChange(idx, e.target.value)}
+                                                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                required
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                             <p className="text-xs text-gray-400 mt-1">
-                                Inserisci nome e cognome per ogni ingresso.
+                                Inserisci nome {event.requiresMatricola ? 'e matricola' : ''} per ogni ingresso.
                             </p>
                         </div>
                     )}

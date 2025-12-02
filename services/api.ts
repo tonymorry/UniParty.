@@ -1,3 +1,4 @@
+
 import { Event, EventCategory, LoginResponse, Ticket, User, UserRole } from '../types';
 
 // ==========================================
@@ -40,6 +41,7 @@ const mockApi = {
     update: async () => ({} as any),
     delete: async () => {},
     getEventStats: async () => ({}),
+    getAttendees: async () => [],
     validateTicket: async () => ({} as any)
   },
   wallet: {
@@ -179,6 +181,10 @@ const realApi = {
         const res = await fetch(`${API_URL}/events/${eventId}/stats`, { headers: getHeaders() });
         return res.json();
     },
+    getAttendees: async (eventId: string) => {
+        const res = await fetch(`${API_URL}/events/${eventId}/attendees`, { headers: getHeaders() });
+        return res.json();
+    },
     validateTicket: async (qrCodeId: string) => {
         const res = await fetch(`${API_URL}/tickets/validate`, {
             method: 'POST',
@@ -211,11 +217,11 @@ const realApi = {
     }
   },
   payments: {
-    createCheckoutSession: async (eventId: string, quantity: number, userId: string, ticketNames: string[], prListName: string) => {
+    createCheckoutSession: async (eventId: string, quantity: number, userId: string, ticketNames: string[], prListName: string, ticketMatricolas?: string[]) => {
         const res = await fetch(`${API_URL}/stripe/create-checkout-session`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ eventId, quantity, userId, ticketNames, prList: prListName })
+            body: JSON.stringify({ eventId, quantity, userId, ticketNames, prList: prListName, ticketMatricolas })
         });
         const data = await res.json();
         if(data.url) {

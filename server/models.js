@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 
 // --- USER SCHEMA ---
@@ -55,12 +56,12 @@ const eventSchema = new mongoose.Schema({
   // Favorites Counter
   favoritesCount: { type: Number, default: 0 },
 
-  // Status for soft delete/archiving (Legal/Fiscal compliance)
-  // 'active': Visible to public (subject to time rules)
-  // 'draft': Visible only to organization, not published
-  // 'archived': Hidden from public, visible to association (History)
-  // 'deleted': Deleted by user (Soft delete)
-  status: { type: String, enum: ['active', 'draft', 'archived', 'deleted'], default: 'active' }
+  // Status for soft delete/archiving
+  status: { type: String, enum: ['active', 'draft', 'archived', 'deleted'], default: 'active' },
+
+  // --- ACADEMIC / SEMINAR FEATURES ---
+  requiresMatricola: { type: Boolean, default: false },
+  scanType: { type: String, enum: ['entry_only', 'entry_exit'], default: 'entry_only' }
 }, { timestamps: true });
 
 // --- TICKET SCHEMA ---
@@ -73,15 +74,23 @@ const ticketSchema = new mongoose.Schema({
   purchaseDate: { type: Date, default: Date.now },
   prList: { type: String, default: 'Nessuna lista' },
   
-  used: { type: Boolean, default: false },
-  checkInDate: Date,
+  // Academic Fields
+  matricola: { type: String },
+  entryTime: { type: Date },
+  exitTime: { type: Date },
+
+  used: { type: Boolean, default: false }, // Kept for legacy compatibility (true if completed)
+  checkInDate: Date, // Kept for legacy compatibility (synced with entryTime)
   
   // Stripe Data
   paymentIntentId: String,
   sessionId: String,
 
-  // Status for soft delete/archiving
-  status: { type: String, enum: ['active', 'archived', 'deleted'], default: 'active' }
+  // Status
+  // 'valid'/'active': Ready to be used
+  // 'entered': Inside the event (for entry_exit)
+  // 'completed': Finished (Exit scanned or Entry scanned for simple events)
+  status: { type: String, enum: ['active', 'valid', 'entered', 'completed', 'archived', 'deleted'], default: 'valid' }
 }, { timestamps: true });
 
 // --- ORDER SCHEMA ---
@@ -89,6 +98,7 @@ const orderSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
   ticketNames: [String], // Array of names
+  ticketMatricolas: [String], // Array of matricolas (parallel to names)
   prList: { type: String, default: 'Nessuna lista' },
   quantity: { type: Number, required: true },
   totalAmountCents: { type: Number, required: true },
