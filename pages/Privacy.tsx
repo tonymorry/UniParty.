@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Lock, FileText } from 'lucide-react';
+import { Shield, Lock, FileText, Clock, GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Privacy: React.FC = () => {
@@ -13,7 +13,7 @@ const Privacy: React.FC = () => {
         
         <div className="prose prose-indigo max-w-none text-gray-600 space-y-6">
             <p className="font-semibold text-gray-900">
-                Ultimo aggiornamento: 27 Novembre 2025
+                Ultimo aggiornamento: 02 Dicembre 2025
             </p>
             
             <p>
@@ -30,58 +30,48 @@ const Privacy: React.FC = () => {
             <h2 className="text-xl font-bold text-gray-900 mt-8">2. Dati che raccogliamo</h2>
             <ul className="list-disc pl-5 space-y-1">
                 <li><strong>Dati Account:</strong> Nome, Cognome, Email, Password (crittografata).</li>
-                <li><strong>Dati Transazionali:</strong> Storico delle prenotazioni, Voucher generati, importi versati, data e ora delle transazioni.</li>
-                <li><strong>Dati di Utilizzo:</strong> Scansione dei QR Code (data e ora di ingresso all'evento).</li>
-                <li><strong>Per le Associazioni:</strong> Dati aziendali/associativi e ID dell'account Stripe collegato per ricevere i fondi.</li>
+                <li><strong>Dati Accademici (Opzionale):</strong> Numero di Matricola, richiesto solo per specifici eventi (es. seminari) su indicazione dell'Organizzatore.</li>
+                <li><strong>Dati Transazionali:</strong> Storico delle prenotazioni, Voucher generati, importi versati.</li>
+                <li><strong>Dati di Utilizzo e Presenza:</strong> Scansione dei QR Code. Per alcuni eventi, registriamo sia l'orario di <strong>Ingresso</strong> che di <strong>Uscita</strong> per calcolare la permanenza.</li>
+                <li><strong>Per le Associazioni:</strong> Dati aziendali/associativi e ID dell'account Stripe collegato.</li>
             </ul>
             <div className="bg-gray-50 p-4 rounded-lg text-sm mt-2 border border-gray-200">
                 <Lock className="w-4 h-4 inline mr-2 text-gray-500"/>
-                <strong>Nota sui Pagamenti:</strong> Non memorizziamo né processiamo direttamente i numeri completi delle carte di credito. I pagamenti sono gestiti in sicurezza da <strong>Stripe Inc.</strong>, che agisce come titolare autonomo per i dati finanziari.
+                <strong>Nota sui Pagamenti:</strong> Non memorizziamo né processiamo direttamente i numeri completi delle carte di credito. I pagamenti sono gestiti in sicurezza da <strong>Stripe Inc.</strong>.
             </div>
 
-            <h2 className="text-xl font-bold text-gray-900 mt-8">3. Perché trattiamo i tuoi dati (Finalità)</h2>
+            <h2 className="text-xl font-bold text-gray-900 mt-8">3. Finalità del Trattamento</h2>
             <ol className="list-decimal pl-5 space-y-1">
-                <li><strong>Erogazione del Servizio:</strong> Per gestire il tuo account, generare i Voucher di prenotazione e permetterti l'accesso agli eventi (Base giuridica: Contratto).</li>
-                <li><strong>Obblighi Fiscali e Legali (IMPORTANTE):</strong> Per conservare traccia delle transazioni economiche come richiesto dalle leggi fiscali italiane e normative antiriciclaggio (Base giuridica: Obbligo Legale).</li>
-                <li><strong>Sicurezza:</strong> Per prevenire frodi o abusi della piattaforma (Base giuridica: Legittimo Interesse).</li>
+                <li><strong>Erogazione del Servizio:</strong> Gestione account, emissione Voucher e accessi (Base giuridica: Contratto).</li>
+                <li><strong>Certificazione Presenze (Novità):</strong> Per i seminari o eventi formativi, trattiamo Matricola e Orari di Entrata/Uscita per permettere all'Organizzatore di certificare la presenza ai fini di Crediti Formativi o attestati (Base giuridica: Esecuzione del contratto/Interesse legittimo dell'ente formatore).</li>
+                <li><strong>Obblighi Fiscali:</strong> Conservazione traccia delle transazioni economiche (Base giuridica: Obbligo Legale).</li>
+                <li><strong>Sicurezza:</strong> Prevenzione frodi (Base giuridica: Legittimo Interesse).</li>
             </ol>
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">4. Conservazione dei Dati (Data Retention)</h2>
-            <p>
-                I tuoi dati sono conservati per il tempo necessario all'erogazione del servizio. In caso di cancellazione dell'account o di eventi passati, applichiamo criteri differenziati in base alla normativa fiscale:
-            </p>
             <ul className="list-disc pl-5 space-y-1 mt-2">
                 <li>
-                    <strong>Transazioni a Pagamento:</strong> Se hai acquistato Voucher a pagamento o organizzato eventi con biglietti a pagamento, i dati relativi alle transazioni e all'account verranno conservati in archivio sicuro ("Soft Delete") per <strong>10 anni</strong>, come richiesto dall'art. 2220 del Codice Civile per finalità fiscali.
+                    <strong>Transazioni a Pagamento:</strong> I dati relativi a transazioni economiche vengono conservati ("Soft Delete") per <strong>10 anni</strong>, come richiesto dall'art. 2220 del Codice Civile per finalità fiscali.
                 </li>
                 <li>
-                    <strong>Transazioni Gratuite o Nessuna Transazione:</strong> Se hai utilizzato la piattaforma esclusivamente per eventi gratuiti, i tuoi dati verranno <strong>cancellati definitivamente</strong> ("Hard Delete") dai nostri sistemi poco dopo la richiesta di cancellazione o la conclusione dell'evento, garantendo il massimo rispetto della tua privacy.
+                    <strong>Transazioni Gratuite:</strong> Se l'account ha effettuato solo prenotazioni gratuite, i dati vengono <strong>cancellati definitivamente</strong> ("Hard Delete") dai nostri sistemi su richiesta di cancellazione o dopo un periodo di inattività prolungato.
                 </li>
             </ul>
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">5. Condivisione dei dati</h2>
             <p>Condividiamo i tuoi dati strettamente necessari con:</p>
             <ul className="list-disc pl-5 space-y-1">
-                <li><strong>Organizzatori (Associazioni):</strong> Ricevono il tuo Nome, Cognome e dettagli del Voucher per verificare la tua identità all'ingresso dell'evento.</li>
-                <li><strong>Stripe:</strong> Per processare i pagamenti e gestire i trasferimenti di denaro alle associazioni.</li>
-                <li><strong>Autorità Pubbliche:</strong> Solo se richiesto per legge o per ordine dell'autorità giudiziaria.</li>
+                <li>
+                    <strong>Organizzatori (Associazioni):</strong> Ricevono Nome, Cognome e, ove richiesto, <strong>Numero di Matricola</strong> e orari di presenza. L'Associazione agisce come Titolare autonomo o Responsabile del trattamento per le finalità legate all'evento specifico.
+                </li>
+                <li><strong>Stripe:</strong> Per processare i pagamenti.</li>
+                <li><strong>Autorità Pubbliche:</strong> Solo se richiesto per legge.</li>
             </ul>
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">6. I tuoi diritti</h2>
-            <p>Ai sensi del GDPR, hai diritto di:</p>
-            <ul className="list-disc pl-5 space-y-1">
-                <li>Accedere ai tuoi dati.</li>
-                <li>Chiedere la rettifica di dati inesatti.</li>
-                <li>Chiedere la cancellazione (Diritto all'oblio), fatti salvi gli obblighi di conservazione fiscale descritti al punto 4.</li>
-                <li>Scaricare i tuoi dati (Portabilità).</li>
-            </ul>
-            <p className="mt-4">
-                Per esercitare questi diritti, accedi alla sezione <Link to="/support" className="text-indigo-600 hover:underline">Supporto</Link> o scrivici.
-            </p>
-
-            <h2 className="text-xl font-bold text-gray-900 mt-8">7. Modifiche</h2>
             <p>
-                Potremmo aggiornare questa informativa. Ti avviseremo di modifiche significative tramite l'email associata al tuo account o un avviso sulla piattaforma.
+                Hai diritto di accedere, rettificare, cancellare i tuoi dati o opporti al trattamento. 
+                Per esercitare questi diritti, scrivi a <a href="mailto:uniparty.team@gmail.com" className="text-indigo-600 hover:underline">uniparty.team@gmail.com</a>.
             </p>
         </div>
       </div>

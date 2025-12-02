@@ -436,7 +436,8 @@ const AdminDashboard: React.FC = () => {
                   <div className="p-6 overflow-y-auto flex-1">
                       <div className="mb-6">
                            <h2 className="text-2xl font-bold text-gray-900">{selectedEvent.title}</h2>
-                           <p className="text-gray-500">{new Date(selectedEvent.date).toLocaleDateString()} • {selectedEvent.location}</p>
+                           <p className="text-gray-500">{new Date(selectedEvent.date).toLocaleDateString()}</p>
+                           <p className="text-gray-500">{selectedEvent.location}</p>
                       </div>
 
                       {statsLoading ? (

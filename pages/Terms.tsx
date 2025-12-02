@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Link as LinkIcon } from 'lucide-react';
+import { FileText, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Terms: React.FC = () => {
@@ -13,89 +13,68 @@ const Terms: React.FC = () => {
         
         <div className="prose prose-indigo max-w-none text-gray-600 space-y-6">
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-                <p className="text-sm text-yellow-800 font-semibold m-0">
-                    Nota Bene: UniParty agisce esclusivamente come fornitore tecnologico. Il contratto di vendita dell'ingresso si perfeziona tra l'Utente e l'Organizzatore dell'evento.
+                <p className="text-sm text-yellow-800 font-semibold m-0 flex items-start">
+                    <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
+                    <span>Nota Bene: UniParty agisce esclusivamente come fornitore tecnologico. Il contratto di vendita o partecipazione si perfeziona tra l'Utente e l'Organizzatore dell'evento.</span>
                 </p>
             </div>
 
             <p className="font-semibold text-gray-900">
-                Ultimo aggiornamento: 27 Novembre 2025
+                Ultimo aggiornamento: 02 Dicembre 2025
             </p>
             
+            <h2 className="text-xl font-bold text-gray-900 mt-8">1. Oggetto del Servizio</h2>
             <p>
-                Benvenuto su <strong>UniParty</strong>. L'utilizzo della piattaforma e dei servizi offerti implica l'accettazione integrale dei presenti Termini e Condizioni. Ti invitiamo a leggerli attentamente.
+                UniParty fornisce una piattaforma per la prenotazione di eventi universitari (party, seminari, conferenze) e la gestione dei relativi accessi tramite tecnologia QR Code.
             </p>
 
-            <h2 className="text-xl font-bold text-gray-900 mt-8">1. Definizioni</h2>
-            <ul className="list-disc pl-5 space-y-1">
-                <li><strong>Piattaforma:</strong> Il sito web e l'applicazione UniParty.</li>
-                <li><strong>Organizzatore:</strong> L'Associazione studentesca o ente terzo che promuove l'evento.</li>
-                <li><strong>Utente:</strong> Lo studente o persona che prenota l'accesso all'evento.</li>
-                <li><strong>Voucher:</strong> Il codice QR generato dalla Piattaforma a seguito del pagamento.</li>
-            </ul>
-
-            <h2 className="text-xl font-bold text-gray-900 mt-8">2. Ruolo di UniParty (Mandato all'incasso)</h2>
+            <h2 className="text-xl font-bold text-gray-900 mt-8">2. Ruolo di UniParty e dell'Organizzatore</h2>
             <p>
-                UniParty fornisce all'Organizzatore una piattaforma tecnologica per la gestione delle prenotazioni e la riscossione dei pagamenti.
-                UniParty agisce in qualità di <strong>mandatario all'incasso</strong> in nome e per conto dell'Organizzatore.
-                Ciò significa che:
+                UniParty agisce come <strong>mandatario all'incasso</strong> per conto dell'Organizzatore (Associazione). 
+                UniParty incassa le somme versate dall'Utente e le trasferisce all'Organizzatore (al netto delle commissioni), il quale rimane l'unico responsabile dell'evento, della sua sicurezza e della conformità fiscale (emissione biglietti SIAE/Titoli fiscali).
+            </p>
+
+            <h2 className="text-xl font-bold text-gray-900 mt-8">3. Seminari e Rilevazione Presenze</h2>
+            <p>
+                Per eventi di tipo accademico o seminariale, la piattaforma può richiedere:
             </p>
             <ul className="list-disc pl-5 space-y-1">
-                <li>UniParty <strong>NON è il venditore</strong> del servizio di intrattenimento/spettacolo.</li>
-                <li>UniParty <strong>NON è responsabile</strong> dell'organizzazione, della sicurezza o dello svolgimento dell'evento.</li>
-                <li>Il pagamento effettuato dall'Utente sulla Piattaforma estingue il debito nei confronti dell'Organizzatore per l'importo versato.</li>
+                <li><strong>Numero di Matricola:</strong> L'Utente è responsabile della correttezza del numero inserito. UniParty non verifica la veridicità della matricola.</li>
+                <li><strong>Scansione Ingresso e Uscita:</strong> Per ottenere la validazione della presenza, l'Utente è tenuto a far scansionare il proprio QR Code sia all'arrivo ("Check-in") che all'abbandono della sala ("Check-out"). La mancata scansione dell'uscita potrebbe invalidare la presenza ai fini dell'attribuzione di crediti o attestati.</li>
             </ul>
-
-            <h2 className="text-xl font-bold text-gray-900 mt-8">3. Natura del Voucher e Titolo Fiscale (SIAE)</h2>
-            <p>
-                Il <strong>Voucher (QR Code)</strong> emesso da UniParty costituisce esclusivamente una <strong>ricevuta di prenotazione</strong> e di avvenuto pagamento.
-            </p>
-            <p className="font-bold">
-                Il Voucher NON costituisce Titolo di Accesso valido ai fini fiscali (Biglietto SIAE).
-            </p>
-            <p>
-                È responsabilità esclusiva dell'Organizzatore (e del gestore del locale ove si svolge l'evento) emettere il regolare titolo fiscale (scontrino, biglietto SIAE o equivalente) al momento della presentazione del Voucher all'ingresso, conformemente alla normativa vigente sugli spettacoli e intrattenimenti.
+            <p className="text-sm italic">
+                Nota: L'attribuzione effettiva di CFU o vantaggi accademici è a discrezione esclusiva dell'Ente Organizzatore/Ateneo e non dipende da UniParty.
             </p>
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">4. Prezzi e Commissioni</h2>
             <p>
-                Il prezzo totale pagato dall'Utente comprende:
-            </p>
-            <ul className="list-disc pl-5 space-y-1">
-                <li>La quota di partecipazione stabilita dall'Organizzatore.</li>
-                <li>La commissione di servizio (Fee) di UniParty (€0,40 IVA inclusa, ove applicabile) per l'utilizzo della piattaforma.</li>
-            </ul>
-            <p>
-                La commissione di servizio non è rimborsabile, salvo in caso di annullamento dell'evento per colpa imputabile direttamente alla Piattaforma.
+                Il prezzo finale comprende il costo del biglietto (deciso dall'Organizzatore) e la commissione di servizio (Fee) di UniParty pari a <strong>€0,40</strong> (IVA inclusa).
+                <br />
+                Per gli <strong>eventi gratuiti</strong>, non viene applicata alcuna commissione.
+                <br />
+                La commissione di servizio non è rimborsabile.
             </p>
 
-            <h2 className="text-xl font-bold text-gray-900 mt-8">5. Rimborsi e Annullamento Eventi</h2>
+            <h2 className="text-xl font-bold text-gray-900 mt-8">5. Annullamenti e Rimborsi</h2>
             <p>
-                In caso di annullamento, rinvio o modifica sostanziale dell'evento, la responsabilità del rimborso ricade esclusivamente sull'<strong>Organizzatore</strong>.
-                UniParty, in qualità di intermediario tecnico, potrà processare i rimborsi solo su esplicita autorizzazione e disponibilità fondi dell'Organizzatore.
+                In caso di annullamento dell'evento, la responsabilità del rimborso del prezzo del biglietto ricade sull'Organizzatore. UniParty potrà facilitare tecnicamente il rimborso solo su autorizzazione dell'Organizzatore e disponibilità dei fondi sul conto connesso Stripe.
             </p>
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">6. Limitazione di Responsabilità</h2>
             <p>
-                UniParty non potrà essere ritenuta responsabile per:
+                UniParty non è responsabile per:
             </p>
             <ul className="list-disc pl-5 space-y-1">
-                <li>Cancellazione o modifica degli eventi da parte degli Organizzatori.</li>
-                <li>Mancato ingresso dovuto al rifiuto da parte del locale (es. selezione all'ingresso, stato di ebbrezza, capienza raggiunta se non gestita correttamente dall'Organizzatore).</li>
-                <li>Mancata emissione del titolo fiscale da parte dell'Organizzatore/Locale.</li>
+                <li>Qualità o svolgimento dell'evento.</li>
+                <li>Mancato riconoscimento di crediti formativi dovuto a errori nell'inserimento della matricola o mancate scansioni.</li>
+                <li>Rifiuto dell'ingresso da parte del locale/organizzazione (es. capienza raggiunta, selezione all'ingresso).</li>
             </ul>
 
-            <h2 className="text-xl font-bold text-gray-900 mt-8">7. Contatti e Reclami</h2>
+            <h2 className="text-xl font-bold text-gray-900 mt-8">7. Contatti</h2>
             <p>
-                Per problemi tecnici relativi all'App o ai pagamenti, contatta il nostro supporto. Per questioni relative all'evento (orari, rimborsi, info), contatta direttamente l'Associazione organizzatrice tramite i link presenti nel loro profilo.
+                Per assistenza tecnica: <a href="mailto:uniparty.team@gmail.com" className="text-indigo-600 hover:underline">uniparty.team@gmail.com</a>.
+                Per informazioni sugli eventi, contattare direttamente l'Associazione organizzatrice.
             </p>
-
-            <div className="mt-8 pt-8 border-t border-gray-200 text-sm text-gray-500">
-                <p><strong>Dati Societari:</strong></p>
-                <p>UniParty (Associazione / Startup in costituzione)</p>
-                <p>Indirizzo: Via Università, Roma (RM) - [INSERIRE INDIRIZZO REALE]</p>
-                <p>Email: uniparty.team@gmail.com</p>
-            </div>
         </div>
       </div>
     </div>
