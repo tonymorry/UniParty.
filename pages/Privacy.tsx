@@ -17,61 +17,53 @@ const Privacy: React.FC = () => {
             </p>
             
             <p>
-                In questa informativa spieghiamo come <strong>UniParty</strong> ("noi", "Titolare") raccoglie, utilizza e protegge i tuoi dati personali. 
-                Utilizzando la nostra piattaforma di prenotazione eventi ("Servizio"), accetti le pratiche descritte in questo documento.
+                In questa informativa spieghiamo come <strong>UniParty</strong> ("noi", "Piattaforma") raccoglie, utilizza e protegge i tuoi dati personali. 
             </p>
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">1. Titolare del Trattamento</h2>
             <p>
-                Il Titolare del trattamento è <strong>UniParty</strong> (Associazione/Ente in via di costituzione).
-                <br />Email di contatto per questioni privacy: <a href="mailto:uniparty.team@gmail.com" className="text-indigo-600 hover:underline">uniparty.team@gmail.com</a>
+                Il Titolare del trattamento dei dati relativi all'account e alla navigazione è <strong>UniParty</strong>.
+                <br />
+                Per i dati relativi alla partecipazione agli eventi (es. liste ingressi), l'<strong>Organizzatore dell'evento</strong> agisce come Titolare autonomo o Responsabile, a seconda dei casi.
             </p>
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">2. Dati che raccogliamo</h2>
             <ul className="list-disc pl-5 space-y-1">
                 <li><strong>Dati Account:</strong> Nome, Cognome, Email, Password (crittografata).</li>
-                <li><strong>Dati Accademici (Opzionale):</strong> Numero di Matricola, richiesto solo per specifici eventi (es. seminari) su indicazione dell'Organizzatore.</li>
-                <li><strong>Dati Transazionali:</strong> Storico delle prenotazioni, Voucher generati, importi versati.</li>
-                <li><strong>Dati di Utilizzo e Presenza:</strong> Scansione dei QR Code. Per alcuni eventi, registriamo sia l'orario di <strong>Ingresso</strong> che di <strong>Uscita</strong> per calcolare la permanenza.</li>
-                <li><strong>Per le Associazioni:</strong> Dati aziendali/associativi e ID dell'account Stripe collegato.</li>
+                <li><strong>Dati Accademici (Se richiesti):</strong> Numero di Matricola, raccolto solo per specifici eventi (es. seminari) per finalità di accreditamento.</li>
+                <li><strong>Dati di Presenza:</strong> Orari di scansione del QR Code (Ingresso ed eventuale Uscita) per calcolare la permanenza all'evento.</li>
+                <li><strong>Dati Transazionali:</strong> Storico degli ordini. Non trattiamo i dati completi della carta di credito, che sono gestiti interamente da Stripe.</li>
             </ul>
-            <div className="bg-gray-50 p-4 rounded-lg text-sm mt-2 border border-gray-200">
-                <Lock className="w-4 h-4 inline mr-2 text-gray-500"/>
-                <strong>Nota sui Pagamenti:</strong> Non memorizziamo né processiamo direttamente i numeri completi delle carte di credito. I pagamenti sono gestiti in sicurezza da <strong>Stripe Inc.</strong>.
-            </div>
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">3. Finalità del Trattamento</h2>
             <ol className="list-decimal pl-5 space-y-1">
-                <li><strong>Erogazione del Servizio:</strong> Gestione account, emissione Voucher e accessi (Base giuridica: Contratto).</li>
-                <li><strong>Certificazione Presenze (Novità):</strong> Per i seminari o eventi formativi, trattiamo Matricola e Orari di Entrata/Uscita per permettere all'Organizzatore di certificare la presenza ai fini di Crediti Formativi o attestati (Base giuridica: Esecuzione del contratto/Interesse legittimo dell'ente formatore).</li>
-                <li><strong>Obblighi Fiscali:</strong> Conservazione traccia delle transazioni economiche (Base giuridica: Obbligo Legale).</li>
-                <li><strong>Sicurezza:</strong> Prevenzione frodi (Base giuridica: Legittimo Interesse).</li>
+                <li><strong>Erogazione del Servizio:</strong> Gestione account, generazione Voucher e controllo accessi (Base giuridica: Contratto).</li>
+                <li><strong>Certificazione Presenze:</strong> Per consentire agli Organizzatori di certificare la presenza ai fini di Crediti Formativi (Base giuridica: Esecuzione del contratto).</li>
+                <li><strong>Sicurezza e Prevenzione Frodi:</strong> (Base giuridica: Legittimo Interesse).</li>
             </ol>
 
-            <h2 className="text-xl font-bold text-gray-900 mt-8">4. Conservazione dei Dati (Data Retention)</h2>
+            <h2 className="text-xl font-bold text-gray-900 mt-8">4. Conservazione dei Dati</h2>
             <ul className="list-disc pl-5 space-y-1 mt-2">
                 <li>
-                    <strong>Transazioni a Pagamento:</strong> I dati relativi a transazioni economiche vengono conservati ("Soft Delete") per <strong>10 anni</strong>, come richiesto dall'art. 2220 del Codice Civile per finalità fiscali.
+                    <strong>Dati Fiscali:</strong> I dati relativi a transazioni a pagamento vengono conservati per <strong>10 anni</strong> per obblighi di legge (art. 2220 C.C.), anche in caso di cancellazione account ("Soft Delete").
                 </li>
                 <li>
-                    <strong>Transazioni Gratuite:</strong> Se l'account ha effettuato solo prenotazioni gratuite, i dati vengono <strong>cancellati definitivamente</strong> ("Hard Delete") dai nostri sistemi su richiesta di cancellazione o dopo un periodo di inattività prolungato.
+                    <strong>Dati Generali:</strong> Se l'account non ha generato transazioni fiscali rilevanti, i dati vengono cancellati definitivamente su richiesta ("Hard Delete").
                 </li>
             </ul>
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">5. Condivisione dei dati</h2>
-            <p>Condividiamo i tuoi dati strettamente necessari con:</p>
+            <p>Condividiamo i tuoi dati con:</p>
             <ul className="list-disc pl-5 space-y-1">
                 <li>
-                    <strong>Organizzatori (Associazioni):</strong> Ricevono Nome, Cognome e, ove richiesto, <strong>Numero di Matricola</strong> e orari di presenza. L'Associazione agisce come Titolare autonomo o Responsabile del trattamento per le finalità legate all'evento specifico.
+                    <strong>Organizzatori:</strong> Ricevono l'elenco partecipanti (Nome, Cognome, Matricola, Orari) per gestire l'evento.
                 </li>
-                <li><strong>Stripe:</strong> Per processare i pagamenti.</li>
-                <li><strong>Autorità Pubbliche:</strong> Solo se richiesto per legge.</li>
+                <li><strong>Stripe:</strong> Per l'elaborazione sicura dei pagamenti.</li>
             </ul>
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">6. I tuoi diritti</h2>
             <p>
-                Hai diritto di accedere, rettificare, cancellare i tuoi dati o opporti al trattamento. 
-                Per esercitare questi diritti, scrivi a <a href="mailto:uniparty.team@gmail.com" className="text-indigo-600 hover:underline">uniparty.team@gmail.com</a>.
+                Per esercitare i tuoi diritti (accesso, rettifica, cancellazione), scrivi a <a href="mailto:uniparty.team@gmail.com" className="text-indigo-600 hover:underline">uniparty.team@gmail.com</a>.
             </p>
         </div>
       </div>

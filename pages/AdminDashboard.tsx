@@ -4,7 +4,7 @@ import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { User, Event, Ticket, UserRole } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { Shield, User as UserIcon, Calendar, CheckCircle, XCircle, Trash2, RefreshCw, Ticket as TicketIcon, Search, Eye, Filter, BarChart, X, TrendingUp, DollarSign, Heart, GraduationCap, Clock } from 'lucide-react';
+import { Shield, User as UserIcon, Calendar, CheckCircle, XCircle, Trash2, RefreshCw, Ticket as TicketIcon, Search, Eye, Filter, BarChart, X, TrendingUp, DollarSign, Heart, GraduationCap, Clock, Users } from 'lucide-react';
 
 type UserFilter = 'all' | 'studente' | 'associazione';
 
@@ -295,7 +295,7 @@ const AdminDashboard: React.FC = () => {
                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organizzatore</th>
                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stato</th>
-                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statistiche</th>
+                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Azioni</th>
                                    </tr>
                                </thead>
                                <tbody className="bg-white divide-y divide-gray-200">
@@ -327,14 +327,21 @@ const AdminDashboard: React.FC = () => {
                                                     {e.status || 'active'}
                                                 </span>
                                            </td>
-                                           <td className="px-6 py-4 whitespace-nowrap">
+                                           <td className="px-6 py-4 whitespace-nowrap flex items-center space-x-2">
                                                <button 
                                                    onClick={() => handleViewStats(e)}
                                                    className="text-indigo-600 hover:text-white hover:bg-indigo-600 border border-indigo-200 hover:border-indigo-600 px-3 py-1 rounded-md transition flex items-center text-sm font-medium"
                                                >
                                                    <BarChart className="w-4 h-4 mr-2" />
-                                                   Dettagli
+                                                   Stats
                                                </button>
+                                               <button 
+                                                    onClick={() => navigate(`/events/${e._id}/attendees`)}
+                                                    className="text-teal-600 hover:text-white hover:bg-teal-600 border border-teal-200 hover:border-teal-600 px-3 py-1 rounded-md transition flex items-center text-sm font-medium"
+                                                >
+                                                    <Users className="w-4 h-4 mr-2" />
+                                                    Lista
+                                                </button>
                                            </td>
                                        </tr>
                                    ))}
@@ -436,8 +443,7 @@ const AdminDashboard: React.FC = () => {
                   <div className="p-6 overflow-y-auto flex-1">
                       <div className="mb-6">
                            <h2 className="text-2xl font-bold text-gray-900">{selectedEvent.title}</h2>
-                           <p className="text-gray-500">{new Date(selectedEvent.date).toLocaleDateString()}</p>
-                           <p className="text-gray-500">{selectedEvent.location}</p>
+                           <p className="text-gray-500">{new Date(selectedEvent.date).toLocaleDateString()} • {selectedEvent.location}</p>
                       </div>
 
                       {statsLoading ? (
