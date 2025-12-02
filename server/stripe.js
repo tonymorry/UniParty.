@@ -12,7 +12,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 // FIX: CONSTANT FEE IN CENTS (INTEGER)
 const APPLICATION_FEE_CENTS = 40; 
 
-// Helper to process a successful order (Shared logic)
+// Helper to process a successful order (Shared logic for Paid Orders via Webhook/Verify)
 const processSuccessfulOrder = async (order, session, dbSession) => {
     // 1. Update Event Sold Count
     const eventDoc = await Event.findByIdAndUpdate(
@@ -97,7 +97,7 @@ const StripeController = {
 
   /**
    * 2. CREATE CHECKOUT SESSION (Direct Charge)
-   * UPDATED: Creates an Order in DB first to handle large data sets safely.
+   * UPDATED: Handles Free Orders internally and Stripe Minimums.
    */
   createCheckoutSession: async (req, res) => {
     try {
@@ -113,7 +113,8 @@ const StripeController = {
 
       const organizer = event.organization;
       
-      if (!organizer.stripeAccountId || !organizer.stripeOnboardingComplete) {
+      // Check organizer setup (skip only if free, but generally good to enforce)
+      if (event.price > 0 && (!organizer.stripeAccountId || !organizer.stripeOnboardingComplete)) {
           return res.status(400).json({ error: "Organizer has not set up payments." });
       }
 
@@ -123,24 +124,108 @@ const StripeController = {
       }
 
       // 2. PRICE CALCULATION (STRICT INTEGER MATH)
-      // Convert stored price (Euro float) to Cents (Integer) using round to fix floating point errors
       const unitPriceCents = Math.round(Number(event.price) * 100); 
       
-      // Fixed Fee
-      const feeCents = APPLICATION_FEE_CENTS;
+      // LOGIC FIX: If ticket is free, Fee is 0. If ticket is paid, Fee is 40 cents.
+      const feeCents = unitPriceCents === 0 ? 0 : APPLICATION_FEE_CENTS;
       
       // Total User Pays per ticket
       const totalPerTicketCents = unitPriceCents + feeCents;
+      
+      // Total Amount for the whole order
+      const totalAmountCents = totalPerTicketCents * quantity;
+
+
+      // ======================================================
+      // CASE A: FREE ORDER (Total = 0)
+      // Skip Stripe completely. Generate tickets immediately.
+      // ======================================================
+      if (totalAmountCents === 0) {
+          const dbSession = await mongoose.startSession();
+          dbSession.startTransaction();
+
+          try {
+              // A. Create Order (Immediately Completed)
+              const newOrder = await Order.create([{
+                  userId,
+                  eventId,
+                  ticketNames,
+                  ticketMatricolas: ticketMatricolas || [],
+                  prList: prList || "Nessuna lista",
+                  quantity,
+                  totalAmountCents: 0,
+                  status: 'completed', // Direct success
+                  stripeSessionId: `FREE_${Date.now()}_${uuidv4()}` // Fake ID for reference
+              }], { session: dbSession });
+
+              const orderDoc = newOrder[0];
+
+              // B. Update Event Sold Count
+              await Event.findByIdAndUpdate(
+                  eventId, 
+                  { $inc: { ticketsSold: quantity } },
+                  { session: dbSession }
+              );
+
+              // C. Generate Tickets
+              const ticketsToCreate = [];
+              for (let i = 0; i < ticketNames.length; i++) {
+                  ticketsToCreate.push({
+                      event: eventId,
+                      owner: userId,
+                      ticketHolderName: ticketNames[i] || "Guest",
+                      matricola: ticketMatricolas && ticketMatricolas[i] ? ticketMatricolas[i] : undefined,
+                      qrCodeId: uuidv4(), 
+                      prList: prList || "Nessuna lista",
+                      used: false,
+                      status: 'valid',
+                      sessionId: orderDoc.stripeSessionId,
+                      paymentIntentId: 'FREE'
+                  });
+              }
+              await Ticket.insertMany(ticketsToCreate, { session: dbSession });
+
+              await dbSession.commitTransaction();
+              
+              // D. Send Email
+              // Need to fetch user email first
+              const user = await User.findById(userId);
+              if (user) {
+                  mailer.sendTicketsEmail(user.email, ticketNames, event.title).catch(err => console.error("Email Error:", err));
+              }
+
+              // E. Return Success URL immediately
+              return res.json({ url: `${FRONTEND_URL}/#/payment-success?free_order_id=${orderDoc._id}` });
+
+          } catch (err) {
+              await dbSession.abortTransaction();
+              throw err;
+          } finally {
+              dbSession.endSession();
+          }
+      }
+
+      // ======================================================
+      // CASE B: AMOUNT TOO SMALL (< €0.50)
+      // Stripe requires minimum ~50 cents.
+      // ======================================================
+      if (totalAmountCents > 0 && totalAmountCents < 50) {
+          return res.status(400).json({ error: "L'importo totale deve essere almeno €0.50 per processare il pagamento su Stripe." });
+      }
+
+      // ======================================================
+      // CASE C: PAID ORDER (Standard Stripe Flow)
+      // ======================================================
 
       // 3. Create Pending Order in DB
       const newOrder = await Order.create({
           userId,
           eventId,
           ticketNames,
-          ticketMatricolas: ticketMatricolas || [], // Save matricolas
+          ticketMatricolas: ticketMatricolas || [], 
           prList: prList || "Nessuna lista",
           quantity,
-          totalAmountCents: totalPerTicketCents * quantity,
+          totalAmountCents: totalAmountCents,
           status: 'pending'
       });
 
@@ -156,7 +241,6 @@ const StripeController = {
                 name: `Voucher: ${event.title}`,
                 description: `${new Date(event.date).toISOString().split('T')[0]} @ ${event.location}`,
               },
-              // CRITICAL: Ensure this is an integer
               unit_amount: Math.round(totalPerTicketCents), 
             },
             quantity: quantity,
@@ -193,6 +277,12 @@ const StripeController = {
   verifyPayment: async (req, res) => {
     const { sessionId } = req.body;
     
+    // Fallback for Free Orders redirecting to this page manually?
+    // Usually Free Orders rely on the URL param logic in frontend, but if they call verify:
+    if (sessionId && sessionId.startsWith('FREE_')) {
+        return res.json({ success: true, message: "Free order confirmed" });
+    }
+
     if (!sessionId) return res.status(400).json({ error: "Missing Session ID" });
 
     // Start a Transaction Session
