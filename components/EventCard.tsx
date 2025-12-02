@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users, Flame, Heart } from 'lucide-react';
@@ -18,20 +17,20 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
     month: 'short',
   });
 
-  // FIX: Strict Integer Math for Price Display
-  // 1. Get Base Price in Cents (e.g. 15.00 -> 1500)
+  // STRICT PRICE CALCULATION (Integer Math)
+  // 1. Convert price to cents (e.g., 15.00 -> 1500)
   const priceInCents = Math.round(Number(event.price) * 100);
   
-  // Use priceInCents === 0 to ensure strict FREE check
+  // 2. Determine if Free
   const isFree = priceInCents === 0;
 
-  // 2. Add Fee in Cents (always 40 cents if paid, 0 if free)
+  // 3. Calculate Fee (40 cents if paid, 0 if free)
   const feeInCents = isFree ? 0 : 40;
   
-  // 3. Total in cents
+  // 4. Total calculation
   const totalInCents = priceInCents + feeInCents;
   
-  // 4. Convert back to Euros for display (e.g. 1540 -> 15.40)
+  // 5. Convert for display
   const finalPrice = totalInCents / 100;
 
   // Logic for ticket display
@@ -39,7 +38,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
   const isSoldOut = soldRatio >= 1;
   const isAlmostSoldOut = soldRatio >= 0.6 && !isSoldOut;
   
-  // FIX: Handle potential null organization (e.g. deleted user)
+  // Handle potential null organization (e.g. deleted user)
   const organizationId = typeof event.organization === 'string' 
     ? event.organization 
     : event.organization?._id;

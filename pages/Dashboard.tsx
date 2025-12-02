@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -26,6 +25,7 @@ const Dashboard: React.FC = () => {
   // Event Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [longDescription, setLongDescription] = useState('');
   const [price, setPrice] = useState('0');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('22:00');
@@ -67,49 +67,27 @@ const Dashboard: React.FC = () => {
   }, [user]);
 
   if (!user || user.role !== UserRole.ASSOCIAZIONE) {
-    return <div className="p-8">Access Denied</div>;
+      return (
+          <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                  <h2 className="text-xl font-bold">Accesso Riservato</h2>
+                  <p className="text-gray-500">Solo le associazioni possono accedere a questa dashboard.</p>
+                  <button onClick={() => navigate('/')} className="mt-4 text-indigo-600 font-semibold">Torna alla Home</button>
+              </div>
+          </div>
+      );
   }
 
-  // Calculate Stats
-  const totalEvents = assocEvents.length;
-  const totalTicketsSold = assocEvents.reduce((acc, curr) => acc + curr.ticketsSold, 0);
-  const totalRevenue = assocEvents.reduce((acc, curr) => acc + (curr.ticketsSold * curr.price), 0);
-
-  const handleTabChange = (tab: 'overview' | 'create') => {
-      setActiveTab(tab);
-      setSearchParams(tab === 'create' ? { tab: 'create' } : {});
-  };
-
-  const handleStripeConnect = async () => {
-    setIsConnecting(true);
-    try {
-      const link = await api.stripe.createConnectAccount(user._id);
-      if (link) {
-          window.location.href = link;
-      } else {
-           const confirmed = window.confirm("Simulating Stripe Onboarding. Click OK to finish.");
-           if(confirmed) {
-               await api.stripe.finalizeOnboarding(user._id);
-               refreshUser();
-           }
+  const handleConnectStripe = async () => {
+      setIsConnecting(true);
+      try {
+          const url = await api.stripe.createConnectAccount(user._id);
+          window.location.href = url;
+      } catch (e) {
+          console.error("Stripe Connect Failed", e);
+          alert("Errore connessione Stripe. Riprova.");
+          setIsConnecting(false);
       }
-    } catch (error) {
-      console.error(error);
-      alert("Failed to connect Stripe");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const handleAddPrList = () => {
-      if (currentPrInput.trim() && !prLists.includes(currentPrInput.trim())) {
-          setPrLists([...prLists, currentPrInput.trim()]);
-          setCurrentPrInput('');
-      }
-  };
-
-  const handleRemovePrList = (listToRemove: string) => {
-      setPrLists(prLists.filter(list => list !== listToRemove));
   };
 
   const handleImageUpload = () => {
@@ -117,7 +95,7 @@ const Dashboard: React.FC = () => {
       {
         cloudName: 'db3bj2bgg',
         uploadPreset: 'wii81qid',
-        sources: ['local', 'url', 'camera', 'instagram'],
+        sources: ['local', 'url', 'camera'],
         multiple: false,
         maxFiles: 1,
         clientAllowedFormats: ["image"],
@@ -131,528 +109,444 @@ const Dashboard: React.FC = () => {
     widget.open();
   };
 
+  const handleAddPrList = () => {
+      if (currentPrInput.trim() && !prLists.includes(currentPrInput.trim())) {
+          setPrLists([...prLists, currentPrInput.trim()]);
+          setCurrentPrInput('');
+      }
+  };
+
+  const handleRemovePrList = (list: string) => {
+      setPrLists(prLists.filter(l => l !== list));
+  };
+
   const handleCreateEvent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Strict number handling for Price
-    // Parse the string input, handle comma/dot, multiply by 100, round to integer, then divide by 100
-    const finalPriceStr = user.stripeOnboardingComplete ? price : '0';
-    const cleanPriceStr = finalPriceStr.toString().replace(',', '.');
-    const tempPrice = parseFloat(cleanPriceStr);
-    
-    // e.g. 15.00 -> 1500 -> 15.00
-    // e.g. 14.999 -> 1499.9 -> 1500 -> 15.00
-    const numericPrice = Math.round(tempPrice * 100) / 100;
+      e.preventDefault();
+      
+      if (!user.stripeAccountId || !user.stripeOnboardingComplete) {
+           if(parseFloat(price) > 0) {
+               alert("Devi connettere Stripe per creare eventi a pagamento.");
+               return;
+           }
+      }
 
-    if (isNaN(numericPrice) || numericPrice < 0) {
-        alert("Prezzo non valido.");
-        return;
-    }
+      setCreatingEvent(true);
+      try {
+          const isoDate = new Date(date).toISOString();
+          
+          await api.events.create({
+              title,
+              description,
+              longDescription,
+              image,
+              date: isoDate,
+              time,
+              location,
+              price: parseFloat(price),
+              maxCapacity: parseInt(maxCapacity),
+              category,
+              prLists,
+              status: targetStatus,
+              requiresMatricola,
+              scanType
+          }, user);
 
-    if (!image) {
-        alert("Per favore carica un'immagine per l'evento.");
-        return;
-    }
+          alert("Evento creato con successo!");
+          
+          // Reset
+          setTitle('');
+          setDescription('');
+          setLongDescription('');
+          setPrice('0');
+          setDate('');
+          setLocation('');
+          setImage('');
+          setPrLists([]);
+          setCreatingEvent(false);
+          setActiveTab('overview');
+          
+          // Refresh
+          setLoadingEvents(true);
+          api.events.getByOrgId(user._id).then(setAssocEvents).finally(() => setLoadingEvents(false));
 
-    setCreatingEvent(true);
-    try {
-        const newEvent = await api.events.create({
-            title,
-            description,
-            longDescription: description,
-            date,
-            time,
-            location,
-            image,
-            maxCapacity: parseInt(maxCapacity),
-            price: numericPrice,
-            category,
-            prLists,
-            status: targetStatus,
-            requiresMatricola,
-            scanType
-        }, user);
-
-        if (targetStatus === 'draft') {
-            alert("Bozza salvata con successo!");
-            navigate(`/events/${newEvent._id}`);
-        } else {
-            alert("Evento pubblicato con successo!");
-            navigate('/');
-        }
-    } catch (e: any) {
-        console.error(e);
-        alert("Errore creazione evento: " + (e.message || "Unknown"));
-    } finally {
-        setCreatingEvent(false);
-    }
+      } catch (err: any) {
+          console.error(err);
+          alert("Failed to create event: " + err.message);
+          setCreatingEvent(false);
+      }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-       <div className="max-w-5xl mx-auto space-y-6">
-           
-           {/* Header & Tab Switcher */}
-           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-               <div>
-                   <h1 className="text-3xl font-bold text-gray-900">Dashboard Associazione</h1>
-                   <p className="text-gray-500 text-sm mt-1">Benvenuto, {user.name}.</p>
-               </div>
-               
-               {/* Tab Switcher */}
-               <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
-                   <button
-                       onClick={() => handleTabChange('overview')}
-                       className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'overview' ? 'bg-indigo-100 text-indigo-800' : 'text-gray-600 hover:bg-gray-50'}`}
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+                  <LayoutDashboard className="w-8 h-8 text-indigo-600 mr-2" />
+                  Dashboard
+              </h1>
+              <div className="flex space-x-2">
+                   <button 
+                      onClick={() => { setActiveTab('overview'); setSearchParams({}); }}
+                      className={`px-4 py-2 rounded-lg font-medium transition ${activeTab === 'overview' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`}
                    >
-                       <LayoutDashboard className="w-4 h-4 mr-2" />
-                       Panoramica
+                      Panoramica
                    </button>
-                   <button
-                       onClick={() => handleTabChange('create')}
-                       className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'create' ? 'bg-indigo-100 text-indigo-800' : 'text-gray-600 hover:bg-gray-50'}`}
+                   <button 
+                      onClick={() => { setActiveTab('create'); setSearchParams({tab: 'create'}); }}
+                      className={`px-4 py-2 rounded-lg font-medium transition ${activeTab === 'create' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`}
                    >
-                       <Plus className="w-4 h-4 mr-2" />
-                       Crea Evento
+                      Crea Evento
                    </button>
-               </div>
-           </div>
+              </div>
+          </div>
+      </div>
 
-           {/* ==================================================================================
-               TAB 1: PANORAMICA (STATS & LISTA EVENTI)
-               ================================================================================== */}
-           {activeTab === 'overview' && (
-               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                   
-                   {/* Stripe Status Section */}
-                   <div className={`bg-white rounded-xl p-6 shadow-sm border-l-4 ${user.stripeOnboardingComplete ? 'border-green-500' : 'border-blue-500'}`}>
-                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                           <div className="flex items-start md:items-center">
-                               {user.stripeOnboardingComplete ? (
-                                   <div className="bg-green-100 p-3 rounded-full mr-4 shrink-0">
-                                       <CheckCircle className="w-6 h-6 text-green-600" />
-                                   </div>
-                               ) : (
-                                   <div className="bg-blue-100 p-3 rounded-full mr-4 shrink-0">
-                                       <DollarSign className="w-6 h-6 text-blue-600" />
-                                   </div>
-                               )}
-                               <div>
-                                   <h2 className="text-xl font-bold text-gray-900">Stato Pagamenti</h2>
-                                   <p className="text-gray-600 text-sm">
-                                       {user.stripeOnboardingComplete 
-                                           ? "Il tuo account Stripe è attivo. Puoi ricevere pagamenti." 
-                                           : "Connetti Stripe per poter vendere Voucher a pagamento."}
-                                   </p>
-                               </div>
-                           </div>
-                           {!user.stripeOnboardingComplete && (
-                               <button 
-                                   onClick={handleStripeConnect}
-                                   disabled={isConnecting}
-                                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-bold transition shadow-md disabled:opacity-50 whitespace-nowrap"
-                               >
-                                   {isConnecting ? 'Connessione...' : 'Connetti Stripe'}
-                               </button>
-                           )}
-                       </div>
-                   </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          
+          {/* STRIPE STATUS BANNER */}
+          {(!user.stripeAccountId || !user.stripeOnboardingComplete) && (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between shadow-sm">
+                  <div className="flex items-start mb-4 md:mb-0">
+                      <div className="bg-orange-100 p-3 rounded-full mr-4">
+                          <AlertTriangle className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div>
+                          <h3 className="text-lg font-bold text-orange-900">Configura Pagamenti</h3>
+                          <p className="text-orange-700">Per vendere biglietti a pagamento, devi connettere il tuo account Stripe.</p>
+                      </div>
+                  </div>
+                  <button 
+                      onClick={handleConnectStripe}
+                      disabled={isConnecting}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-bold shadow-md transition disabled:opacity-70 flex items-center"
+                  >
+                      {isConnecting ? 'Connessione...' : 'Connetti Stripe'}
+                  </button>
+              </div>
+          )}
 
-                   {/* Dashboard Stats */}
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
-                            <div className="p-3 rounded-full bg-indigo-50 text-indigo-600 mr-4">
-                                <TrendingUp className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="text-gray-500 text-sm font-medium">Totale Ricavi</p>
-                                <p className="text-2xl font-bold text-gray-900">€{totalRevenue.toFixed(2)}</p>
-                            </div>
-                        </div>
-                        <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
-                            <div className="p-3 rounded-full bg-green-50 text-green-600 mr-4">
-                                <Ticket className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="text-gray-500 text-sm font-medium">Biglietti Venduti</p>
-                                <p className="text-2xl font-bold text-gray-900">{totalTicketsSold}</p>
-                            </div>
-                        </div>
-                        <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
-                            <div className="p-3 rounded-full bg-orange-50 text-orange-600 mr-4">
-                                <Briefcase className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="text-gray-500 text-sm font-medium">Eventi Creati</p>
-                                <p className="text-2xl font-bold text-gray-900">{totalEvents}</p>
-                            </div>
-                        </div>
-                   </div>
+          {/* OVERVIEW TAB */}
+          {activeTab === 'overview' && (
+              <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                      <h2 className="text-xl font-bold text-gray-900">I Tuoi Eventi</h2>
+                      <Link to="/scanner" className="bg-indigo-900 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-800 transition">
+                          <CheckCircle className="w-4 h-4 mr-2" /> Scanner
+                      </Link>
+                  </div>
 
-                   {/* Events List */}
-                   <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8">
-                        <div className="flex justify-between items-center mb-6">
-                             <h2 className="text-xl font-bold text-gray-900 flex items-center">
-                                <Briefcase className="w-6 h-6 mr-2 text-indigo-600" />
-                                I Tuoi Eventi
-                            </h2>
-                            <button onClick={() => handleTabChange('create')} className="text-sm text-indigo-600 hover:underline">
-                                + Nuovo Evento
-                            </button>
-                        </div>
-                        
-                        {loadingEvents ? (
-                            <div className="text-center py-8">Caricamento eventi...</div>
-                        ) : assocEvents.length > 0 ? (
-                            <div className="divide-y divide-gray-100">
-                                {assocEvents.map(event => (
-                                    <div key={event._id} className="py-4 flex flex-col md:flex-row md:items-center justify-between group gap-4">
-                                        <div className="flex items-center">
-                                            <div className="w-12 h-12 bg-gray-100 rounded-lg mr-4 overflow-hidden flex-shrink-0">
-                                                <img src={event.image} className="w-full h-full object-cover" alt="" onError={(e) => (e.currentTarget.style.display = 'none')}/>
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition line-clamp-1">{event.title}</h3>
-                                                    {event.status === 'draft' && (
-                                                        <span className="bg-yellow-100 text-yellow-800 text-[10px] px-2 py-0.5 rounded font-bold uppercase">
-                                                            BOZZA
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center text-xs text-gray-500 mt-1">
-                                                    <Calendar className="w-3 h-3 mr-1" />
-                                                    {new Date(event.date).toLocaleDateString()}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
-                                            <div className="text-right">
-                                                <div className="font-mono font-medium text-gray-900 text-sm">
-                                                    {event.ticketsSold}/{event.maxCapacity}
-                                                </div>
-                                                <div className="text-xs text-green-600 font-semibold mt-1">
-                                                    +€{(event.ticketsSold * event.price).toFixed(2)}
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Link 
-                                                    to={`/events/${event._id}/attendees`}
-                                                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-bold transition flex items-center"
-                                                >
-                                                    <Users className="w-3 h-3 mr-1" />
-                                                    Lista
-                                                </Link>
-                                                <Link 
-                                                    to={`/events/${event._id}`} 
-                                                    className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition"
-                                                >
-                                                    Gestisci
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                                <p className="text-gray-500 mb-4">Non hai ancora creato nessun evento.</p>
-                                <button onClick={() => handleTabChange('create')} className="bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">
-                                    Inizia ora
-                                </button>
-                            </div>
-                        )}
-                   </div>
-               </div>
-           )}
+                  {loadingEvents ? (
+                      <div className="text-center py-12">Caricamento eventi...</div>
+                  ) : assocEvents.length === 0 ? (
+                      <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100">
+                          <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                          <h3 className="text-lg font-bold text-gray-900">Nessun evento creato</h3>
+                          <p className="text-gray-500 mb-6">Inizia a creare il tuo primo evento per vendere biglietti.</p>
+                          <button onClick={() => { setActiveTab('create'); setSearchParams({tab: 'create'}); }} className="text-indigo-600 font-bold hover:underline">
+                              Crea ora
+                          </button>
+                      </div>
+                  ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {assocEvents.map(event => (
+                              <div key={event._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
+                                  <div className="h-40 bg-gray-200 relative">
+                                      <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
+                                      <div className="absolute top-2 right-2">
+                                          <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase ${event.status === 'active' ? 'bg-green-100 text-green-800' : event.status === 'draft' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>
+                                              {event.status || 'Active'}
+                                          </span>
+                                      </div>
+                                  </div>
+                                  <div className="p-5">
+                                      <h3 className="font-bold text-gray-900 text-lg mb-1 truncate">{event.title}</h3>
+                                      <p className="text-gray-500 text-sm mb-4">{new Date(event.date).toLocaleDateString()}</p>
+                                      
+                                      <div className="flex justify-between items-center text-sm mb-4">
+                                          <div className="flex items-center text-gray-600">
+                                              <Users className="w-4 h-4 mr-1" />
+                                              {event.ticketsSold}/{event.maxCapacity}
+                                          </div>
+                                          <div className="font-bold text-indigo-600">
+                                              €{(event.ticketsSold * event.price).toFixed(2)}
+                                          </div>
+                                      </div>
 
-           {/* ==================================================================================
-               TAB 2: CREA EVENTO (FORM)
-               ================================================================================== */}
-           {activeTab === 'create' && (
-               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                   {!user.isVerified ? (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center shadow-sm">
-                            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <ShieldCheck className="w-8 h-8 text-yellow-600" />
-                            </div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-2">Account in attesa di approvazione</h2>
-                            <p className="text-gray-600 max-w-lg mx-auto mb-6">
-                                Il nostro team sta verificando i dati della tua associazione. 
-                                Una volta approvato, potrai iniziare a pubblicare eventi.
-                            </p>
-                        </div>
-                   ) : (
-                       <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-                           <div className="bg-indigo-900 p-6 text-white">
-                               <h2 className="text-xl font-bold flex items-center">
-                                   <Plus className="w-6 h-6 mr-2" />
-                                   Crea Nuovo Evento
-                               </h2>
-                               <p className="text-indigo-200 text-sm mt-1">Compila i dettagli del tuo prossimo evento.</p>
-                           </div>
-                           
-                           <form onSubmit={handleCreateEvent} className="p-6 md:p-8 space-y-6">
-                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                   <div className="md:col-span-2">
-                                       <label className="block text-sm font-medium text-gray-700 mb-1">Titolo Evento</label>
-                                       <input 
-                                           type="text" 
-                                           value={title} 
-                                           onChange={e => setTitle(e.target.value)} 
-                                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                           required
-                                           placeholder="Es. Halloween Party 2025"
-                                       />
-                                   </div>
-                                   <div>
-                                       <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><Tag className="w-4 h-4 mr-1"/> Categoria</label>
-                                       <select 
-                                           value={category}
-                                           onChange={e => setCategory(e.target.value as EventCategory)}
-                                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
-                                       >
-                                           {Object.values(EventCategory).map(c => (
-                                               <option key={c} value={c}>{c}</option>
-                                           ))}
-                                       </select>
-                                   </div>
-                               </div>
+                                      <div className="flex gap-2">
+                                          <Link to={`/events/${event._id}`} className="flex-1 text-center py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700">
+                                              Dettagli
+                                          </Link>
+                                          <Link to={`/events/${event._id}/attendees`} className="flex-1 text-center py-2 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100">
+                                              Lista
+                                          </Link>
+                                      </div>
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+                  )}
+              </div>
+          )}
 
-                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                   <div>
-                                       <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><Clock className="w-4 h-4 mr-1"/> Data</label>
-                                       <input 
-                                           type="date" 
-                                           value={date} 
-                                           onChange={e => setDate(e.target.value)} 
-                                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                           required
-                                       />
-                                   </div>
-                                   <div>
-                                       <label className="block text-sm font-medium text-gray-700 mb-1">Ora</label>
-                                       <input 
-                                           type="time" 
-                                           value={time} 
-                                           onChange={e => setTime(e.target.value)} 
-                                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                           required
-                                       />
-                                   </div>
-                                   <div>
-                                       <label className="block text-sm font-medium text-gray-700 mb-1">Luogo</label>
-                                       <input 
-                                           type="text" 
-                                           value={location} 
-                                           onChange={e => setLocation(e.target.value)} 
-                                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                           required
-                                           placeholder="Nome del locale o indirizzo"
-                                       />
-                                   </div>
-                               </div>
+          {/* CREATE TAB */}
+          {activeTab === 'create' && (
+              <div className="max-w-3xl mx-auto">
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                      <div className="p-6 border-b border-gray-100 bg-gray-50">
+                          <h2 className="text-xl font-bold text-gray-900">Nuovo Evento</h2>
+                          <p className="text-gray-500 text-sm">Compila i dettagli per pubblicare un nuovo evento.</p>
+                      </div>
+                      
+                      <form onSubmit={handleCreateEvent} className="p-6 space-y-6">
+                          
+                          {/* Basic Info */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="col-span-2">
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Titolo Evento</label>
+                                  <input 
+                                      type="text" 
+                                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                      value={title}
+                                      onChange={e => setTitle(e.target.value)}
+                                      required
+                                  />
+                              </div>
 
-                               <div>
-                                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><ImageIcon className="w-4 h-4 mr-1"/> Immagine Evento</label>
-                                   <div className="flex gap-4 items-center">
-                                       <button
-                                           type="button"
-                                           onClick={handleImageUpload}
-                                           className="flex items-center px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium border border-gray-300"
-                                       >
-                                           <Upload className="w-4 h-4 mr-2" />
-                                           Carica Immagine
-                                       </button>
-                                       {image ? (
-                                           <div className="w-16 h-10 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0 relative group">
-                                               <img src={image} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                                           </div>
-                                       ) : (
-                                           <span className="text-sm text-gray-400">Nessuna immagine selezionata</span>
-                                       )}
-                                   </div>
-                               </div>
+                              <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                                  <select 
+                                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                      value={category}
+                                      onChange={e => setCategory(e.target.value as EventCategory)}
+                                  >
+                                      {Object.values(EventCategory).map(c => (
+                                          <option key={c} value={c}>{c}</option>
+                                      ))}
+                                  </select>
+                              </div>
 
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                   
-                                   <div className="relative">
-                                       <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                                           <DollarSign className="w-4 h-4 mr-1"/> Prezzo Biglietto (€)
-                                       </label>
-                                       
-                                       <div className="relative">
-                                            <input 
-                                                type="number" 
-                                                value={user.stripeOnboardingComplete ? price : '0'} 
-                                                onChange={e => {
-                                                    if (user.stripeOnboardingComplete) setPrice(e.target.value);
-                                                }} 
-                                                onBlur={() => {
-                                                    // Strict formatting on blur to prevent floating point confusion
-                                                    if(price) {
-                                                        const p = parseFloat(price.replace(',', '.'));
-                                                        if(!isNaN(p)) {
-                                                            setPrice(p.toFixed(2));
-                                                        }
-                                                    }
-                                                }}
-                                                disabled={!user.stripeOnboardingComplete}
-                                                className={`w-full px-4 py-2 border rounded-lg outline-none transition
-                                                    ${!user.stripeOnboardingComplete 
-                                                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' 
-                                                        : 'border-gray-300 focus:ring-2 focus:ring-indigo-500 bg-white'
-                                                    }
-                                                `}
-                                                required
-                                                min="0"
-                                                step="0.01"
-                                                placeholder="0.00"
-                                            />
-                                            {!user.stripeOnboardingComplete && (
-                                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                                    <Lock className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                            )}
-                                       </div>
+                              <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Luogo</label>
+                                  <input 
+                                      type="text" 
+                                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                      value={location}
+                                      onChange={e => setLocation(e.target.value)}
+                                      required
+                                  />
+                              </div>
 
-                                       {!user.stripeOnboardingComplete ? (
-                                           <p className="text-xs text-orange-600 mt-1 flex items-center">
-                                               <Info className="w-3 h-3 mr-1"/>
-                                               Abilita i pagamenti per vendere Voucher.
-                                           </p>
-                                       ) : (
-                                           <p className="text-xs text-gray-500 mt-1">Imposta 0 per eventi gratuiti.</p>
-                                       )}
-                                   </div>
+                              <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                                  <input 
+                                      type="date" 
+                                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                      value={date}
+                                      onChange={e => setDate(e.target.value)}
+                                      required
+                                  />
+                              </div>
 
-                                   <div>
-                                       <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><Users className="w-4 h-4 mr-1"/> Capacità Massima</label>
-                                       <input 
-                                           type="number" 
-                                           value={maxCapacity} 
-                                           onChange={e => setMaxCapacity(e.target.value)} 
-                                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                           required
-                                           min="1"
-                                       />
-                                   </div>
-                               </div>
-                               
-                               {/* ADVANCED OPTIONS */}
-                               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                   <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center">
-                                       <Settings className="w-4 h-4 mr-2" /> Opzioni Avanzate (Seminari / Accademico)
-                                   </h3>
-                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                       <div className="flex items-center space-x-3 bg-white p-3 rounded-lg border border-gray-200">
-                                           <input 
-                                               type="checkbox" 
-                                               id="reqMatricola"
-                                               checked={requiresMatricola}
-                                               onChange={e => setRequiresMatricola(e.target.checked)}
-                                               className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                           />
-                                           <label htmlFor="reqMatricola" className="text-sm text-gray-700 font-medium">Richiedi Numero Matricola</label>
-                                       </div>
-                                       
-                                       <div className="bg-white p-3 rounded-lg border border-gray-200">
-                                           <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Tipo Scansione</label>
-                                           <select 
-                                               value={scanType}
-                                               onChange={e => setScanType(e.target.value as any)}
-                                               className="w-full text-sm bg-transparent outline-none font-medium text-gray-700"
-                                           >
-                                               <option value="entry_only">Solo Ingresso (Standard)</option>
-                                               <option value="entry_exit">Ingresso & Uscita (Tracciamento ore)</option>
-                                           </select>
-                                       </div>
-                                   </div>
-                               </div>
+                              <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Orario Inizio</label>
+                                  <input 
+                                      type="time" 
+                                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                      value={time}
+                                      onChange={e => setTime(e.target.value)}
+                                      required
+                                  />
+                              </div>
+                          </div>
 
-                               <div>
-                                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><List className="w-4 h-4 mr-1"/> Liste PR (Opzionale)</label>
-                                   <div className="flex gap-2 mb-2">
-                                       <input 
-                                           type="text" 
-                                           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                           placeholder="Nome lista (es. Lista Marco)"
-                                           value={currentPrInput}
-                                           onChange={e => setCurrentPrInput(e.target.value)}
-                                           onKeyDown={e => { if(e.key === 'Enter') { e.preventDefault(); handleAddPrList(); }}}
-                                       />
-                                       <button 
-                                           type="button" 
-                                           onClick={handleAddPrList}
-                                           className="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition"
-                                       >
-                                           Aggiungi
-                                       </button>
-                                   </div>
-                                   {prLists.length > 0 && (
-                                       <div className="flex flex-wrap gap-2 mt-2">
-                                           {prLists.map((list, idx) => (
-                                               <span key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm flex items-center">
-                                                   {list}
-                                                   <button type="button" onClick={() => handleRemovePrList(list)} className="ml-2 hover:text-red-600">
-                                                       <X className="w-3 h-3" />
-                                                   </button>
-                                               </span>
-                                           ))}
-                                       </div>
-                                   )}
-                               </div>
+                          {/* Image */}
+                          <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Immagine Copertina</label>
+                              <div className="flex items-center space-x-4">
+                                  <button 
+                                      type="button"
+                                      onClick={handleImageUpload}
+                                      className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-200 transition flex items-center"
+                                  >
+                                      <Upload className="w-4 h-4 mr-2" /> Carica
+                                  </button>
+                                  {image && (
+                                      <div className="h-16 w-32 bg-gray-100 rounded overflow-hidden border border-gray-200">
+                                          <img src={image} alt="Preview" className="w-full h-full object-cover" />
+                                      </div>
+                                  )}
+                              </div>
+                          </div>
 
-                               <div>
-                                   <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione Completa</label>
-                                   <textarea 
-                                       value={description} 
-                                       onChange={e => setDescription(e.target.value)} 
-                                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-32"
-                                       required
-                                       placeholder="Dettagli dell'evento, lineup, dress code..."
-                                   ></textarea>
-                               </div>
+                          {/* Description */}
+                          <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione Breve</label>
+                              <textarea 
+                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                  rows={2}
+                                  value={description}
+                                  onChange={e => setDescription(e.target.value)}
+                                  required
+                              />
+                          </div>
 
-                               <div className="pt-4 flex gap-4">
-                                   <button 
-                                       type="submit" 
-                                       onClick={() => setTargetStatus('draft')}
-                                       disabled={creatingEvent}
-                                       className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 rounded-xl shadow-md transition transform active:scale-99 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center border border-gray-300"
-                                   >
-                                       {creatingEvent && targetStatus === 'draft' ? 'Salvataggio...' : (
-                                           <>
-                                             <FileText className="w-5 h-5 mr-2" />
-                                             Salva come Bozza
-                                           </>
-                                       )}
-                                   </button>
+                          <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione Completa (Opzionale)</label>
+                              <textarea 
+                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                  rows={4}
+                                  value={longDescription}
+                                  onChange={e => setLongDescription(e.target.value)}
+                              />
+                          </div>
 
-                                   <button 
-                                       type="submit" 
-                                       onClick={() => setTargetStatus('active')}
-                                       disabled={creatingEvent}
-                                       className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-99 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
-                                   >
-                                       {creatingEvent && targetStatus === 'active' ? (
-                                           <span className="flex items-center">
-                                               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                               Pubblicazione...
-                                           </span>
-                                       ) : (
-                                           "Pubblica Evento"
-                                       )}
-                                   </button>
-                               </div>
+                          {/* Ticket Info */}
+                          <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                              <h3 className="font-bold text-indigo-900 mb-4 flex items-center">
+                                  <Ticket className="w-5 h-5 mr-2" /> Configurazione Biglietti
+                              </h3>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Prezzo (€)</label>
+                                      <div className="relative">
+                                          <DollarSign className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
+                                          <input 
+                                              type="number" 
+                                              min="0"
+                                              step="0.01"
+                                              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                              value={price}
+                                              onChange={e => setPrice(e.target.value)}
+                                              required
+                                          />
+                                      </div>
+                                      <p className="text-xs text-gray-500 mt-1">Imposta 0 per eventi gratuiti.</p>
+                                  </div>
 
-                           </form>
-                       </div>
-                   )}
-               </div>
-           )}
+                                  <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Capienza Massima</label>
+                                      <input 
+                                          type="number" 
+                                          min="1"
+                                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                          value={maxCapacity}
+                                          onChange={e => setMaxCapacity(e.target.value)}
+                                          required
+                                      />
+                                  </div>
+                              </div>
+                          </div>
 
-       </div>
+                          {/* Advanced Options */}
+                          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                              <h3 className="font-bold text-gray-900 mb-4 flex items-center">
+                                  <Settings className="w-5 h-5 mr-2" /> Opzioni Avanzate
+                              </h3>
+                              
+                              {/* PR Lists */}
+                              <div className="mb-4">
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Liste PR (Opzionale)</label>
+                                  <div className="flex gap-2 mb-2">
+                                      <input 
+                                          type="text" 
+                                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                          placeholder="Nome lista"
+                                          value={currentPrInput}
+                                          onChange={e => setCurrentPrInput(e.target.value)}
+                                          onKeyDown={e => { if(e.key === 'Enter') { e.preventDefault(); handleAddPrList(); }}}
+                                      />
+                                      <button 
+                                          type="button" 
+                                          onClick={handleAddPrList}
+                                          className="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition"
+                                      >
+                                          Aggiungi
+                                      </button>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                      {prLists.map((list, idx) => (
+                                          <span key={idx} className="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center shadow-sm">
+                                              {list}
+                                              <button type="button" onClick={() => handleRemovePrList(list)} className="ml-2 hover:text-red-600">
+                                                  <X className="w-3 h-3" />
+                                              </button>
+                                          </span>
+                                      ))}
+                                  </div>
+                              </div>
+                              
+                              {/* Academic/Scan Options */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
+                                      <input 
+                                          type="checkbox" 
+                                          id="reqMatricola"
+                                          checked={requiresMatricola}
+                                          onChange={e => setRequiresMatricola(e.target.checked)}
+                                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                      />
+                                      <label htmlFor="reqMatricola" className="ml-2 block text-sm text-gray-900">
+                                          Richiedi Matricola
+                                          <p className="text-xs text-gray-500">Utile per seminari/CFU</p>
+                                      </label>
+                                  </div>
+                                  
+                                  <div className="p-3 bg-white rounded-lg border border-gray-200">
+                                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Modalità Scansione</label>
+                                      <div className="flex items-center space-x-4">
+                                          <label className="flex items-center">
+                                              <input 
+                                                  type="radio" 
+                                                  name="scanType"
+                                                  value="entry_only"
+                                                  checked={scanType === 'entry_only'}
+                                                  onChange={() => setScanType('entry_only')}
+                                                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                                              />
+                                              <span className="ml-2 text-sm text-gray-700">Solo Ingresso</span>
+                                          </label>
+                                          <label className="flex items-center">
+                                              <input 
+                                                  type="radio" 
+                                                  name="scanType"
+                                                  value="entry_exit"
+                                                  checked={scanType === 'entry_exit'}
+                                                  onChange={() => setScanType('entry_exit')}
+                                                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                                              />
+                                              <span className="ml-2 text-sm text-gray-700">Ingresso & Uscita</span>
+                                          </label>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+
+                          <div className="pt-4 flex items-center justify-between border-t border-gray-100">
+                              <div className="flex items-center space-x-2">
+                                  <label className="text-sm font-medium text-gray-700">Salva come:</label>
+                                  <select 
+                                      value={targetStatus}
+                                      onChange={e => setTargetStatus(e.target.value as any)}
+                                      className="border border-gray-300 rounded-md text-sm p-1"
+                                  >
+                                      <option value="active">Pubblico (Attivo)</option>
+                                      <option value="draft">Bozza (Nascosto)</option>
+                                  </select>
+                              </div>
+                              <button 
+                                  type="submit" 
+                                  disabled={creatingEvent}
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg transition transform active:scale-95 disabled:opacity-70 flex items-center"
+                              >
+                                  {creatingEvent ? 'Creazione...' : 'Pubblica Evento'}
+                              </button>
+                          </div>
+                      </form>
+                  </div>
+              </div>
+          )}
+      </div>
     </div>
   );
 };
