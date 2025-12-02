@@ -1,9 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { User, Event, Ticket, UserRole } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { Shield, User as UserIcon, Calendar, CheckCircle, XCircle, Trash2, RefreshCw, Ticket as TicketIcon, Search, Eye, Filter, BarChart, X, TrendingUp, DollarSign, Heart } from 'lucide-react';
+import { Shield, User as UserIcon, Calendar, CheckCircle, XCircle, Trash2, RefreshCw, Ticket as TicketIcon, Search, Eye, Filter, BarChart, X, TrendingUp, DollarSign, Heart, GraduationCap, Clock } from 'lucide-react';
 
 type UserFilter = 'all' | 'studente' | 'associazione';
 
@@ -119,6 +120,20 @@ const AdminDashboard: React.FC = () => {
       e.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
       (typeof e.organization === 'object' && e.organization.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const getTicketStatusBadge = (ticket: Ticket) => {
+      if (ticket.status === 'entered') {
+          return <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-200">IN SALA</span>;
+      }
+      if (ticket.status === 'completed') {
+          return <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">COMPLETATO</span>;
+      }
+      if (ticket.status === 'valid' || ticket.status === 'active' || (!ticket.used && !ticket.status)) {
+          return <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 border border-green-200">VALIDO</span>;
+      }
+      // Fallback legacy used
+      return <span className="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600 border border-gray-200">USATO</span>;
+  };
 
   if (!user || user.role !== UserRole.ADMIN) return null;
 
@@ -350,19 +365,42 @@ const AdminDashboard: React.FC = () => {
                       ) : (
                           <div className="space-y-4">
                               {selectedUserTickets.map(ticket => (
-                                  <div key={ticket._id} className="border border-gray-200 rounded-lg p-4 flex justify-between items-center bg-gray-50 hover:bg-white transition shadow-sm">
+                                  <div key={ticket._id} className="border border-gray-200 rounded-lg p-4 flex justify-between items-start bg-gray-50 hover:bg-white transition shadow-sm">
                                       <div>
                                           <p className="font-bold text-gray-900">{ticket.event.title}</p>
                                           <p className="text-sm text-gray-500">{new Date(ticket.event.date).toLocaleDateString()}</p>
                                           <p className="text-xs text-indigo-600 mt-1 font-mono">{ticket.qrCodeId}</p>
+                                          
+                                          {ticket.matricola && (
+                                              <p className="text-xs text-gray-700 mt-2 font-semibold flex items-center bg-white border border-gray-200 rounded px-2 py-1 w-fit">
+                                                  <GraduationCap className="w-3 h-3 mr-1" />
+                                                  Mat: {ticket.matricola}
+                                              </p>
+                                          )}
                                       </div>
-                                      <div className="text-right">
-                                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${ticket.used ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                                              {ticket.used ? 'USATO' : 'VALIDO'}
-                                          </span>
+                                      <div className="text-right flex flex-col items-end">
+                                          {getTicketStatusBadge(ticket)}
+                                          
                                           <p className="text-xs text-gray-400 mt-2">
                                               Acquistato: {new Date(ticket.purchaseDate).toLocaleDateString()}
                                           </p>
+
+                                          {(ticket.entryTime || ticket.exitTime) && (
+                                              <div className="mt-2 text-xs text-gray-500 bg-white p-2 rounded border border-gray-200 shadow-sm w-fit">
+                                                  {ticket.entryTime && (
+                                                      <div className="flex items-center justify-end whitespace-nowrap">
+                                                          <Clock className="w-3 h-3 mr-1 text-green-600" /> 
+                                                          In: {new Date(ticket.entryTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                      </div>
+                                                  )}
+                                                  {ticket.exitTime && (
+                                                      <div className="flex items-center justify-end mt-1 whitespace-nowrap">
+                                                          <Clock className="w-3 h-3 mr-1 text-blue-600" />
+                                                          Out: {new Date(ticket.exitTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                      </div>
+                                                  )}
+                                              </div>
+                                          )}
                                       </div>
                                   </div>
                               ))}
@@ -384,126 +422,86 @@ const AdminDashboard: React.FC = () => {
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
                   
                   {/* Modal Header */}
-                  <div className="bg-indigo-900 p-6 flex justify-between items-start text-white">
-                      <div>
-                          <h2 className="text-2xl font-bold">{selectedEvent.title}</h2>
-                          <div className="flex items-center text-indigo-200 mt-1">
-                              <Calendar className="w-4 h-4 mr-2" />
-                              <span>{new Date(selectedEvent.date).toLocaleDateString()} • {selectedEvent.location}</span>
-                          </div>
-                      </div>
-                      <button onClick={() => setIsStatsModalOpen(false)} className="text-indigo-200 hover:text-white bg-indigo-800 p-2 rounded-full hover:bg-indigo-700 transition">
+                  <div className="bg-indigo-900 p-6 flex justify-between items-center text-white">
+                      <h3 className="text-xl font-bold flex items-center">
+                          <BarChart className="w-6 h-6 mr-2" />
+                          Statistiche Evento
+                      </h3>
+                      <button onClick={() => setIsStatsModalOpen(false)} className="text-indigo-200 hover:text-white">
                           <X className="w-6 h-6" />
                       </button>
                   </div>
 
                   {/* Modal Content */}
                   <div className="p-6 overflow-y-auto flex-1">
+                      <div className="mb-6">
+                           <h2 className="text-2xl font-bold text-gray-900">{selectedEvent.title}</h2>
+                           <p className="text-gray-500">{new Date(selectedEvent.date).toLocaleDateString()} • {selectedEvent.location}</p>
+                      </div>
+
                       {statsLoading ? (
-                          <div className="flex flex-col items-center justify-center py-12">
-                              <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-                              <p className="text-gray-500">Calcolo statistiche in corso...</p>
-                          </div>
+                           <div className="text-center py-12">Caricamento statistiche...</div>
                       ) : (
-                          <div className="space-y-8">
-                              
-                              {/* Summary Cards */}
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                  {/* Revenue */}
-                                  <div className="bg-green-50 rounded-xl p-6 border border-green-100 flex items-center">
-                                      <div className="p-3 bg-green-100 rounded-full text-green-600 mr-4">
-                                          <DollarSign className="w-8 h-8" />
-                                      </div>
-                                      <div>
-                                          <p className="text-sm text-green-800 font-medium uppercase tracking-wide">Incasso Totale</p>
-                                          <p className="text-2xl font-bold text-gray-900">
-                                              €{(selectedEvent.ticketsSold * selectedEvent.price).toFixed(2)}
-                                          </p>
-                                      </div>
-                                  </div>
+                           <>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                                        <div className="flex items-center text-blue-600 mb-2">
+                                            <TrendingUp className="w-5 h-5 mr-2" />
+                                            <span className="font-bold">Ricavo Totale (Stima)</span>
+                                        </div>
+                                        <div className="text-2xl font-bold text-gray-900">
+                                            €{(selectedEvent.ticketsSold * selectedEvent.price).toFixed(2)}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                                        <div className="flex items-center text-green-600 mb-2">
+                                            <TicketIcon className="w-5 h-5 mr-2" />
+                                            <span className="font-bold">Biglietti Venduti</span>
+                                        </div>
+                                        <div className="text-2xl font-bold text-gray-900">
+                                            {selectedEvent.ticketsSold} / {selectedEvent.maxCapacity}
+                                        </div>
+                                    </div>
 
-                                  {/* Sold/Capacity */}
-                                  <div className="bg-blue-50 rounded-xl p-6 border border-blue-100 flex items-center">
-                                      <div className="p-3 bg-blue-100 rounded-full text-blue-600 mr-4">
-                                          <TicketIcon className="w-8 h-8" />
-                                      </div>
-                                      <div>
-                                          <p className="text-sm text-blue-800 font-medium uppercase tracking-wide">Voucher Venduti</p>
-                                          <p className="text-2xl font-bold text-gray-900">
-                                              {selectedEvent.ticketsSold} <span className="text-sm text-gray-400 font-normal">/ {selectedEvent.maxCapacity}</span>
-                                          </p>
-                                          <div className="w-full bg-blue-200 rounded-full h-1.5 mt-2">
-                                              <div 
-                                                  className="bg-blue-600 h-1.5 rounded-full" 
-                                                  style={{ width: `${Math.min(100, (selectedEvent.ticketsSold / selectedEvent.maxCapacity) * 100)}%` }}
-                                              ></div>
-                                          </div>
-                                      </div>
-                                  </div>
+                                    <div className="bg-pink-50 rounded-xl p-4 border border-pink-100">
+                                        <div className="flex items-center text-pink-600 mb-2">
+                                            <Heart className="w-5 h-5 mr-2" />
+                                            <span className="font-bold">Preferiti</span>
+                                        </div>
+                                        <div className="text-2xl font-bold text-gray-900">
+                                            {selectedEventStats?.favorites || 0}
+                                        </div>
+                                    </div>
+                                </div>
 
-                                  {/* Favorites */}
-                                  <div className="bg-pink-50 rounded-xl p-6 border border-pink-100 flex items-center">
-                                      <div className="p-3 bg-pink-100 rounded-full text-pink-600 mr-4">
-                                          <Heart className="w-8 h-8" />
-                                      </div>
-                                      <div>
-                                          <p className="text-sm text-pink-800 font-medium uppercase tracking-wide">Preferiti</p>
-                                          <p className="text-2xl font-bold text-gray-900">
-                                              {selectedEventStats?.favorites || 0}
-                                          </p>
-                                      </div>
-                                  </div>
-                              </div>
-
-                              {/* PR List Breakdown */}
-                              <div>
-                                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                                      <TrendingUp className="w-5 h-5 mr-2 text-indigo-600" />
-                                      Dettaglio Liste PR
-                                  </h3>
-                                  <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                                      {selectedEventStats && Object.keys(selectedEventStats).filter(k => k !== 'favorites').length > 0 ? (
-                                          <table className="min-w-full divide-y divide-gray-200">
-                                              <thead className="bg-gray-50">
-                                                  <tr>
-                                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome Lista</th>
-                                                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Vendite</th>
-                                                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Valore Stimato</th>
-                                                  </tr>
-                                              </thead>
-                                              <tbody className="bg-white divide-y divide-gray-200">
-                                                  {Object.entries(selectedEventStats)
-                                                      .filter(([key]) => key !== 'favorites')
-                                                      .sort(([,a], [,b]) => (b as number) - (a as number))
-                                                      .map(([listName, count]) => (
-                                                          <tr key={listName}>
-                                                              <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{listName}</td>
-                                                              <td className="px-6 py-4 whitespace-nowrap text-right font-bold text-indigo-600">{count}</td>
-                                                              <td className="px-6 py-4 whitespace-nowrap text-right text-gray-500">€{((count as number) * selectedEvent.price).toFixed(2)}</td>
-                                                          </tr>
-                                                  ))}
-                                              </tbody>
-                                          </table>
-                                      ) : (
-                                          <div className="p-8 text-center text-gray-500">
-                                              Nessuna vendita associata a liste PR o nessuna lista configurata.
-                                          </div>
-                                      )}
-                                  </div>
-                              </div>
-
-                          </div>
+                                <div className="border-t border-gray-100 pt-6">
+                                     <h4 className="text-lg font-bold text-gray-900 mb-4">Vendite per Lista PR</h4>
+                                     <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+                                        <div className="grid grid-cols-2 bg-gray-100 p-3 font-semibold text-gray-600 text-sm">
+                                            <div>Nome Lista</div>
+                                            <div className="text-right">Voucher Venduti</div>
+                                        </div>
+                                        {selectedEventStats && Object.entries(selectedEventStats).filter(([k]) => k !== 'favorites').length > 0 ? (
+                                             Object.entries(selectedEventStats)
+                                                .filter(([key]) => key !== 'favorites')
+                                                .map(([name, count]) => (
+                                                    <div key={name} className="grid grid-cols-2 p-3 border-b border-gray-100 last:border-0 hover:bg-white transition">
+                                                        <div className="font-medium text-gray-800">{name}</div>
+                                                        <div className="text-right text-indigo-600 font-bold">{count}</div>
+                                                    </div>
+                                                ))
+                                        ) : (
+                                            <div className="p-6 text-center text-gray-500">Nessuna vendita registrata per liste PR.</div>
+                                        )}
+                                     </div>
+                                </div>
+                           </>
                       )}
-                  </div>
-                  <div className="bg-gray-50 p-4 border-t border-gray-100 flex justify-end">
-                      <button onClick={() => setIsStatsModalOpen(false)} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition">
-                          Chiudi Statistiche
-                      </button>
                   </div>
               </div>
           </div>
       )}
-
     </div>
   );
 };
