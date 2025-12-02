@@ -124,12 +124,14 @@ const StripeController = {
       }
 
       // 2. PRICE CALCULATION (STRICT INTEGER MATH)
+      // Convert price (e.g. 15.00) to cents (1500) strictly.
       const unitPriceCents = Math.round(Number(event.price) * 100); 
       
       // LOGIC FIX: If ticket is free, Fee is 0. If ticket is paid, Fee is 40 cents.
       const feeCents = unitPriceCents === 0 ? 0 : APPLICATION_FEE_CENTS;
       
-      // Total User Pays per ticket
+      // Total User Pays per ticket (Integer addition)
+      // e.g. 1500 + 40 = 1540
       const totalPerTicketCents = unitPriceCents + feeCents;
       
       // Total Amount for the whole order
@@ -241,6 +243,8 @@ const StripeController = {
                 name: `Voucher: ${event.title}`,
                 description: `${new Date(event.date).toISOString().split('T')[0]} @ ${event.location}`,
               },
+              // UNIT AMOUNT must be integer cents. 
+              // Math.round ensures 15.40 -> 1540 and not 1539.99999
               unit_amount: Math.round(totalPerTicketCents), 
             },
             quantity: quantity,

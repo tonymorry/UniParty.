@@ -241,23 +241,25 @@ const EventDetails: React.FC = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!event) return <div className="min-h-screen flex items-center justify-center">Event not found or expired</div>;
 
-  const isFree = event.price === 0;
-  
   // FIX: USE STRICT INTEGER MATH (Cents)
   // Convert Euro price to Cents. Math.round() prevents floating point errors like 10.3999999
   const priceInCents = Math.round(Number(event.price) * 100);
   
-  // Fee is strictly 40 cents
+  // Use priceInCents === 0 to ensure strict FREE check
+  const isFree = priceInCents === 0;
+  
+  // Fee is strictly 40 cents if paid, 0 if free
   const feeInCents = isFree ? 0 : 40; 
   
   // Total Cents per ticket
   const totalPerTicketCents = priceInCents + feeInCents;
   
-  // Convert back to Euros for display
+  // Convert back to Euros for display (e.g. 1540 / 100 = 15.40)
   const totalPricePerTicket = totalPerTicketCents / 100;
   
-  // Total Amount for the whole order (in Euros)
-  const totalAmount = (totalPerTicketCents * quantity) / 100;
+  // Total Amount for the whole order (in Cents then Euros)
+  const totalOrderCents = totalPerTicketCents * quantity;
+  const totalAmount = totalOrderCents / 100;
 
   const remainingTickets = event.maxCapacity - event.ticketsSold;
   const isSoldOut = remainingTickets <= 0;

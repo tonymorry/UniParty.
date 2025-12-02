@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users, Flame, Heart } from 'lucide-react';
@@ -18,16 +19,19 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
   });
 
   // FIX: Strict Integer Math for Price Display
-  // Base Price (Euros) -> Cents
+  // 1. Get Base Price in Cents (e.g. 15.00 -> 1500)
   const priceInCents = Math.round(Number(event.price) * 100);
   
-  // Fee is always 40 cents if price > 0
-  const feeInCents = priceInCents > 0 ? 40 : 0;
+  // Use priceInCents === 0 to ensure strict FREE check
+  const isFree = priceInCents === 0;
+
+  // 2. Add Fee in Cents (always 40 cents if paid, 0 if free)
+  const feeInCents = isFree ? 0 : 40;
   
-  // Total in cents
+  // 3. Total in cents
   const totalInCents = priceInCents + feeInCents;
   
-  // Convert back to Euros for display
+  // 4. Convert back to Euros for display (e.g. 1540 -> 15.40)
   const finalPrice = totalInCents / 100;
 
   // Logic for ticket display
@@ -89,7 +93,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
                    </div>
                )}
                <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-indigo-700 font-bold text-sm shadow-sm flex items-center">
-                    {event.price === 0 ? 'Free' : `€${finalPrice.toFixed(2)}`}
+                    {isFree ? 'Free' : `€${finalPrice.toFixed(2)}`}
                </div>
           </div>
         </div>

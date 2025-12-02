@@ -134,10 +134,15 @@ const Dashboard: React.FC = () => {
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Strict number handling for Price
+    // Parse the string input, handle comma/dot, multiply by 100, round to integer, then divide by 100
     const finalPriceStr = user.stripeOnboardingComplete ? price : '0';
     const cleanPriceStr = finalPriceStr.toString().replace(',', '.');
     const tempPrice = parseFloat(cleanPriceStr);
-    const numericPrice = Math.round((tempPrice + Number.EPSILON) * 100) / 100;
+    
+    // e.g. 15.00 -> 1500 -> 15.00
+    // e.g. 14.999 -> 1499.9 -> 1500 -> 15.00
+    const numericPrice = Math.round(tempPrice * 100) / 100;
 
     if (isNaN(numericPrice) || numericPrice < 0) {
         alert("Prezzo non valido.");
@@ -483,6 +488,15 @@ const Dashboard: React.FC = () => {
                                                 onChange={e => {
                                                     if (user.stripeOnboardingComplete) setPrice(e.target.value);
                                                 }} 
+                                                onBlur={() => {
+                                                    // Strict formatting on blur to prevent floating point confusion
+                                                    if(price) {
+                                                        const p = parseFloat(price.replace(',', '.'));
+                                                        if(!isNaN(p)) {
+                                                            setPrice(p.toFixed(2));
+                                                        }
+                                                    }
+                                                }}
                                                 disabled={!user.stripeOnboardingComplete}
                                                 className={`w-full px-4 py-2 border rounded-lg outline-none transition
                                                     ${!user.stripeOnboardingComplete 
