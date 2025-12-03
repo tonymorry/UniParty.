@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -134,15 +135,14 @@ const Dashboard: React.FC = () => {
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Strict number handling for Price
-    // Parse the string input, handle comma/dot, multiply by 100, round to integer, then divide by 100
-    const finalPriceStr = user.stripeOnboardingComplete ? price : '0';
-    const cleanPriceStr = finalPriceStr.toString().replace(',', '.');
+    // 1. Pulisci la stringa (gestione virgola/punto)
+    const cleanPriceStr = (user.stripeOnboardingComplete ? price : '0').toString().replace(',', '.');
     const tempPrice = parseFloat(cleanPriceStr);
-    
-    // e.g. 15.00 -> 1500 -> 15.00
-    // e.g. 14.999 -> 1499.9 -> 1500 -> 15.00
-    const numericPrice = Math.round(tempPrice * 100) / 100;
+
+    // 2. FIX DEFINITIVO: Arrotondamento "Fixed"
+    // Converte 14.9999 -> "15.00" -> 15
+    // Questo assicura che al server arrivi un numero pulito a 2 decimali.
+    const numericPrice = isNaN(tempPrice) ? 0 : Number(tempPrice.toFixed(2));
 
     if (isNaN(numericPrice) || numericPrice < 0) {
         alert("Prezzo non valido.");

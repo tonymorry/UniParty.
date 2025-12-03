@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Event, UserRole } from '../types';
@@ -241,24 +242,26 @@ const EventDetails: React.FC = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!event) return <div className="min-h-screen flex items-center justify-center">Event not found or expired</div>;
 
-  // FIX: USE STRICT INTEGER MATH (Cents)
-  // Convert Euro price to Cents. Math.round() prevents floating point errors like 10.3999999
-  const priceInCents = Math.round(Number(event.price) * 100);
-  
-  // Use priceInCents === 0 to ensure strict FREE check
+  // --- PRICE CALCULATION (SAFE MATH) ---
+  // 1. Pulisci il prezzo base dal DB (es. 10.00)
+  const safeBasePrice = Number(Number(event.price).toFixed(2));
+
+  // 2. Converti in Centesimi INTERI (es. 1000)
+  const priceInCents = Math.round(safeBasePrice * 100);
+
   const isFree = priceInCents === 0;
-  
-  // Fee is strictly 40 cents if paid, 0 if free
+
+  // 3. Aggiungi la Fee (0 o 40 centesimi fissi)
   const feeInCents = isFree ? 0 : 40; 
-  
-  // Total Cents per ticket
+
+  // 4. Totale in Centesimi
   const totalPerTicketCents = priceInCents + feeInCents;
-  
-  // Convert back to Euros for display (e.g. 1540 / 100 = 15.40)
-  const totalPricePerTicket = totalPerTicketCents / 100;
-  
-  // Total Amount for the whole order (in Cents then Euros)
+
+  // 5. Totale Ordine
   const totalOrderCents = totalPerTicketCents * quantity;
+
+  // 6. Converti indietro in Euro per la visualizzazione
+  const totalPricePerTicket = totalPerTicketCents / 100;
   const totalAmount = totalOrderCents / 100;
 
   const remainingTickets = event.maxCapacity - event.ticketsSold;

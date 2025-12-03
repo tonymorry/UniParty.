@@ -530,8 +530,9 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         }
 
         if (req.body.price !== undefined) {
-            // Forza l'arrotondamento corretto anche lato server per sicurezza
-            req.body.price = Math.round((Number(req.body.price) + Number.EPSILON) * 100) / 100;
+             // FORCE 2 DECIMALS: Risolve il problema 10 -> 9.99
+             // Trasforma in stringa fissa e poi di nuovo in numero
+             req.body.price = Number(Number(req.body.price).toFixed(2));
         }
 
         let { 
@@ -598,8 +599,9 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
         if (event.organization.toString() !== req.user.userId) return res.status(403).json({ error: "Unauthorized" });
 
         if (req.body.price !== undefined) {
-             // Forza l'arrotondamento corretto anche lato server per sicurezza
-             req.body.price = Math.round((Number(req.body.price) + Number.EPSILON) * 100) / 100;
+             // FORCE 2 DECIMALS: Risolve il problema 10 -> 9.99
+             // Trasforma in stringa fissa e poi di nuovo in numero
+             req.body.price = Number(Number(req.body.price).toFixed(2));
         }
 
         let { 
