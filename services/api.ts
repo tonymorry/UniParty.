@@ -34,12 +34,14 @@ const mockApi = {
     getFavoriteEvents: async () => [],
     me: async () => ({}) as any,
     toggleFollow: async () => [],
-    searchAssociations: async () => []
+    searchAssociations: async () => [],
+    getPublicProfile: async () => ({} as any)
   },
   events: {
     getAll: async () => [],
     getById: async () => undefined,
     getByOrgId: async () => [],
+    getPublicEventsByOrg: async () => [],
     create: async () => ({} as any),
     update: async () => ({} as any),
     delete: async () => {},
@@ -155,6 +157,11 @@ const realApi = {
         });
         if(!res.ok) throw new Error('Search failed');
         return res.json();
+    },
+    getPublicProfile: async (userId: string) => {
+        const res = await fetch(`${API_URL}/users/${userId}/public`);
+        if(!res.ok) throw new Error('Failed to fetch public profile');
+        return res.json();
     }
   },
   events: {
@@ -167,8 +174,14 @@ const realApi = {
         if (!res.ok) return undefined;
         return res.json();
     },
+    // For Dashboard (Authenticated Owner)
     getByOrgId: async (orgId: string) => {
         const res = await fetch(`${API_URL}/events?organization=${orgId}`);
+        return res.json();
+    },
+    // For Public Profile (Active/Future only)
+    getPublicEventsByOrg: async (orgId: string) => {
+        const res = await fetch(`${API_URL}/events?organization=${orgId}&public=true`);
         return res.json();
     },
     create: async (eventData: any, user: any) => {

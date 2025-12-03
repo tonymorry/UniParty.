@@ -19,7 +19,8 @@ import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import Favorites from './pages/Favorites';
 import EventAttendees from './pages/EventAttendees'; 
-import SearchAssociations from './pages/SearchAssociations'; // Import new page
+import SearchAssociations from './pages/SearchAssociations'; 
+import AssociationProfile from './pages/AssociationProfile'; // Import public profile
 import Footer from './components/Footer';
 import CookieBanner from './components/CookieBanner';
 
@@ -38,7 +39,8 @@ function App() {
               <Route path="/events/:id/attendees" element={<EventAttendees />} />
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/favorites" element={<Favorites />} />
-              <Route path="/search" element={<SearchAssociations />} /> {/* New Route */}
+              <Route path="/search" element={<SearchAssociations />} />
+              <Route path="/association/:id" element={<AssociationProfile />} /> {/* New Public Profile Route */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/scanner" element={<Scanner />} />

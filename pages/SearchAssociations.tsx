@@ -93,7 +93,11 @@ const SearchAssociations: React.FC = () => {
             <div className="space-y-4">
                 {results.length > 0 ? (
                     results.map(assoc => (
-                        <div key={assoc._id} className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between transition hover:shadow-md">
+                        <div 
+                            key={assoc._id} 
+                            onClick={() => navigate(`/association/${assoc._id}`)}
+                            className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between transition hover:shadow-md cursor-pointer hover:bg-gray-50"
+                        >
                             <div className="flex items-center">
                                 <div className="w-12 h-12 bg-gray-100 rounded-full overflow-hidden mr-4 flex-shrink-0 border border-gray-200">
                                     {assoc.profileImage ? (
@@ -110,7 +114,10 @@ const SearchAssociations: React.FC = () => {
                                 </div>
                             </div>
                             <button
-                                onClick={() => handleToggleFollow(assoc._id)}
+                                onClick={(e) => {
+                                    e.stopPropagation(); // Prevent navigation when clicking follow
+                                    handleToggleFollow(assoc._id);
+                                }}
                                 disabled={followLoading === assoc._id}
                                 className={`px-4 py-2 rounded-full font-bold text-sm flex items-center transition ${
                                     isFollowing(assoc._id) 

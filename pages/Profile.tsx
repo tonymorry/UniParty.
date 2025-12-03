@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
@@ -323,8 +324,12 @@ const Profile: React.FC = () => {
                         {user.followedAssociations && user.followedAssociations.length > 0 ? (
                             <div className="flex overflow-x-auto space-x-4 pb-4">
                                 {user.followedAssociations.map((assoc: any) => (
-                                    <div key={assoc._id} className="flex flex-col items-center min-w-[80px]">
-                                        <div className="w-16 h-16 bg-gray-100 rounded-full overflow-hidden border border-gray-200 mb-2">
+                                    <Link 
+                                        to={`/association/${typeof assoc === 'string' ? assoc : assoc._id}`}
+                                        key={typeof assoc === 'string' ? assoc : assoc._id} 
+                                        className="flex flex-col items-center min-w-[80px] group cursor-pointer"
+                                    >
+                                        <div className="w-16 h-16 bg-gray-100 rounded-full overflow-hidden border border-gray-200 mb-2 group-hover:ring-2 group-hover:ring-indigo-500 transition">
                                             {assoc.profileImage ? (
                                                 <img src={assoc.profileImage} alt={assoc.name} className="w-full h-full object-cover" />
                                             ) : (
@@ -333,8 +338,8 @@ const Profile: React.FC = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        <span className="text-xs font-medium text-gray-700 text-center truncate w-full">{assoc.name}</span>
-                                    </div>
+                                        <span className="text-xs font-medium text-gray-700 text-center truncate w-full group-hover:text-indigo-600">{assoc.name}</span>
+                                    </Link>
                                 ))}
                             </div>
                         ) : (

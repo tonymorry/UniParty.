@@ -357,6 +357,23 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
     }
 });
 
+// NEW: Public Profile Data (No Auth Required)
+app.get('/api/users/:id/public', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id)
+            .select('name profileImage description socialLinks followersCount role isDeleted');
+        
+        if (!user || user.isDeleted) return res.status(404).json({ error: "User not found" });
+        
+        // Ensure only associations or explicit public profiles are returned if needed, 
+        // but generally generic public profile is fine.
+        
+        res.json(user);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.get('/api/users/:id/refresh-stripe', authMiddleware, async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user || !user.stripeAccountId) return res.status(400).json({ error: "No stripe account" });
@@ -437,18 +454,31 @@ app.put('/api/admin/users/:id/restore', authMiddleware, adminMiddleware, async (
 
 app.get('/api/events', async (req, res) => {
     try {
-        const { organization } = req.query;
+        const { organization, public: isPublic } = req.query;
         let query = {};
 
         if (organization) {
-            // CASE 1: ASSOCIATION DASHBOARD
             query.organization = organization;
-            // Show 'active', 'archived' OR 'draft' (Association must see drafts)
-            // Also support legacy documents with no status
-            query.$or = [
-                { status: { $in: ['active', 'archived', 'draft'] } },
-                { status: { $exists: false } }
-            ];
+            
+            // NEW LOGIC: If 'public=true' is passed, filter for public active future events only.
+            // Otherwise, assume it's the dashboard (requires handling in UI or Auth, but for now logic is split by param)
+            if (isPublic === 'true') {
+                 // PUBLIC PROFILE VIEW
+                 query.$or = [
+                    { status: 'active' },
+                    { status: { $exists: false } }
+                 ];
+                 // Date filter: Only Future events (or today)
+                 const today = new Date();
+                 today.setHours(0, 0, 0, 0);
+                 query.date = { $gte: today };
+            } else {
+                 // DASHBOARD VIEW (Shows Drafts, Archived, etc.)
+                 query.$or = [
+                    { status: { $in: ['active', 'archived', 'draft'] } },
+                    { status: { $exists: false } }
+                 ];
+            }
         } else {
             // CASE 2: PUBLIC / STUDENTS (Home Page)
             // Show only 'active' or legacy. Hide 'draft' and 'archived' and 'deleted'.
