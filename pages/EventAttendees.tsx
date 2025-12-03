@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
-import { ArrowLeft, Clock, CheckCircle, Circle, User, GraduationCap, Users } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Circle, User, GraduationCap, Users, Download } from 'lucide-react';
 
 interface Attendee {
     _id: string;
@@ -61,6 +61,41 @@ const EventAttendees: React.FC = () => {
         }
     };
 
+    const downloadCSV = () => {
+        if (!attendees.length) return;
+
+        // Header CSV
+        const headers = ["Nome", "Matricola", "Lista PR", "Stato", "Orario Ingresso", "Orario Uscita"];
+        
+        // Rows Data
+        const rows = attendees.map(a => [
+            `"${a.ticketHolderName.replace(/"/g, '""')}"`, // Escape quotes
+            `"${a.matricola || ''}"`,
+            `"${a.prList || ''}"`,
+            `"${a.status}"`,
+            `"${a.entryTime ? new Date(a.entryTime).toLocaleString() : ''}"`,
+            `"${a.exitTime ? new Date(a.exitTime).toLocaleString() : ''}"`
+        ]);
+
+        // Join content
+        const csvContent = [
+            headers.join(','), 
+            ...rows.map(e => e.join(','))
+        ].join('\n');
+
+        // Create Blob with BOM for Excel compatibility (UTF-8)
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        
+        // Trigger Download
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `lista_partecipanti_${id}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-8">
             <div className="max-w-6xl mx-auto">
@@ -85,8 +120,19 @@ const EventAttendees: React.FC = () => {
                              />
                              <User className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                          </div>
-                         <div className="text-sm text-gray-500 font-medium">
-                             Totale: {attendees.length}
+                         
+                         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                             <div className="text-sm text-gray-500 font-medium whitespace-nowrap">
+                                 Totale: {attendees.length}
+                             </div>
+                             <button 
+                                onClick={downloadCSV}
+                                disabled={attendees.length === 0}
+                                className="flex items-center px-4 py-2 bg-white border border-indigo-200 text-indigo-700 rounded-lg text-sm font-bold shadow-sm hover:bg-indigo-50 hover:border-indigo-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                             >
+                                <Download className="w-4 h-4 mr-2" />
+                                Scarica Lista
+                             </button>
                          </div>
                     </div>
 
