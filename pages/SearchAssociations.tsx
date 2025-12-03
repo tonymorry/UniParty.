@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -80,7 +81,7 @@ const SearchAssociations: React.FC = () => {
                 onChange={e => setQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 border-0 rounded-xl shadow-md focus:ring-2 focus:ring-indigo-500 outline-none text-lg"
             />
-            <Search className="absolute left-4 top-4.5 w-6 h-6 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400" />
         </div>
 
         {loading ? (

@@ -344,9 +344,10 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
         const { q } = req.query;
         if (!q) return res.json([]);
 
+        // FIXED: Using $ne: true to include documents where isDeleted field is missing (legacy data)
         const associations = await User.find({
             role: 'associazione',
-            isDeleted: false,
+            isDeleted: { $ne: true }, 
             name: { $regex: q, $options: 'i' }
         }).select('name profileImage followersCount description');
 

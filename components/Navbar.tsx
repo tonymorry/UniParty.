@@ -1,8 +1,10 @@
+
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
-import { Ticket, PartyPopper, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard } from 'lucide-react';
+import { Ticket, PartyPopper, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user, logout, deleteAccount } = useAuth();
@@ -77,6 +79,13 @@ const Navbar: React.FC = () => {
 
             {user && user.role === UserRole.STUDENTE && (
                <>
+                 <Link 
+                    to="/search" 
+                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-indigo-700 transition"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <Search className="h-5 w-5 mr-3 text-indigo-300" /> Search Associations
+                 </Link>
                  <Link 
                     to="/wallet" 
                     className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-indigo-700 transition"
