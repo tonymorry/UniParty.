@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,4 +6,33 @@
 body {
   font-family: 'Inter', sans-serif;
   background-color: #f8fafc;
+}
+
+/* 
+   Logica per Scanner Nativo (Capacitor):
+   Quando la classe .barcode-scanner-active è presente sul body,
+   rendiamo trasparenti i contenitori principali per permettere
+   alla fotocamera (che sta sotto la WebView) di essere vista.
+*/
+
+body.barcode-scanner-active {
+  background: transparent !important;
+}
+
+body.barcode-scanner-active #root {
+  background: transparent !important;
+}
+
+/* Rende trasparente il contenitore dell'app principale */
+body.barcode-scanner-active .min-h-screen {
+    background-color: transparent !important;
+}
+
+/* 
+   Target specifico per Scanner.tsx:
+   Rende trasparente il riquadro nero dove normalmente 
+   verrebbe renderizzato lo scanner web.
+*/
+body.barcode-scanner-active .bg-black {
+    background-color: transparent !important;
 }

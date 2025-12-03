@@ -1,6 +1,8 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { BarcodeScanner, BarcodeFormat, LensFacing } from '@capacitor-mlkit/barcode-scanning';
+import { Capacitor } from '@capacitor/core';
 import { api } from '../services/api';
 import { Ticket, UserRole } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +18,7 @@ const Scanner: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null);
   
-  // Ref for the scanner instance
+  // Ref for the scanner instance (Web only)
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const isScanningRef = useRef<boolean>(false);
 
@@ -35,12 +37,52 @@ const Scanner: React.FC = () => {
 
     const startScanner = async () => {
         // Prevent multiple initializations
-        if (html5QrCodeRef.current || isScanningRef.current) return;
+        if (isScanningRef.current) return;
 
+        // --- NATIVE LOGIC (Capacitor) ---
+        if (Capacitor.isNativePlatform()) {
+            try {
+                const { camera } = await BarcodeScanner.requestPermissions();
+                
+                if (camera === 'granted' || camera === 'limited') {
+                    setCameraPermission(true);
+                    isScanningRef.current = true;
+                    
+                    // Add class to make WebView transparent so camera is visible
+                    document.body.classList.add('barcode-scanner-active');
+
+                    // Start Scan
+                    const { barcodes } = await BarcodeScanner.scan({
+                        formats: [BarcodeFormat.QrCode],
+                        lensFacing: LensFacing.Back
+                    });
+
+                    // If we get here, a code was found
+                    if (barcodes.length > 0) {
+                        const content = barcodes[0].rawValue;
+                        await stopScanner(); // Stop camera and restore UI
+                        handleValidation(content);
+                    }
+                } else {
+                    setCameraPermission(false);
+                    setError("Permessi fotocamera negati.");
+                }
+            } catch (err) {
+                console.error("Native scanner error:", err);
+                setCameraPermission(false);
+                setError("Impossibile avviare scanner nativo.");
+            }
+            return;
+        }
+
+        // --- WEB LOGIC (Html5Qrcode) ---
+        
         // Wait for DOM
         await new Promise(r => setTimeout(r, 100));
         const element = document.getElementById('reader');
         if (!element) return;
+
+        if (html5QrCodeRef.current) return; // Double check for web instance
 
         try {
             const html5QrCode = new Html5Qrcode("reader");
@@ -74,7 +116,7 @@ const Scanner: React.FC = () => {
                 setError("No cameras found.");
             }
         } catch (err) {
-            console.error("Error starting scanner", err);
+            console.error("Error starting web scanner", err);
             setCameraPermission(false);
             // Don't set global error yet, let them use manual
         }
@@ -89,15 +131,28 @@ const Scanner: React.FC = () => {
   }, [user, navigate, scanResult, error, loading]);
 
   const stopScanner = async () => {
-      if (html5QrCodeRef.current && isScanningRef.current) {
+      isScanningRef.current = false;
+
+      if (Capacitor.isNativePlatform()) {
+          // Native Cleanup
+          document.body.classList.remove('barcode-scanner-active');
           try {
-              isScanningRef.current = false;
-              await html5QrCodeRef.current.stop();
-              await html5QrCodeRef.current.clear();
+              await BarcodeScanner.removeAllListeners();
+              await BarcodeScanner.stopScan();
           } catch (e) {
-              console.error("Failed to stop scanner", e);
-          } finally {
-              html5QrCodeRef.current = null;
+              console.warn("Failed to stop native scanner", e);
+          }
+      } else {
+          // Web Cleanup
+          if (html5QrCodeRef.current) {
+              try {
+                  await html5QrCodeRef.current.stop();
+                  await html5QrCodeRef.current.clear();
+              } catch (e) {
+                  console.error("Failed to stop web scanner", e);
+              } finally {
+                  html5QrCodeRef.current = null;
+              }
           }
       }
   };
