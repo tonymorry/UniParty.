@@ -8,10 +8,10 @@ const userSchema = new mongoose.Schema({
     type: String, 
     required: true, 
     unique: true, 
-    lowercase: true, // Forces email to lowercase on save
-    trim: true       // Removes whitespace
+    lowercase: true, 
+    trim: true       
   },
-  password: { type: String, required: true }, // Will be hashed
+  password: { type: String, required: true }, 
   name: { type: String, required: true },
   role: { type: String, enum: ['studente', 'associazione'], required: true },
   profileImage: { type: String, default: '' },
@@ -25,15 +25,33 @@ const userSchema = new mongoose.Schema({
 
   // Student specific
   surname: String,
-  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }], // Array of Favorite Events
-  followedAssociations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // New: Following list
+  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }], 
+  followedAssociations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], 
   
+  // Web Push Subscription
+  pushSubscription: {
+    endpoint: String,
+    keys: {
+      p256dh: String,
+      auth: String
+    }
+  },
+
   // Association specific
   description: String,
   socialLinks: String,
-  stripeAccountId: { type: String, default: '' }, // The 'Connected Account' ID (e.g., acct_12345)
+  stripeAccountId: { type: String, default: '' }, 
   stripeOnboardingComplete: { type: Boolean, default: false },
-  followersCount: { type: Number, default: 0 } // New: Followers Counter
+  followersCount: { type: Number, default: 0 } 
+}, { timestamps: true });
+
+// --- NOTIFICATION SCHEMA ---
+const notificationSchema = new mongoose.Schema({
+  recipient: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  title: { type: String, required: true },
+  message: { type: String, required: true },
+  url: { type: String, default: '/' },
+  isRead: { type: Boolean, default: false },
 }, { timestamps: true });
 
 // --- EVENT SCHEMA ---
@@ -82,17 +100,13 @@ const ticketSchema = new mongoose.Schema({
   entryTime: { type: Date },
   exitTime: { type: Date },
 
-  used: { type: Boolean, default: false }, // Kept for legacy compatibility (true if completed)
-  checkInDate: Date, // Kept for legacy compatibility (synced with entryTime)
+  used: { type: Boolean, default: false }, 
+  checkInDate: Date, 
   
   // Stripe Data
   paymentIntentId: String,
   sessionId: String,
 
-  // Status
-  // 'valid'/'active': Ready to be used
-  // 'entered': Inside the event (for entry_exit)
-  // 'completed': Finished (Exit scanned or Entry scanned for simple events)
   status: { type: String, enum: ['active', 'valid', 'entered', 'completed', 'archived', 'deleted'], default: 'valid' }
 }, { timestamps: true });
 
@@ -100,8 +114,8 @@ const ticketSchema = new mongoose.Schema({
 const orderSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
-  ticketNames: [String], // Array of names
-  ticketMatricolas: [String], // Array of matricolas (parallel to names)
+  ticketNames: [String], 
+  ticketMatricolas: [String], 
   prList: { type: String, default: 'Nessuna lista' },
   quantity: { type: Number, required: true },
   totalAmountCents: { type: Number, required: true },
@@ -115,5 +129,6 @@ module.exports = {
   User: mongoose.model('User', userSchema),
   Event: mongoose.model('Event', eventSchema),
   Ticket: mongoose.model('Ticket', ticketSchema),
-  Order: mongoose.model('Order', orderSchema)
+  Order: mongoose.model('Order', orderSchema),
+  Notification: mongoose.model('Notification', notificationSchema)
 };

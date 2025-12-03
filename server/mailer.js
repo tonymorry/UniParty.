@@ -1,4 +1,5 @@
 
+
 const { Resend } = require('resend');
 
 // Initialize Resend with API Key from environment variables
@@ -110,62 +111,7 @@ const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
   }
 };
 
-const sendNewEventNotification = async (bccList, eventTitle, associationName, eventId) => {
-  try {
-    if (!bccList || bccList.length === 0) return;
-
-    console.log(`📤 Attempting to send EVENT NOTIFICATION to ${bccList.length} followers via Resend`);
-    
-    // Send in batches of 40 to avoid limits if necessary, though Resend handles BCC well usually.
-    // For simplicity, assuming list is manageable.
-    
-    const { data, error } = await resend.emails.send({
-      from: 'notifications@resend.dev',
-      to: 'uniparty.team@gmail.com', // Dummy TO address
-      bcc: bccList, // Real recipients
-      subject: `Nuovo Evento da ${associationName}! 🎉`,
-      html: `
-        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px;">
-           <div style="text-align: center; margin-bottom: 30px;">
-             <h1 style="color: #4338ca; margin: 0; font-size: 28px; letter-spacing: -1px;">UniParty</h1>
-          </div>
-
-          <h2 style="color: #111827; font-size: 22px; font-weight: 700; margin-bottom: 16px;">${associationName} ha pubblicato un nuovo evento!</h2>
-          
-          <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #dcfce7;">
-             <h3 style="margin: 0; color: #166534; font-size: 20px;">${eventTitle}</h3>
-          </div>
-
-          <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
-            Corri a vedere i dettagli e prenota il tuo ingresso prima che finiscano i posti!
-          </p>
-
-          <div style="text-align: center; margin-bottom: 40px;">
-            <a href="${FRONTEND_URL}/#/events/${eventId}" style="background-color: #4338ca; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; display: inline-block;">
-              Vedi Evento
-            </a>
-          </div>
-          
-          <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-            Ricevi questa email perché segui ${associationName} su UniParty.
-          </p>
-        </div>
-      `,
-    });
-
-    if (error) {
-      console.error("❌ Resend Notification Error:", error);
-      return;
-    }
-
-    console.log("📨 Notification emails sent successfully. ID:", data.id);
-  } catch (error) {
-    console.error("❌ Unexpected Error sending Notification Email:", error);
-  }
-};
-
 module.exports = {
   sendWelcomeEmail,
-  sendTicketsEmail,
-  sendNewEventNotification
+  sendTicketsEmail
 };

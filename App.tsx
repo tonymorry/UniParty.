@@ -1,6 +1,6 @@
 
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
@@ -20,17 +20,33 @@ import Terms from './pages/Terms';
 import Favorites from './pages/Favorites';
 import EventAttendees from './pages/EventAttendees'; 
 import SearchAssociations from './pages/SearchAssociations'; 
-import AssociationProfile from './pages/AssociationProfile'; // Import public profile
+import AssociationProfile from './pages/AssociationProfile'; 
+import Notifications from './pages/Notifications';
 import Footer from './components/Footer';
 import CookieBanner from './components/CookieBanner';
 
 function App() {
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(
+          (registration) => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          },
+          (err) => {
+            console.log('ServiceWorker registration failed: ', err);
+          }
+        );
+      });
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
           <Navbar />
-          {/* Aggiunto pb-20 per mobile per non coprire il contenuto con la BottomNav */}
           <main className="flex-grow pb-20 md:pb-0">
             <Routes>
               <Route path="/" element={<Home />} />
@@ -40,7 +56,8 @@ function App() {
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/search" element={<SearchAssociations />} />
-              <Route path="/association/:id" element={<AssociationProfile />} /> {/* New Public Profile Route */}
+              <Route path="/association/:id" element={<AssociationProfile />} />
+              <Route path="/notifications" element={<Notifications />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/scanner" element={<Scanner />} />

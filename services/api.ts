@@ -1,5 +1,7 @@
 
 
+
+
 import { Event, EventCategory, LoginResponse, Ticket, User, UserRole } from '../types';
 
 // ==========================================
@@ -67,6 +69,12 @@ const mockApi = {
       getUserTickets: async () => [],
       verifyUser: async () => {},
       restoreUser: async () => {}
+  },
+  notifications: {
+      subscribe: async () => {},
+      getAll: async () => [],
+      markAsRead: async () => {},
+      getVapidKey: async () => ({ key: 'mock' })
   }
 };
 
@@ -294,6 +302,28 @@ const realApi = {
       },
       restoreUser: async (userId: string) => {
           const res = await fetch(`${API_URL}/admin/users/${userId}/restore`, { method: 'PUT', headers: getHeaders() });
+          return res.json();
+      }
+  },
+  notifications: {
+      subscribe: async (subscription: PushSubscription) => {
+          const res = await fetch(`${API_URL}/notifications/subscribe`, {
+              method: 'POST',
+              headers: getHeaders(),
+              body: JSON.stringify(subscription)
+          });
+          if(!res.ok) throw new Error("Subscription failed");
+      },
+      getAll: async () => {
+          const res = await fetch(`${API_URL}/notifications`, { headers: getHeaders() });
+          return res.json();
+      },
+      markAsRead: async (id: string) => {
+          const res = await fetch(`${API_URL}/notifications/${id}/read`, { method: 'PUT', headers: getHeaders() });
+          return res.json();
+      },
+      getVapidKey: async () => {
+          const res = await fetch(`${API_URL}/notifications/vapid-key`);
           return res.json();
       }
   }

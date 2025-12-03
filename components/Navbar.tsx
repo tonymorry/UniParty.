@@ -1,15 +1,50 @@
 
 
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
-import { Ticket, PartyPopper, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search } from 'lucide-react';
+import { api } from '../services/api';
+import { Ticket, PartyPopper, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell } from 'lucide-react';
+
+// Helper to convert VAPID key
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+ 
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+ 
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
 
 const Navbar: React.FC = () => {
   const { user, logout, deleteAccount } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = async () => {
+      if (user) {
+          try {
+              const notifs = await api.notifications.getAll();
+              const unread = notifs.filter((n: any) => !n.isRead).length;
+              setUnreadCount(unread);
+          } catch(e) {
+              console.error(e);
+          }
+      }
+  };
+
+  useEffect(() => {
+      fetchUnreadCount();
+  }, [user, location]);
 
   const handleLogout = () => {
     logout();
@@ -31,6 +66,36 @@ const Navbar: React.FC = () => {
       }
   };
 
+  const handleEnableNotifications = async () => {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+          alert("Push notifications not supported");
+          return;
+      }
+
+      try {
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') {
+              alert("Permission denied");
+              return;
+          }
+
+          const { key } = await api.notifications.getVapidKey();
+          const registration = await navigator.serviceWorker.ready;
+          
+          const subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(key)
+          });
+
+          await api.notifications.subscribe(subscription);
+          alert("Notifications enabled!");
+          setIsOpen(false);
+      } catch (e) {
+          console.error("Setup error", e);
+          alert("Failed to setup notifications");
+      }
+  };
+
   return (
     <nav className="bg-indigo-900 text-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,22 +106,47 @@ const Navbar: React.FC = () => {
             <span className="text-xl font-bold tracking-wider">UniParty</span>
           </Link>
 
-          {/* HAMBURGER MENU TOGGLE BUTTON (HIDDEN ON MOBILE, VISIBLE ON DESKTOP) */}
-          <div className="hidden md:flex">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-700 focus:outline-none transition-colors"
-            >
-              <span className="sr-only">Open main menu</span>
-              {isOpen ? <X className="h-8 w-8" /> : <Menu className="h-8 w-8" />}
-            </button>
+          {/* Desktop Right Actions */}
+          <div className="flex items-center space-x-4">
+              {/* Notification Bell (User Only) */}
+              {user && (
+                  <Link to="/notifications" className="relative p-2 text-indigo-200 hover:text-white transition">
+                      <Bell className="w-6 h-6" />
+                      {unreadCount > 0 && (
+                          <span className="absolute top-1 right-1 block h-4 w-4 rounded-full bg-red-500 ring-2 ring-indigo-900 text-[10px] font-bold text-center flex items-center justify-center">
+                              {unreadCount}
+                          </span>
+                      )}
+                  </Link>
+              )}
+
+              {/* HAMBURGER MENU TOGGLE BUTTON */}
+              <div className="md:hidden">
+                <button
+                  onClick={() => setIsOpen(!isOpen)}
+                  className="inline-flex items-center justify-center p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-700 focus:outline-none transition-colors"
+                >
+                  <span className="sr-only">Open main menu</span>
+                  {isOpen ? <X className="h-8 w-8" /> : <Menu className="h-8 w-8" />}
+                </button>
+              </div>
+
+              {/* Desktop Menu Button (Reuse hamburger logic for now on desktop to keep consistent with existing) */}
+              <div className="hidden md:flex">
+                  <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="inline-flex items-center justify-center p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-700 focus:outline-none transition-colors"
+                  >
+                     <Menu className="h-8 w-8" />
+                  </button>
+              </div>
           </div>
         </div>
       </div>
 
-      {/* DROPDOWN MENU (Visible on ALL screens when toggled via Desktop Hamburger) */}
+      {/* DROPDOWN MENU */}
       {isOpen && (
-        <div className="absolute top-16 right-0 w-full sm:w-80 z-50 bg-indigo-800 border-b-2 border-l-2 border-indigo-700 shadow-2xl animate-in slide-in-from-top-2 duration-200 sm:rounded-bl-xl hidden md:block">
+        <div className="absolute top-16 right-0 w-full sm:w-80 z-50 bg-indigo-800 border-b-2 border-l-2 border-indigo-700 shadow-2xl animate-in slide-in-from-top-2 duration-200 sm:rounded-bl-xl">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             
             <Link 
@@ -163,6 +253,22 @@ const Navbar: React.FC = () => {
                  >
                     My Profile
                  </Link>
+                 
+                 <Link 
+                    to="/notifications" 
+                    className="block px-3 py-2 rounded-md text-base font-medium hover:bg-indigo-700 transition text-indigo-100 hover:text-white flex items-center justify-between"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <span>Notifications</span>
+                    {unreadCount > 0 && <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{unreadCount}</span>}
+                 </Link>
+
+                 <button
+                    onClick={handleEnableNotifications}
+                    className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-indigo-100 hover:text-white hover:bg-indigo-700 transition"
+                 >
+                     Enable Push Notifications
+                 </button>
                </div>
              )}
 
