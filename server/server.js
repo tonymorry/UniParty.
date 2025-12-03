@@ -61,9 +61,6 @@ const cleanupExpiredEvents = async () => {
         let archivedCount = 0;
 
         for (const event of events) {
-            // Remove associated notifications for cleanup
-            await Notification.deleteMany({ relatedEvent: event._id });
-
             if (event.price === 0) {
                 // Hard Delete Free Events
                 await Ticket.deleteMany({ event: event._id });
@@ -80,6 +77,9 @@ const cleanupExpiredEvents = async () => {
                 await event.save();
                 archivedCount++;
             }
+            
+            // Remove associated notifications for cleanup (Requested Change)
+            await Notification.deleteMany({ relatedEvent: event._id });
         }
         
         if (hardDeletedCount > 0 || archivedCount > 0) {
@@ -285,37 +285,27 @@ app.post('/api/notifications/subscribe', authMiddleware, async (req, res) => {
 
 // Get User Notifications (Filtered by Event Visibility)
 app.get('/api/notifications', authMiddleware, async (req, res) => {
-    try {
-        // Calculate visibility cutoff (same logic as events)
-        const now = new Date();
-        const currentHour = now.getHours();
-        
-        const visibilityCutoff = new Date();
-        visibilityCutoff.setHours(0, 0, 0, 0); 
+  try {
+    // Calcola orario limite (ieri alle 10:00 se è mattina, oggi alle 10:00 se è pomeriggio)
+    const now = new Date();
+    const visibilityCutoff = new Date();
+    visibilityCutoff.setHours(0, 0, 0, 0);
+    if (now.getHours() < 10) visibilityCutoff.setDate(visibilityCutoff.getDate() - 1);
 
-        if (currentHour < 10) {
-            visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); 
-        } 
+    const notifications = await Notification.find({ recipient: req.user.userId })
+      .populate('relatedEvent', 'date') // Popola per controllare la data
+      .sort({ createdAt: -1 });
 
-        // Fetch notifications and populate related event date
-        const notifications = await Notification.find({ recipient: req.user.userId })
-            .sort({ createdAt: -1 })
-            .populate('relatedEvent', 'date');
-        
-        // Filter in memory: Keep notifications if:
-        // 1. They are NOT related to an event (system messages)
-        // 2. They ARE related to an event AND event.date >= visibilityCutoff
-        const visibleNotifications = notifications.filter(n => {
-            if (!n.relatedEvent) return true;
-            // n.relatedEvent is now an object because of populate
-            const eventDate = new Date(n.relatedEvent.date);
-            return eventDate >= visibilityCutoff;
-        });
+    // Filtra: tieni solo se non ha evento collegato OPPURE se l'evento è ancora visibile
+    const validNotifications = notifications.filter(n => {
+       if (!n.relatedEvent) return true; // Notifica di sistema generica
+       return new Date(n.relatedEvent.date) >= visibilityCutoff;
+    });
 
-        res.json(visibleNotifications);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
+    res.json(validNotifications.slice(0, 20));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Mark Notification as Read
