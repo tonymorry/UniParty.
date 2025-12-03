@@ -52,6 +52,7 @@ const notificationSchema = new mongoose.Schema({
   message: { type: String, required: true },
   url: { type: String, default: '/' },
   isRead: { type: Boolean, default: false },
+  relatedEvent: { type: mongoose.Schema.Types.ObjectId, ref: 'Event' } // Linked Event for visibility logic
 }, { timestamps: true });
 
 // --- EVENT SCHEMA ---

@@ -61,6 +61,9 @@ const cleanupExpiredEvents = async () => {
         let archivedCount = 0;
 
         for (const event of events) {
+            // Remove associated notifications for cleanup
+            await Notification.deleteMany({ relatedEvent: event._id });
+
             if (event.price === 0) {
                 // Hard Delete Free Events
                 await Ticket.deleteMany({ event: event._id });
@@ -280,13 +283,36 @@ app.post('/api/notifications/subscribe', authMiddleware, async (req, res) => {
     }
 });
 
-// Get User Notifications
+// Get User Notifications (Filtered by Event Visibility)
 app.get('/api/notifications', authMiddleware, async (req, res) => {
     try {
+        // Calculate visibility cutoff (same logic as events)
+        const now = new Date();
+        const currentHour = now.getHours();
+        
+        const visibilityCutoff = new Date();
+        visibilityCutoff.setHours(0, 0, 0, 0); 
+
+        if (currentHour < 10) {
+            visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); 
+        } 
+
+        // Fetch notifications and populate related event date
         const notifications = await Notification.find({ recipient: req.user.userId })
             .sort({ createdAt: -1 })
-            .limit(20);
-        res.json(notifications);
+            .populate('relatedEvent', 'date');
+        
+        // Filter in memory: Keep notifications if:
+        // 1. They are NOT related to an event (system messages)
+        // 2. They ARE related to an event AND event.date >= visibilityCutoff
+        const visibleNotifications = notifications.filter(n => {
+            if (!n.relatedEvent) return true;
+            // n.relatedEvent is now an object because of populate
+            const eventDate = new Date(n.relatedEvent.date);
+            return eventDate >= visibilityCutoff;
+        });
+
+        res.json(visibleNotifications);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -566,7 +592,8 @@ app.post('/api/events', authMiddleware, async (req, res) => {
                      title: `Nuovo Evento: ${newEvent.title}`,
                      message: `${user.name} ha pubblicato un nuovo evento!`,
                      url: `/events/${newEvent._id}`,
-                     isRead: false
+                     isRead: false,
+                     relatedEvent: newEvent._id // Linked for time-based filtering
                  }));
 
                  // 1. Save In-App Notifications
@@ -635,6 +662,9 @@ app.delete('/api/events/:id', authMiddleware, async (req, res) => {
         await event.save();
         
         await Ticket.updateMany({ event: req.params.id }, { $set: { status: 'deleted' } });
+        
+        // Delete associated notifications for this event
+        await Notification.deleteMany({ relatedEvent: req.params.id });
 
         res.json({ success: true });
     } catch (e) {
