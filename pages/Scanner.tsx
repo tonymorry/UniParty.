@@ -1,7 +1,9 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+// @ts-ignore
 import { BarcodeScanner, BarcodeFormat, LensFacing } from '@capacitor-mlkit/barcode-scanning';
+// @ts-ignore
 import { Capacitor } from '@capacitor/core';
 import { api } from '../services/api';
 import { Ticket, UserRole } from '../types';
@@ -42,6 +44,7 @@ const Scanner: React.FC = () => {
         // --- NATIVE LOGIC (Capacitor) ---
         if (Capacitor.isNativePlatform()) {
             try {
+                // @ts-ignore
                 const { camera } = await BarcodeScanner.requestPermissions();
                 
                 if (camera === 'granted' || camera === 'limited') {
@@ -52,6 +55,7 @@ const Scanner: React.FC = () => {
                     document.body.classList.add('barcode-scanner-active');
 
                     // Start Scan
+                    // @ts-ignore
                     const { barcodes } = await BarcodeScanner.scan({
                         formats: [BarcodeFormat.QrCode],
                         lensFacing: LensFacing.Back
@@ -71,6 +75,8 @@ const Scanner: React.FC = () => {
                 console.error("Native scanner error:", err);
                 setCameraPermission(false);
                 setError("Impossibile avviare scanner nativo.");
+                // Ensure UI is restored in case of error
+                document.body.classList.remove('barcode-scanner-active');
             }
             return;
         }
@@ -137,7 +143,9 @@ const Scanner: React.FC = () => {
           // Native Cleanup
           document.body.classList.remove('barcode-scanner-active');
           try {
+              // @ts-ignore
               await BarcodeScanner.removeAllListeners();
+              // @ts-ignore
               await BarcodeScanner.stopScan();
           } catch (e) {
               console.warn("Failed to stop native scanner", e);
