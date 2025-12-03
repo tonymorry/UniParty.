@@ -1,0 +1,157 @@
+
+import React, { useState, useEffect } from 'react';
+import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { UserRole } from '../types';
+import { Search, UserPlus, UserCheck, Briefcase } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+const SearchAssociations: React.FC = () => {
+  const { user, refreshUser } = useAuth();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [followLoading, setFollowLoading] = useState<string | null>(null);
+
+  // Debounce logic could be added here, but simple submit/effect for now
+  useEffect(() => {
+    if (query.length > 2) {
+      const search = async () => {
+        setLoading(true);
+        try {
+          const data = await api.auth.searchAssociations(query);
+          setResults(data);
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setLoading(false);
+        }
+      };
+      const timeoutId = setTimeout(search, 500);
+      return () => clearTimeout(timeoutId);
+    } else {
+        setResults([]);
+    }
+  }, [query]);
+
+  const handleToggleFollow = async (associationId: string) => {
+      setFollowLoading(associationId);
+      try {
+          await api.auth.toggleFollow(associationId);
+          await refreshUser(); // Update context to reflect new following list
+      } catch (e) {
+          console.error("Follow error", e);
+      } finally {
+          setFollowLoading(null);
+      }
+  };
+
+  const isFollowing = (associationId: string) => {
+      if (!user?.followedAssociations) return false;
+      // Depending on if populate ran, it might be string ID or User object
+      return user.followedAssociations.some((f: any) => 
+          (typeof f === 'string' ? f : f._id) === associationId
+      );
+  };
+
+  if (!user || user.role !== UserRole.STUDENTE) {
+      return (
+          <div className="p-8 text-center">
+              <p>Questa funzione è riservata agli studenti.</p>
+              <button onClick={() => navigate('/')} className="text-indigo-600 mt-4 font-bold">Torna alla Home</button>
+          </div>
+      );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <Search className="w-7 h-7 mr-2 text-indigo-600" />
+            Cerca Associazioni
+        </h1>
+
+        <div className="relative mb-8">
+            <input 
+                type="text" 
+                placeholder="Digita il nome di un'associazione..."
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 border-0 rounded-xl shadow-md focus:ring-2 focus:ring-indigo-500 outline-none text-lg"
+            />
+            <Search className="absolute left-4 top-4.5 w-6 h-6 text-gray-400" />
+        </div>
+
+        {loading ? (
+             <div className="text-center py-12">
+                 <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-2"></div>
+                 <p className="text-gray-500">Ricerca in corso...</p>
+             </div>
+        ) : (
+            <div className="space-y-4">
+                {results.length > 0 ? (
+                    results.map(assoc => (
+                        <div key={assoc._id} className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between transition hover:shadow-md">
+                            <div className="flex items-center">
+                                <div className="w-12 h-12 bg-gray-100 rounded-full overflow-hidden mr-4 flex-shrink-0 border border-gray-200">
+                                    {assoc.profileImage ? (
+                                        <img src={assoc.profileImage} alt={assoc.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-500">
+                                            <Briefcase className="w-6 h-6" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-900 text-lg">{assoc.name}</h3>
+                                    <p className="text-sm text-gray-500">{assoc.followersCount || 0} Followers</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => handleToggleFollow(assoc._id)}
+                                disabled={followLoading === assoc._id}
+                                className={`px-4 py-2 rounded-full font-bold text-sm flex items-center transition ${
+                                    isFollowing(assoc._id) 
+                                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+                                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                }`}
+                            >
+                                {followLoading === assoc._id ? (
+                                    <span className="opacity-50">...</span>
+                                ) : isFollowing(assoc._id) ? (
+                                    <>
+                                        <UserCheck className="w-4 h-4 mr-2" />
+                                        Segui già
+                                    </>
+                                ) : (
+                                    <>
+                                        <UserPlus className="w-4 h-4 mr-2" />
+                                        Segui
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    ))
+                ) : (
+                    query.length > 2 && (
+                        <div className="text-center py-12 text-gray-500">
+                            Nessuna associazione trovata.
+                        </div>
+                    )
+                )}
+                
+                {query.length <= 2 && (
+                     <div className="text-center py-12 text-gray-400">
+                         Inizia a digitare per cercare organizzatori da seguire.
+                         <br/>Riceverai una notifica email quando pubblicheranno nuovi eventi!
+                     </div>
+                )}
+            </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default SearchAssociations;

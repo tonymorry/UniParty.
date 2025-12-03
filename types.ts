@@ -1,4 +1,5 @@
 
+
 export enum UserRole {
   STUDENTE = 'studente',
   ASSOCIAZIONE = 'associazione',
@@ -25,6 +26,8 @@ export interface User {
   stripeAccountId?: string; // Only for associations
   stripeOnboardingComplete?: boolean; // Only for associations
   favorites?: string[]; // Array of Event IDs
+  followedAssociations?: User[] | string[]; // Array of User IDs or populated Users
+  followersCount?: number; // Only for associations
   isVerified?: boolean;
   isDeleted?: boolean; // For Admin view
   createdAt?: string;

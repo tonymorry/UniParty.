@@ -1,4 +1,5 @@
 
+
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -146,7 +147,9 @@ app.post('/api/auth/register', async (req, res) => {
             description,
             socialLinks,
             isVerified,
-            favorites: []
+            favorites: [],
+            followedAssociations: [],
+            followersCount: 0
         });
 
         const token = jwt.sign({ userId: newUser._id, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -194,7 +197,8 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
-    const user = await User.findById(req.user.userId);
+    // Populate followedAssociations to show them in profile
+    const user = await User.findById(req.user.userId).populate('followedAssociations', 'name profileImage');
     if (!user || user.isDeleted) return res.status(404).json({ error: "User not found" });
     res.json(user);
 });
@@ -207,7 +211,7 @@ app.put('/api/users/:id', authMiddleware, async (req, res) => {
         req.body.email = req.body.email.toLowerCase().trim();
     }
 
-    const updated = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updated = await User.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('followedAssociations', 'name profileImage');
     res.json(updated);
 });
 
@@ -293,6 +297,60 @@ app.get('/api/users/favorites/list', authMiddleware, async (req, res) => {
             populate: { path: 'organization', select: 'name _id' }
         });
         res.json(user.favorites);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// --- NEW FOLLOW SYSTEM ROUTES ---
+
+// Toggle Follow Association
+app.post('/api/users/follow/toggle', authMiddleware, async (req, res) => {
+    try {
+        const { associationId } = req.body;
+        const student = await User.findById(req.user.userId);
+        const association = await User.findById(associationId);
+
+        if (!association || association.role !== 'associazione') {
+            return res.status(404).json({ error: "Association not found" });
+        }
+
+        const isFollowing = student.followedAssociations.includes(associationId);
+
+        if (isFollowing) {
+            // Unfollow
+            student.followedAssociations = student.followedAssociations.filter(id => id.toString() !== associationId);
+            association.followersCount = Math.max(0, (association.followersCount || 0) - 1);
+        } else {
+            // Follow
+            student.followedAssociations.push(associationId);
+            association.followersCount = (association.followersCount || 0) + 1;
+        }
+
+        await student.save();
+        await association.save();
+
+        // Return updated list for frontend to update state
+        const updatedStudent = await User.findById(req.user.userId).populate('followedAssociations', 'name profileImage');
+        res.json(updatedStudent.followedAssociations);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Search Associations
+app.get('/api/users/search', authMiddleware, async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q) return res.json([]);
+
+        const associations = await User.find({
+            role: 'associazione',
+            isDeleted: false,
+            name: { $regex: q, $options: 'i' }
+        }).select('name profileImage followersCount description');
+
+        res.json(associations);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -481,6 +539,21 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         });
 
         await newEvent.populate('organization', 'name _id');
+
+        // --- AUTOMATIC NOTIFICATIONS ---
+        // Only if status is 'active' (published immediately)
+        if (newEvent.status === 'active') {
+             // Find all students following this organization
+             const followers = await User.find({ followedAssociations: req.user.userId }).select('email');
+             const emails = followers.map(u => u.email);
+             
+             if (emails.length > 0) {
+                 // Trigger async email sending
+                 mailer.sendNewEventNotification(emails, newEvent.title, user.name, newEvent._id)
+                    .catch(err => console.error("Notification Error:", err));
+             }
+        }
+
         res.json(newEvent);
     } catch (e) {
         res.status(500).json({ error: e.message });

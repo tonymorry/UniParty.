@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -14,7 +15,8 @@ import {
   Users, 
   Shield, 
   Calendar,
-  LogIn 
+  LogIn,
+  Search 
 } from 'lucide-react';
 
 const BottomNav: React.FC = () => {
@@ -73,9 +75,10 @@ const BottomNav: React.FC = () => {
             </div>
           </Link>
 
-          <Link to="/support" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/support') ? 'text-indigo-600' : 'text-gray-400'}`}>
-            <HelpCircle className="w-6 h-6" />
-            <span className="text-[10px] font-medium mt-1">Supporto</span>
+          {/* Changed Support to Search */}
+          <Link to="/search" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/search') ? 'text-indigo-600' : 'text-gray-400'}`}>
+            <Search className="w-6 h-6" />
+            <span className="text-[10px] font-medium mt-1">Cerca</span>
           </Link>
 
           <Link to="/profile" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/profile') ? 'text-indigo-600' : 'text-gray-400'}`}>

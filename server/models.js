@@ -1,4 +1,5 @@
 
+
 const mongoose = require('mongoose');
 
 // --- USER SCHEMA ---
@@ -25,12 +26,14 @@ const userSchema = new mongoose.Schema({
   // Student specific
   surname: String,
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }], // Array of Favorite Events
+  followedAssociations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // New: Following list
   
   // Association specific
   description: String,
   socialLinks: String,
   stripeAccountId: { type: String, default: '' }, // The 'Connected Account' ID (e.g., acct_12345)
-  stripeOnboardingComplete: { type: Boolean, default: false }
+  stripeOnboardingComplete: { type: Boolean, default: false },
+  followersCount: { type: Number, default: 0 } // New: Followers Counter
 }, { timestamps: true });
 
 // --- EVENT SCHEMA ---

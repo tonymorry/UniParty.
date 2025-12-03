@@ -1,4 +1,5 @@
 
+
 import { Event, EventCategory, LoginResponse, Ticket, User, UserRole } from '../types';
 
 // ==========================================
@@ -31,7 +32,9 @@ const mockApi = {
     deleteAccount: async () => {},
     toggleFavorite: async () => [],
     getFavoriteEvents: async () => [],
-    me: async () => ({}) as any
+    me: async () => ({}) as any,
+    toggleFollow: async () => [],
+    searchAssociations: async () => []
   },
   events: {
     getAll: async () => [],
@@ -135,6 +138,22 @@ const realApi = {
             headers: getHeaders()
         });
         if(!res.ok) throw new Error('Failed to fetch user');
+        return res.json();
+    },
+    toggleFollow: async (associationId: string) => {
+        const res = await fetch(`${API_URL}/users/follow/toggle`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ associationId })
+        });
+        if(!res.ok) throw new Error('Failed to toggle follow');
+        return res.json();
+    },
+    searchAssociations: async (query: string) => {
+        const res = await fetch(`${API_URL}/users/search?q=${encodeURIComponent(query)}`, {
+            headers: getHeaders()
+        });
+        if(!res.ok) throw new Error('Search failed');
         return res.json();
     }
   },

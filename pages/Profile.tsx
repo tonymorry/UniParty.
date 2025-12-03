@@ -1,7 +1,8 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
-import { User, Mail, Globe, Camera, X, Save, Upload, Settings, FileText, Shield, HelpCircle, LogOut, CheckCircle, AlertTriangle } from 'lucide-react';
+import { User, Mail, Globe, Camera, X, Save, Upload, Settings, FileText, Shield, HelpCircle, LogOut, CheckCircle, AlertTriangle, Briefcase, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Profile: React.FC = () => {
@@ -245,6 +246,12 @@ const Profile: React.FC = () => {
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">{user.name} {user.surname}</h1>
                         <p className="text-indigo-600 font-medium">{user.email}</p>
+                        {user.role === UserRole.ASSOCIAZIONE && (
+                            <p className="text-gray-500 font-medium text-sm mt-1 flex items-center">
+                                <Users className="w-4 h-4 mr-1" />
+                                {user.followersCount || 0} Follower
+                            </p>
+                        )}
                     </div>
                     <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium uppercase tracking-wider">
                         {user.role}
@@ -306,6 +313,35 @@ const Profile: React.FC = () => {
                         </div>
                     </div>
                 </div>
+                
+                {/* FOLLOWED ASSOCIATIONS (Students Only) */}
+                {user.role === UserRole.STUDENTE && (
+                    <div className="mt-10">
+                         <h2 className="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-4">
+                             Associazioni Seguite
+                        </h2>
+                        {user.followedAssociations && user.followedAssociations.length > 0 ? (
+                            <div className="flex overflow-x-auto space-x-4 pb-4">
+                                {user.followedAssociations.map((assoc: any) => (
+                                    <div key={assoc._id} className="flex flex-col items-center min-w-[80px]">
+                                        <div className="w-16 h-16 bg-gray-100 rounded-full overflow-hidden border border-gray-200 mb-2">
+                                            {assoc.profileImage ? (
+                                                <img src={assoc.profileImage} alt={assoc.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-500">
+                                                    <Briefcase className="w-8 h-8" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="text-xs font-medium text-gray-700 text-center truncate w-full">{assoc.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-gray-500 text-sm">Non segui ancora nessuna associazione.</p>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
       </div>
