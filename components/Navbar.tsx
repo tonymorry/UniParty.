@@ -5,7 +5,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { api } from '../services/api';
-import { Ticket, PartyPopper, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell } from 'lucide-react';
+import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell } from 'lucide-react';
 
 // Helper to convert VAPID key
 function urlBase64ToUint8Array(base64String: string) {
@@ -22,6 +22,33 @@ function urlBase64ToUint8Array(base64String: string) {
   }
   return outputArray;
 }
+
+const UniPartyLogo = () => (
+  <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-9 w-9">
+    <defs>
+      <linearGradient id="logo_gradient" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#3b82f6" />
+        <stop offset="100%" stopColor="#ec4899" />
+      </linearGradient>
+    </defs>
+    <g transform="translate(50, 50) rotate(-15) translate(-50, -50)">
+      <path 
+        d="M25 20 H75 A10 10 0 0 1 85 30 V42 A8 8 0 0 0 85 58 V70 A10 10 0 0 1 75 80 H25 A10 10 0 0 1 15 70 V58 A8 8 0 0 0 15 42 V30 A10 10 0 0 1 25 20 Z" 
+        fill="url(#logo_gradient)" 
+      />
+      <path 
+        d="M50 35 L54 45 H65 L56 52 L60 63 L50 56 L40 63 L44 52 L35 45 H46 L50 35 Z" 
+        fill="white" 
+      />
+      <circle cx="65" cy="35" r="2" fill="white" fillOpacity="0.8" />
+      <circle cx="35" cy="65" r="2" fill="white" fillOpacity="0.8" />
+      <path d="M50 25 V28" stroke="white" strokeWidth="2" strokeLinecap="round" />
+      <path d="M50 72 V75" stroke="white" strokeWidth="2" strokeLinecap="round" />
+      <path d="M25 50 H28" stroke="white" strokeWidth="2" strokeLinecap="round" />
+      <path d="M72 50 H75" stroke="white" strokeWidth="2" strokeLinecap="round" />
+    </g>
+  </svg>
+);
 
 const Navbar: React.FC = () => {
   const { user, logout, deleteAccount } = useAuth();
@@ -102,7 +129,7 @@ const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
-            <PartyPopper className="h-8 w-8 text-yellow-400" />
+            <UniPartyLogo />
             <span className="text-xl font-bold tracking-wider">UniParty</span>
           </Link>
 
