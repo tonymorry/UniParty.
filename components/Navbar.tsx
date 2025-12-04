@@ -101,7 +101,7 @@ const Navbar: React.FC = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center" onClick={() => setIsOpen(false)}>
             <img 
-                src="/Immagine WhatsApp 2025-12-04 ore 19.49.53_0d8b2eae.jpg" 
+                src="/logo.jpg" 
                 alt="UniParty" 
                 className="h-12 w-auto object-contain"
             />
