@@ -1,11 +1,9 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { api } from '../services/api';
-import { Ticket, PartyPopper, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell } from 'lucide-react';
+import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell } from 'lucide-react';
 
 // Helper to convert VAPID key
 function urlBase64ToUint8Array(base64String: string) {
@@ -102,7 +100,11 @@ const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
-            <PartyPopper className="h-8 w-8 text-yellow-400" />
+            <img 
+              src="/Immagine WhatsApp 2025-12-04 ore 19.49.53_0d8b2eae.jpg" 
+              alt="UniParty Logo" 
+              className="h-10 w-10 object-contain rounded-full border border-indigo-700 bg-white" 
+            />
             <span className="text-xl font-bold tracking-wider">UniParty</span>
           </Link>
 
