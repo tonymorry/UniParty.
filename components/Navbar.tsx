@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { api } from '../services/api';
 import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell } from 'lucide-react';
+import logoImg from '../assets/logo.jpg';
 
 // Helper to convert VAPID key
 function urlBase64ToUint8Array(base64String: string) {
@@ -101,9 +102,9 @@ const Navbar: React.FC = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center" onClick={() => setIsOpen(false)}>
             <img 
-                src="/logo.jpg" 
+                src={logoImg} 
                 alt="UniParty" 
-                className="h-12 w-auto object-contain"
+                className="h-10 w-10 md:h-12 md:w-12 rounded-lg object-cover"
             />
           </Link>
 
