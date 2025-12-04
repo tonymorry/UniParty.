@@ -1,10 +1,11 @@
+
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { api } from '../services/api';
-import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell } from 'lucide-react';
-import logoImg from '../assets/logo.jpg';
+import { Ticket, PartyPopper, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell } from 'lucide-react';
 
 // Helper to convert VAPID key
 function urlBase64ToUint8Array(base64String: string) {
@@ -100,12 +101,9 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center" onClick={() => setIsOpen(false)}>
-            <img 
-                src={logoImg} 
-                alt="UniParty" 
-                className="h-10 w-10 md:h-12 md:w-12 rounded-lg object-cover"
-            />
+          <Link to="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
+            <PartyPopper className="h-8 w-8 text-yellow-400" />
+            <span className="text-xl font-bold tracking-wider">UniParty</span>
           </Link>
 
           {/* Desktop Right Actions */}
