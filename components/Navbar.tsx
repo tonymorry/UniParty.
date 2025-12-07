@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -127,7 +126,7 @@ const Navbar: React.FC = () => {
 
       {/* DROPDOWN MENU */}
       {isOpen && (
-        <div className="absolute top-16 right-0 w-full sm:w-80 z-50 bg-indigo-800 border-b-2 border-l-2 border-indigo-700 shadow-2xl animate-in slide-in-from-top-2 duration-200 sm:rounded-bl-xl">
+        <div className="absolute top-16 right-0 w-full sm:w-80 z-50 bg-indigo-800 border-b-2 border-l-2 border-indigo-700 shadow-2xl animate-in slide-in-from-top-2 duration-200 sm:rounded-bl-xl max-h-[calc(100vh-4rem)] overflow-y-auto">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             
             <Link 
@@ -297,3 +296,4 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
+    
