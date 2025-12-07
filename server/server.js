@@ -534,9 +534,17 @@ app.get('/api/events', async (req, res) => {
                     { status: 'active' },
                     { status: { $exists: false } }
                  ];
-                 const today = new Date();
-                 today.setHours(0, 0, 0, 0);
-                 query.date = { $gte: today };
+                 
+                 // APPLICA LA REGOLA DELLE 10:00 AM ANCHE PER PROFILI PUBBLICI
+                 const now = new Date();
+                 const visibilityCutoff = new Date();
+                 visibilityCutoff.setHours(0, 0, 0, 0); 
+
+                 if (now.getHours() < 10) {
+                     visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); 
+                 }
+                 query.date = { $gte: visibilityCutoff };
+                 
             } else {
                  query.$or = [
                     { status: { $in: ['active', 'archived', 'draft'] } },

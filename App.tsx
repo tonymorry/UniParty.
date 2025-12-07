@@ -2,7 +2,8 @@
 
 import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { api } from './services/api';
 import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
 import Home from './pages/Home';
@@ -26,6 +27,57 @@ import ResetPassword from './pages/ResetPassword';
 import Footer from './components/Footer';
 import CookieBanner from './components/CookieBanner';
 
+// Helper to convert VAPID key
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+ 
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+ 
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Internal component to handle automatic notification subscription
+const NotificationManager: React.FC = () => {
+    const { user } = useAuth();
+    
+    useEffect(() => {
+        const initNotifications = async () => {
+            if (user && 'serviceWorker' in navigator && 'PushManager' in window) {
+                try {
+                    // Check if permission is already granted or ask for it
+                    if (Notification.permission !== 'granted') {
+                         const permission = await Notification.requestPermission();
+                         if (permission !== 'granted') return;
+                    }
+                    
+                    const { key } = await api.notifications.getVapidKey();
+                    const registration = await navigator.serviceWorker.ready;
+                    
+                    const subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(key)
+                    });
+
+                    await api.notifications.subscribe(subscription);
+                } catch (e) {
+                    console.error("Auto-notification setup failed", e);
+                }
+            }
+        };
+
+        initNotifications();
+    }, [user]);
+
+    return null;
+};
+
 function App() {
 
   useEffect(() => {
@@ -45,6 +97,7 @@ function App() {
 
   return (
     <AuthProvider>
+      <NotificationManager />
       <Router>
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
           <Navbar />

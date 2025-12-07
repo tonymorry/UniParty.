@@ -7,22 +7,6 @@ import { UserRole } from '../types';
 import { api } from '../services/api';
 import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell } from 'lucide-react';
 
-// Helper to convert VAPID key
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
- 
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
- 
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
-
 const UniPartyLogo = () => (
   <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-9 w-9">
     <defs>
@@ -90,36 +74,6 @@ const Navbar: React.FC = () => {
           } catch (e) {
               alert("Failed to delete account. Please try again.");
           }
-      }
-  };
-
-  const handleEnableNotifications = async () => {
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-          alert("Push notifications not supported");
-          return;
-      }
-
-      try {
-          const permission = await Notification.requestPermission();
-          if (permission !== 'granted') {
-              alert("Permission denied");
-              return;
-          }
-
-          const { key } = await api.notifications.getVapidKey();
-          const registration = await navigator.serviceWorker.ready;
-          
-          const subscription = await registration.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(key)
-          });
-
-          await api.notifications.subscribe(subscription);
-          alert("Notifications enabled!");
-          setIsOpen(false);
-      } catch (e) {
-          console.error("Setup error", e);
-          alert("Failed to setup notifications");
       }
   };
 
@@ -289,13 +243,6 @@ const Navbar: React.FC = () => {
                     <span>Notifications</span>
                     {unreadCount > 0 && <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{unreadCount}</span>}
                  </Link>
-
-                 <button
-                    onClick={handleEnableNotifications}
-                    className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-indigo-100 hover:text-white hover:bg-indigo-700 transition"
-                 >
-                     Enable Push Notifications
-                 </button>
                </div>
              )}
 
