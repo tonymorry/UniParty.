@@ -37,6 +37,10 @@ const userSchema = new mongoose.Schema({
     }
   },
 
+  // Password Reset Fields
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
+
   // Association specific
   description: String,
   socialLinks: String,

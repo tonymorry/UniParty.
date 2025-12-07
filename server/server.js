@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const StripeController = require('./stripe');
 const { User, Event, Ticket, Order, Notification } = require('./models');
 const { authMiddleware, adminMiddleware } = require('./middleware');
@@ -175,6 +176,65 @@ app.post('/api/auth/login', async (req, res) => {
         res.json({ token, user });
     } catch (e) {
         console.error("Login Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: "Email required" });
+
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
+        if (!user) {
+            // Per sicurezza non diciamo se l'email non esiste
+            return res.json({ message: "Se l'email esiste, riceverai un link di recupero." });
+        }
+
+        // Generate Token
+        const token = crypto.randomBytes(20).toString('hex');
+        user.resetPasswordToken = token;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+
+        await user.save();
+
+        await mailer.sendPasswordResetEmail(user.email, token);
+
+        res.json({ message: "Se l'email esiste, riceverai un link di recupero." });
+    } catch (e) {
+        console.error("Forgot Password Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+        const { token, password } = req.body;
+        
+        if (!token || !password) return res.status(400).json({ error: "Missing data" });
+
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ error: "Token non valido o scaduto" });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+        
+        // Clear token
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+
+        await user.save();
+
+        res.json({ message: "Password aggiornata con successo" });
+    } catch (e) {
+        console.error("Reset Password Error:", e);
         res.status(500).json({ error: e.message });
     }
 });

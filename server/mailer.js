@@ -111,7 +111,54 @@ const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
   }
 };
 
+const sendPasswordResetEmail = async (to, token) => {
+    try {
+      console.log(`📤 Attempting to send PASSWORD RESET email via Resend to: ${to}`);
+      
+      const resetUrl = `${FRONTEND_URL}/#/reset-password/${token}`;
+  
+      const { data, error } = await resend.emails.send({
+        from: 'onboarding@resend.dev',
+        to: to,
+        subject: "Recupero Password UniParty 🔒",
+        html: `
+          <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+               <h1 style="color: #4338ca; margin: 0; font-size: 28px; letter-spacing: -1px;">UniParty</h1>
+            </div>
+            
+            <h2 style="color: #111827; font-size: 22px; font-weight: 700; margin-bottom: 16px;">Recupero Password</h2>
+            
+            <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+              Hai richiesto di reimpostare la password del tuo account UniParty. Clicca sul pulsante qui sotto per procedere.
+            </p>
+  
+            <div style="text-align: center; margin-top: 32px; margin-bottom: 32px;">
+              <a href="${resetUrl}" style="background-color: #4338ca; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; display: inline-block;">
+                Reimposta Password
+              </a>
+            </div>
+  
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+              Se non hai richiesto il reset della password, puoi ignorare questa email. Il link scadrà tra 1 ora.
+            </p>
+          </div>
+        `,
+      });
+  
+      if (error) {
+        console.error("❌ Resend Reset Email Error:", error);
+        return;
+      }
+  
+      console.log("📨 Reset email sent successfully. ID:", data.id);
+    } catch (error) {
+      console.error("❌ Unexpected Error sending Reset Email:", error);
+    }
+  };
+
 module.exports = {
   sendWelcomeEmail,
-  sendTicketsEmail
+  sendTicketsEmail,
+  sendPasswordResetEmail
 };

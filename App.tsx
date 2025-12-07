@@ -22,6 +22,7 @@ import EventAttendees from './pages/EventAttendees';
 import SearchAssociations from './pages/SearchAssociations'; 
 import AssociationProfile from './pages/AssociationProfile'; 
 import Notifications from './pages/Notifications';
+import ResetPassword from './pages/ResetPassword';
 import Footer from './components/Footer';
 import CookieBanner from './components/CookieBanner';
 
@@ -51,6 +52,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
               <Route path="/events/:id" element={<EventDetails />} />
               <Route path="/events/:id/attendees" element={<EventAttendees />} />
               <Route path="/wallet" element={<Wallet />} />

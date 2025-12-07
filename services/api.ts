@@ -2,6 +2,8 @@
 
 
 
+
+
 import { Event, EventCategory, LoginResponse, Ticket, User, UserRole } from '../types';
 
 // ==========================================
@@ -37,7 +39,9 @@ const mockApi = {
     me: async () => ({}) as any,
     toggleFollow: async () => [],
     searchAssociations: async () => [],
-    getPublicProfile: async () => ({} as any)
+    getPublicProfile: async () => ({} as any),
+    forgotPassword: async () => ({ message: "Mock: Email sent" }),
+    resetPassword: async () => ({ message: "Mock: Password reset" }),
   },
   events: {
     getAll: async () => [],
@@ -170,6 +174,26 @@ const realApi = {
         const res = await fetch(`${API_URL}/users/${userId}/public`);
         if(!res.ok) throw new Error('Failed to fetch public profile');
         return res.json();
+    },
+    forgotPassword: async (email: string) => {
+        const res = await fetch(`${API_URL}/auth/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to request password reset');
+        return data;
+    },
+    resetPassword: async (token: string, password: string) => {
+        const res = await fetch(`${API_URL}/auth/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to reset password');
+        return data;
     }
   },
   events: {
