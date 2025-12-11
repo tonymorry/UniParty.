@@ -53,6 +53,7 @@ export interface Event {
   status?: 'active' | 'draft' | 'archived' | 'deleted';
   // New Academic Fields
   requiresMatricola?: boolean;
+  requiresCorsoStudi?: boolean; // New field
   scanType?: 'entry_only' | 'entry_exit';
 }
 
@@ -68,6 +69,7 @@ export interface Ticket {
   checkInDate?: string; // When was it scanned
   // New Fields
   matricola?: string;
+  corsoStudi?: string; // New field
   entryTime?: string;
   exitTime?: string;
   status: 'valid' | 'entered' | 'completed' | 'archived' | 'deleted' | 'active'; // 'active' kept for legacy compatibility

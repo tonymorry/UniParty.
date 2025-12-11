@@ -1,11 +1,10 @@
 
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Event, UserRole } from '../types';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Calendar, Clock, Info, CreditCard, Minus, Plus, AlertCircle, User as UserIcon, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, Flame, Heart, FileText, CheckCircle, GraduationCap } from 'lucide-react';
+import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck } from 'lucide-react';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +18,7 @@ const EventDetails: React.FC = () => {
   // Ticket Data States
   const [ticketNames, setTicketNames] = useState<string[]>(['']);
   const [ticketMatricolas, setTicketMatricolas] = useState<string[]>(['']);
+  const [ticketCorsoStudi, setTicketCorsoStudi] = useState<string[]>(['']);
   const [selectedPrList, setSelectedPrList] = useState<string>(""); 
 
   // Consent State
@@ -58,7 +58,9 @@ const EventDetails: React.FC = () => {
                   location: data.location,
                   image: data.image,
                   maxCapacity: data.maxCapacity,
-                  prLists: data.prLists || []
+                  prLists: data.prLists || [],
+                  requiresMatricola: data.requiresMatricola || false,
+                  requiresCorsoStudi: data.requiresCorsoStudi || false,
               });
           }
       }).finally(() => setLoading(false));
@@ -92,6 +94,17 @@ const EventDetails: React.FC = () => {
         }
         return newMats;
     });
+
+    // Sync Corso Studi array length
+    setTicketCorsoStudi(prev => {
+        const newCors = [...prev];
+        if (quantity > prev.length) {
+            for (let i = prev.length; i < quantity; i++) newCors.push('');
+        } else {
+            return newCors.slice(0, quantity);
+        }
+        return newCors;
+    });
   }, [quantity]);
 
   const handleNameChange = (index: number, value: string) => {
@@ -104,6 +117,12 @@ const EventDetails: React.FC = () => {
       const newMats = [...ticketMatricolas];
       newMats[index] = value;
       setTicketMatricolas(newMats);
+  };
+
+  const handleCorsoStudiChange = (index: number, value: string) => {
+      const newCors = [...ticketCorsoStudi];
+      newCors[index] = value;
+      setTicketCorsoStudi(newCors);
   };
 
   const handlePurchase = async () => {
@@ -127,6 +146,11 @@ const EventDetails: React.FC = () => {
         return;
     }
 
+    if (event?.requiresCorsoStudi && ticketCorsoStudi.some(c => c.trim() === '')) {
+        alert("Inserisci il corso di studi per ogni voucher.");
+        return;
+    }
+
     if (event && event.prLists && event.prLists.length > 0 && selectedPrList === "") {
         alert("Seleziona una Lista PR (o 'Nessuna lista').");
         return;
@@ -146,7 +170,8 @@ const EventDetails: React.FC = () => {
             user._id, 
             ticketNames, 
             selectedPrList || "Nessuna lista",
-            event.requiresMatricola ? ticketMatricolas : undefined // Send matricolas if required
+            event.requiresMatricola ? ticketMatricolas : undefined,
+            event.requiresCorsoStudi ? ticketCorsoStudi : undefined
         );
         if (redirectUrl) {
             window.location.hash = redirectUrl;
@@ -203,7 +228,9 @@ const EventDetails: React.FC = () => {
           
           const updatedData = {
               ...editForm,
-              date: isoDate
+              date: isoDate,
+              // If we are forcing both, make sure backend receives both true if one is true
+              requiresCorsoStudi: editForm.requiresMatricola // Since they are coupled in the UI
           };
 
           const updatedEvent = await api.events.update(event!._id, updatedData);
@@ -263,6 +290,9 @@ const EventDetails: React.FC = () => {
   // 6. Converti indietro in Euro per la visualizzazione
   const totalPricePerTicket = totalPerTicketCents / 100;
   const totalAmount = totalOrderCents / 100;
+  
+  // This is the price shown in large text (ticket price without fee)
+  const finalPrice = safeBasePrice; 
 
   const remainingTickets = event.maxCapacity - event.ticketsSold;
   const isSoldOut = remainingTickets <= 0;
@@ -320,6 +350,30 @@ const EventDetails: React.FC = () => {
                               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                               required
                           />
+                      </div>
+
+                      {/* Advanced Settings in Edit */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                               <input 
+                                   type="checkbox" 
+                                   id="editReqAcademicData"
+                                   checked={editForm.requiresMatricola || false}
+                                   onChange={e => {
+                                       // Toggle BOTH
+                                       setEditForm({
+                                           ...editForm, 
+                                           requiresMatricola: e.target.checked,
+                                           requiresCorsoStudi: e.target.checked
+                                       })
+                                   }}
+                                   className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                               />
+                               <label htmlFor="editReqAcademicData" className="text-sm text-gray-700 font-medium cursor-pointer flex items-center">
+                                   <GraduationCap className="w-4 h-4 mr-2 text-indigo-500" />
+                                   Richiedi Dati Accademici
+                               </label>
+                           </div>
                       </div>
                       
                       <div>
@@ -451,301 +505,279 @@ const EventDetails: React.FC = () => {
                     type="button"
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="bg-red-600/90 backdrop-blur hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-red-600/90 backdrop-blur hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition cursor-pointer"
                 >
-                    {isDeleting ? (
-                        <span className="flex items-center">Deleting...</span>
-                    ) : (
-                        <span className="flex items-center"><Trash2 className="w-4 h-4 mr-2" /> Delete</span>
-                    )}
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {isDeleting ? 'Deleting...' : 'Delete'}
                 </button>
             </div>
         )}
 
-        <div className="absolute bottom-0 left-0 w-full p-8">
+        <button 
+            onClick={() => navigate('/')} 
+            className="absolute top-24 left-4 sm:left-8 bg-white/20 backdrop-blur hover:bg-white/30 text-white p-2 rounded-full transition z-20"
+        >
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+             </svg>
+        </button>
+
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">
             <div className="max-w-7xl mx-auto">
-                 <span className="inline-block bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold mb-3 uppercase tracking-wider">
-                    {(typeof event.organization === 'object' && 'name' in event.organization) ? event.organization.name : 'Association Event'}
-                 </span>
-                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{event.title}</h1>
-                 <div className="flex items-center text-gray-200 space-x-6">
-                    <span className="flex items-center"><Calendar className="w-5 h-5 mr-2"/> {new Date(event.date).toLocaleDateString()}</span>
-                    <span className="flex items-center"><MapPin className="w-5 h-5 mr-2"/> {event.location}</span>
-                 </div>
+                <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 inline-block">
+                    {event.category}
+                </span>
+                <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">{event.title}</h1>
+                <div className="flex flex-wrap items-center text-gray-200 text-sm md:text-base gap-4 md:gap-8">
+                    <div className="flex items-center">
+                        <Calendar className="w-5 h-5 mr-2" />
+                        {new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </div>
+                    <div className="flex items-center">
+                        <Clock className="w-5 h-5 mr-2" />
+                        {event.time}
+                    </div>
+                    <div className="flex items-center">
+                        <MapPin className="w-5 h-5 mr-2" />
+                        {event.location}
+                    </div>
+                </div>
             </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
             
-            <div className="lg:col-span-2 space-y-6">
-                <div className="bg-white rounded-xl shadow-sm p-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">About the Event</h2>
-                    <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                        {event.longDescription || event.description}
-                    </p>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm p-8">
-                    <h3 className="text-xl font-bold text-gray-900 mb-4">Location & Time</h3>
-                    <div className="space-y-4">
-                        <div className="flex items-start">
-                            <MapPin className="w-6 h-6 text-indigo-600 mt-1 mr-3" />
-                            <div>
-                                <p className="font-semibold text-gray-900">{event.location}</p>
-                                <p className="text-gray-500 text-sm">View on Map</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start">
-                            <Clock className="w-6 h-6 text-indigo-600 mt-1 mr-3" />
-                            <div>
-                                <p className="font-semibold text-gray-900">{event.time}</p>
-                                <p className="text-gray-500 text-sm">Doors open 30 mins prior</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="lg:col-span-1">
-                {/* CHECKOUT CARD */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                    <h3 className="text-xl font-bold text-gray-900 mb-6">{isFree ? 'Prenota Ingresso' : 'Prenota Ingresso'}</h3>
-                    
-                    {isSoldOut && (
-                         <div className="bg-red-100 text-red-700 p-4 rounded-lg flex items-center justify-center mb-6 font-bold">
-                            <Ban className="w-5 h-5 mr-2"/>
-                            Sold Out
-                         </div>
-                    )}
-                    
-                    {event.status === 'draft' && (
-                        <div className="bg-yellow-50 text-yellow-800 p-4 rounded-lg flex items-center mb-6 text-sm">
-                            <Info className="w-4 h-4 mr-2 flex-shrink-0" />
-                            Prenotazioni disabilitate in modalità bozza.
-                        </div>
-                    )}
-
-                    <div className="flex items-center justify-between mb-6 bg-gray-50 p-4 rounded-lg">
-                        <div>
-                            <p className="font-medium text-gray-900">{isFree ? 'Ingresso Libero' : 'Ingresso Generale'}</p>
-                            {!isFree && (
-                                <p className="text-xs text-gray-500 flex items-center mt-1">
-                                    <Info className="w-3 h-3 mr-1"/> Include €0.40 fee
-                                </p>
-                            )}
-                             <p className="text-xs text-indigo-600 mt-1 font-semibold">
-                                {isOwner 
-                                    ? `${event.ticketsSold}/${event.maxCapacity} sold` 
-                                    : isSoldOut 
-                                        ? 'Sold Out' 
-                                        : isAlmostSoldOut 
-                                            ? 'Ultimi posti!' 
-                                            : 'Voucher disponibili'
-                                }
-                             </p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-xl font-bold text-indigo-600">
-                                {isFree ? 'Free' : `€${totalPricePerTicket.toFixed(2)}`}
-                            </p>
-                        </div>
+            {/* Left Column: Description */}
+            <div className="lg:col-span-2 space-y-8">
+                <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
+                    <h2 className="text-xl font-bold text-gray-900 mb-4">About the Event</h2>
+                    <div className="prose prose-indigo text-gray-600 whitespace-pre-line leading-relaxed">
+                        {event.longDescription}
                     </div>
 
-                    <div className={`flex items-center justify-between mb-6 ${isSoldOut || event.status === 'draft' ? 'opacity-50 pointer-events-none' : ''}`}>
-                        <span className="text-gray-600 font-medium">Quantità</span>
-                        <div className="flex items-center space-x-3">
-                            <button 
-                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                disabled={isSoldOut}
-                                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition disabled:cursor-not-allowed"
-                            >
-                                <Minus className="w-4 h-4 text-gray-600"/>
-                            </button>
-                            <span className="w-8 text-center font-bold text-lg">{quantity}</span>
-                            <button 
-                                onClick={() => setQuantity(Math.min(maxPurchaseLimit, quantity + 1))}
-                                disabled={isSoldOut || quantity >= maxPurchaseLimit}
-                                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                <Plus className="w-4 h-4 text-gray-600"/>
-                            </button>
-                        </div>
-                    </div>
-
-                    {!isSoldOut && event.prLists && event.prLists.length > 0 && event.status !== 'draft' && (
-                        <div className="mb-6">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Seleziona Lista PR <span className="text-red-500">*</span>
-                            </label>
-                            <div className="relative">
-                                <select 
-                                    value={selectedPrList}
-                                    onChange={(e) => setSelectedPrList(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
-                                    required
-                                >
-                                    <option value="" disabled>Seleziona una lista</option>
-                                    {event.prLists.map((list, idx) => (
-                                        <option key={idx} value={list}>{list}</option>
-                                    ))}
-                                    <option value="Nessuna lista">Nessuna lista</option>
-                                </select>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Ticket Names & Matricola Inputs - INSIDE Card */}
-                    {!isSoldOut && user && user.role === UserRole.STUDENTE && event.status !== 'draft' && (
-                        <div className="mb-6 space-y-3 border-t border-gray-100 pt-4">
-                            <p className="text-sm font-semibold text-gray-700">Dettagli Partecipanti</p>
-                            {Array.from({ length: quantity }).map((_, idx) => (
-                                <div key={idx} className="space-y-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
-                                    <p className="text-xs font-bold text-gray-400">Voucher #{idx + 1}</p>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <UserIcon className="h-4 w-4 text-gray-400" />
-                                        </div>
-                                        <input 
-                                            type="text"
-                                            placeholder="Nome e Cognome"
-                                            value={ticketNames[idx] || ''}
-                                            onChange={(e) => handleNameChange(idx, e.target.value)}
-                                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                                            required
-                                        />
-                                    </div>
-                                    {event.requiresMatricola && (
-                                        <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <GraduationCap className="h-4 w-4 text-gray-400" />
-                                            </div>
-                                            <input 
-                                                type="text"
-                                                placeholder="Numero Matricola"
-                                                value={ticketMatricolas[idx] || ''}
-                                                onChange={(e) => handleMatricolaChange(idx, e.target.value)}
-                                                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                required
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                            <p className="text-xs text-gray-400 mt-1">
-                                Inserisci nome {event.requiresMatricola ? 'e matricola' : ''} per ogni ingresso.
-                            </p>
-                        </div>
-                    )}
-
-                    <div className="border-t border-gray-100 pt-4 mb-4">
-                        <div className="flex justify-between items-center text-lg font-bold text-gray-900">
-                            <span>Totale</span>
-                            <span>€{totalAmount.toFixed(2)}</span>
-                        </div>
-                    </div>
-
-                    {/* CONSENT CHECKBOX (Purchase Only) */}
-                    {!isSoldOut && user && user.role === UserRole.STUDENTE && event.status !== 'draft' && (
-                         <div className="flex items-start mb-4">
-                             <div className="flex items-center h-5">
-                                 <input
-                                     id="purchaseTerms"
-                                     type="checkbox"
-                                     checked={acceptedTerms}
-                                     onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                     className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
-                                 />
+                    <div className="mt-8 pt-8 border-t border-gray-100">
+                         <h3 className="text-lg font-bold text-gray-900 mb-4">Organized by</h3>
+                         <div className="flex items-center">
+                             <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg mr-4">
+                                {typeof event.organization === 'object' ? event.organization.name.charAt(0) : 'A'}
                              </div>
-                             <div className="ml-3 text-xs text-gray-600">
-                                 <label htmlFor="purchaseTerms">
-                                     Accetto i <Link to="/terms" className="text-indigo-600 hover:underline">Termini del Servizio</Link> e le condizioni di rimborso.
-                                 </label>
+                             <div>
+                                 <p className="font-bold text-gray-900">{typeof event.organization === 'object' ? event.organization.name : 'Unknown'}</p>
+                                 <Link 
+                                    to={`/association/${typeof event.organization === 'object' ? event.organization._id : event.organization}`} 
+                                    className="text-indigo-600 text-sm hover:underline"
+                                 >
+                                     View Profile
+                                 </Link>
                              </div>
                          </div>
-                    )}
-
-                    {user?.role === UserRole.ASSOCIAZIONE ? (
-                         <div className="bg-yellow-50 text-yellow-700 p-4 rounded-lg flex items-start">
-                            <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5"/>
-                            <span className="text-sm">Le associazioni non possono acquistare. Accedi come studente.</span>
-                         </div>
-                    ) : (
-                        <button
-                            onClick={() => {
-                                if((!event.prLists || event.prLists.length === 0) && selectedPrList === "") {
-                                    setSelectedPrList("Nessuna lista");
-                                }
-                                handlePurchase();
-                            }}
-                            disabled={purchasing || isSoldOut || event.status === 'draft' || (event.prLists && event.prLists.length > 0 && selectedPrList === "") || (!isSoldOut && user && !acceptedTerms)}
-                            className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center ${
-                                isSoldOut || event.status === 'draft' ? 'bg-gray-300 text-gray-500' : ''
-                            }`}
-                        >
-                            {purchasing ? (
-                                <span className="flex items-center">
-                                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-                                    Elaborazione...
-                                </span>
-                            ) : isSoldOut ? (
-                                'Sold Out'
-                            ) : event.status === 'draft' ? (
-                                'Bozza (Non acquistabile)'
-                            ) : (
-                                <>
-                                    <CreditCard className="w-5 h-5 mr-2"/>
-                                    {isFree ? 'Prenota Ingresso' : `Paga €${totalAmount.toFixed(2)}`}
-                                </>
-                            )}
-                        </button>
-                    )}
-                    
-                    {/* DISCLAIMER LEGALE */}
-                    <p className="text-xs text-gray-500 mt-3 italic border-t border-gray-100 pt-2">
-                      Nota: Il QR Code generato vale come voucher di prenotazione. Il titolo di accesso fiscale (SIAE) verrà emesso dall'organizzatore all'ingresso dell'evento.
-                    </p>
-
-                    {!isFree && !isSoldOut && (
-                        <p className="text-center text-xs text-gray-400 mt-2">
-                            Pagamento sicuro via Stripe. 
-                        </p>
-                    )}
-                    {!user && (
-                        <p className="text-center text-xs text-gray-500 mt-4">
-                            Devi essere loggato per prenotare.
-                        </p>
-                    )}
-                    
-                    {user && user.role !== UserRole.STUDENTE && (
-                        <p className="text-center text-xs text-red-500 mt-4">
-                            Solo gli account Studente possono prenotare.
-                        </p>
-                    )}
+                    </div>
                 </div>
 
-                {/* Owner Stats Section */}
+                {/* OWNER STATS PANEL */}
                 {isOwner && prStats && (
-                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mt-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                            <BarChart className="w-5 h-5 mr-2 text-indigo-600" />
-                            Statistiche Liste PR
-                        </h3>
-                        <div className="space-y-2">
-                            {Object.entries(prStats).map(([name, count]) => (
-                                <div key={name} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                                    <span className="font-medium text-gray-700">{name === 'favorites' ? 'Preferiti' : name}</span>
-                                    <span className={`px-2 py-1 rounded-md text-sm font-bold ${name === 'favorites' ? 'bg-pink-100 text-pink-800' : 'bg-indigo-100 text-indigo-800'}`}>{count}</span>
-                                </div>
-                            ))}
-                            {Object.keys(prStats).length === 0 && (
-                                <p className="text-gray-500 text-sm">Nessuna vendita.</p>
-                            )}
+                    <div className="bg-indigo-900 rounded-2xl p-6 md:p-8 shadow-lg text-white">
+                        <div className="flex items-center mb-6">
+                             <BarChart className="w-6 h-6 mr-2 text-indigo-300" />
+                             <h2 className="text-xl font-bold">Live Stats</h2>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                             <div className="bg-indigo-800/50 p-4 rounded-xl border border-indigo-700/50">
+                                 <p className="text-indigo-300 text-sm font-medium">Tickets Sold</p>
+                                 <p className="text-2xl font-bold mt-1">{event.ticketsSold} / {event.maxCapacity}</p>
+                             </div>
+                             <div className="bg-indigo-800/50 p-4 rounded-xl border border-indigo-700/50">
+                                 <p className="text-indigo-300 text-sm font-medium">Est. Revenue</p>
+                                 <p className="text-2xl font-bold mt-1">€{(event.ticketsSold * event.price).toFixed(2)}</p>
+                             </div>
+                        </div>
+
+                        <div>
+                             <h3 className="text-sm font-bold text-indigo-300 uppercase tracking-wider mb-3">Sales by PR List</h3>
+                             <div className="space-y-2">
+                                 {Object.entries(prStats)
+                                    .filter(([key]) => key !== 'favorites')
+                                    .map(([name, count]) => (
+                                     <div key={name} className="flex justify-between items-center bg-indigo-800 p-2 px-3 rounded-lg">
+                                         <span className="font-medium">{name}</span>
+                                         <span className="font-bold bg-white text-indigo-900 px-2 rounded">{count}</span>
+                                     </div>
+                                 ))}
+                                 {Object.keys(prStats).filter(k => k !== 'favorites').length === 0 && (
+                                     <p className="text-indigo-400 text-sm italic">No sales recorded yet.</p>
+                                 )}
+                             </div>
                         </div>
                     </div>
                 )}
+            </div>
 
+            {/* Right Column: Ticket Purchase */}
+            <div className="lg:col-span-1">
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sticky top-24 overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -mr-10 -mt-10 z-0"></div>
+                    
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm text-gray-500 font-medium">Price per person</span>
+                            {isAlmostSoldOut && (
+                                <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full font-bold flex items-center">
+                                    <span className="w-2 h-2 bg-orange-500 rounded-full mr-1 animate-pulse"></span>
+                                    Selling Fast
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-baseline mb-6">
+                            <span className="text-4xl font-extrabold text-gray-900">
+                                {isFree ? 'Free' : `€${finalPrice.toFixed(2)}`}
+                            </span>
+                            {!isFree && <span className="text-gray-500 ml-2 text-sm">+ €0.40 fee</span>}
+                        </div>
+
+                        {/* Sold Out Logic */}
+                        {isSoldOut ? (
+                             <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-center">
+                                 <h3 className="text-red-700 font-bold text-lg mb-1">Sold Out</h3>
+                                 <p className="text-red-500 text-sm">Tickets are no longer available.</p>
+                             </div>
+                        ) : (
+                            <>
+                                {/* Quantity Selector */}
+                                <div className="flex items-center justify-between bg-gray-50 p-3 rounded-xl mb-6 border border-gray-200">
+                                    <span className="font-medium text-gray-700">Quantity</span>
+                                    <div className="flex items-center space-x-3">
+                                        <button 
+                                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                            className="w-8 h-8 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100"
+                                        >
+                                            <Minus className="w-4 h-4" />
+                                        </button>
+                                        <span className="w-8 text-center font-bold text-lg">{quantity}</span>
+                                        <button 
+                                            onClick={() => setQuantity(Math.min(maxPurchaseLimit, quantity + 1))}
+                                            className="w-8 h-8 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Dynamic Ticket Inputs */}
+                                <div className="space-y-3 mb-6 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                                    {ticketNames.map((name, idx) => (
+                                        <div key={idx} className="space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                            <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                                                Ticket #{idx + 1}
+                                            </div>
+                                            <input 
+                                                type="text" 
+                                                placeholder={`Nome Cognome (Voucher ${idx + 1})`}
+                                                value={name}
+                                                onChange={(e) => handleNameChange(idx, e.target.value)}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            />
+                                            
+                                            {/* Matricola Field if Required */}
+                                            {event.requiresMatricola && (
+                                                 <input 
+                                                    type="text" 
+                                                    placeholder={`Numero Matricola`}
+                                                    value={ticketMatricolas[idx] || ''}
+                                                    onChange={(e) => handleMatricolaChange(idx, e.target.value)}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none mt-2"
+                                                />
+                                            )}
+
+                                            {/* Corso Studi Field if Required */}
+                                            {event.requiresCorsoStudi && (
+                                                 <input 
+                                                    type="text" 
+                                                    placeholder={`Corso di Studi`}
+                                                    value={ticketCorsoStudi[idx] || ''}
+                                                    onChange={(e) => handleCorsoStudiChange(idx, e.target.value)}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none mt-2"
+                                                />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* PR List Selection */}
+                                {event.prLists && event.prLists.length > 0 && (
+                                    <div className="mb-6">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Seleziona Lista (Opzionale)</label>
+                                        <select 
+                                            value={selectedPrList}
+                                            onChange={(e) => setSelectedPrList(e.target.value)}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white appearance-none"
+                                        >
+                                            <option value="">-- Seleziona Lista --</option>
+                                            <option value="Nessuna lista">Nessuna lista</option>
+                                            {event.prLists.map(list => (
+                                                <option key={list} value={list}>{list}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {/* Total Summary */}
+                                <div className="border-t border-gray-100 pt-4 mb-6">
+                                    <div className="flex justify-between mb-1 text-gray-600">
+                                        <span>{isFree ? '0' : `€${totalPricePerTicket.toFixed(2)}`} x {quantity}</span>
+                                        <span>{isFree ? 'Free' : `€${totalAmount.toFixed(2)}`}</span>
+                                    </div>
+                                    <div className="flex justify-between font-bold text-xl text-gray-900 mt-2">
+                                        <span>Total</span>
+                                        <span>{isFree ? 'Free' : `€${totalAmount.toFixed(2)}`}</span>
+                                    </div>
+                                </div>
+
+                                {/* Terms Checkbox */}
+                                <div className="flex items-start mb-6">
+                                    <div className="flex items-center h-5">
+                                        <input
+                                            id="terms"
+                                            name="terms"
+                                            type="checkbox"
+                                            checked={acceptedTerms}
+                                            onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
+                                        />
+                                    </div>
+                                    <div className="ml-3 text-xs">
+                                        <label htmlFor="terms" className="font-medium text-gray-600">
+                                            Ho letto e accetto i <Link to="/terms" target="_blank" className="text-indigo-600 underline">Termini e Condizioni</Link>. 
+                                            Sono consapevole che la Fee di servizio non è rimborsabile.
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button 
+                                    onClick={handlePurchase}
+                                    disabled={purchasing || !acceptedTerms}
+                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition shadow-lg transform active:scale-99 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                >
+                                    {purchasing ? (
+                                        <span className="flex items-center">
+                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                            Processing...
+                                        </span>
+                                    ) : (
+                                        isFree ? 'Get Voucher' : 'Proceed to Payment'
+                                    )}
+                                </button>
+                                
+                                <p className="text-center text-xs text-gray-400 mt-4 flex items-center justify-center">
+                                    <ShieldCheck className="w-3 h-3 mr-1" />
+                                    Secure payment via Stripe
+                                </p>
+                            </>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 
+
 const Stripe = require('stripe');
 const { User, Event, Ticket, Order } = require('./models');
 const mongoose = require('mongoose');
@@ -30,12 +31,14 @@ const processSuccessfulOrder = async (order, session, dbSession) => {
     for (let i = 0; i < order.ticketNames.length; i++) {
         const name = order.ticketNames[i];
         const matricola = order.ticketMatricolas && order.ticketMatricolas[i] ? order.ticketMatricolas[i] : undefined;
+        const corsoStudi = order.ticketCorsoStudi && order.ticketCorsoStudi[i] ? order.ticketCorsoStudi[i] : undefined;
 
         ticketsToCreate.push({
             event: order.eventId,
             owner: order.userId,
             ticketHolderName: name || "Guest",
             matricola: matricola,
+            corsoStudi: corsoStudi,
             qrCodeId: uuidv4(), 
             prList: order.prList,
             used: false,
@@ -101,7 +104,7 @@ const StripeController = {
    */
   createCheckoutSession: async (req, res) => {
     try {
-      const { eventId, quantity, ticketNames, ticketMatricolas, prList, userId } = req.body;
+      const { eventId, quantity, ticketNames, ticketMatricolas, ticketCorsoStudi, prList, userId } = req.body;
 
       // 1. Validations
       if (!ticketNames || ticketNames.length !== quantity) {
@@ -153,6 +156,7 @@ const StripeController = {
                   eventId,
                   ticketNames,
                   ticketMatricolas: ticketMatricolas || [],
+                  ticketCorsoStudi: ticketCorsoStudi || [],
                   prList: prList || "Nessuna lista",
                   quantity,
                   totalAmountCents: 0,
@@ -177,6 +181,7 @@ const StripeController = {
                       owner: userId,
                       ticketHolderName: ticketNames[i] || "Guest",
                       matricola: ticketMatricolas && ticketMatricolas[i] ? ticketMatricolas[i] : undefined,
+                      corsoStudi: ticketCorsoStudi && ticketCorsoStudi[i] ? ticketCorsoStudi[i] : undefined,
                       qrCodeId: uuidv4(), 
                       prList: prList || "Nessuna lista",
                       used: false,
@@ -225,6 +230,7 @@ const StripeController = {
           eventId,
           ticketNames,
           ticketMatricolas: ticketMatricolas || [], 
+          ticketCorsoStudi: ticketCorsoStudi || [], 
           prList: prList || "Nessuna lista",
           quantity,
           totalAmountCents: totalAmountCents,

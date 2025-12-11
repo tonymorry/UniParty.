@@ -7,7 +7,7 @@ import { UserRole, EventCategory, Event } from '../types';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { 
     AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, 
-    ShieldCheck, Lock, Info, Upload, FileText, TrendingUp, Briefcase, Ticket, LayoutDashboard, Calendar, Settings
+    ShieldCheck, Lock, Info, Upload, FileText, TrendingUp, Briefcase, Ticket, LayoutDashboard, Calendar, Settings, GraduationCap
 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
@@ -36,7 +36,7 @@ const Dashboard: React.FC = () => {
   const [category, setCategory] = useState<EventCategory>(EventCategory.PARTY);
   
   // Advanced Options
-  const [requiresMatricola, setRequiresMatricola] = useState(false);
+  const [requiresAcademicData, setRequiresAcademicData] = useState(false); // Controls both Matricola & Corso Studi
   const [scanType, setScanType] = useState<'entry_only' | 'entry_exit'>('entry_only');
 
   // PR Lists State
@@ -169,7 +169,8 @@ const Dashboard: React.FC = () => {
             category,
             prLists,
             status: targetStatus,
-            requiresMatricola,
+            requiresMatricola: requiresAcademicData, // Unified Flag
+            requiresCorsoStudi: requiresAcademicData, // Unified Flag
             scanType
         }, user);
 
@@ -545,15 +546,20 @@ const Dashboard: React.FC = () => {
                                        <Settings className="w-4 h-4 mr-2" /> Opzioni Avanzate (Seminari / Accademico)
                                    </h3>
                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                       <div className="flex items-center space-x-3 bg-white p-3 rounded-lg border border-gray-200">
-                                           <input 
-                                               type="checkbox" 
-                                               id="reqMatricola"
-                                               checked={requiresMatricola}
-                                               onChange={e => setRequiresMatricola(e.target.checked)}
-                                               className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                           />
-                                           <label htmlFor="reqMatricola" className="text-sm text-gray-700 font-medium">Richiedi Numero Matricola</label>
+                                       <div>
+                                           <div className="flex items-center space-x-3 bg-white p-3 rounded-lg border border-gray-200">
+                                               <input 
+                                                   type="checkbox" 
+                                                   id="reqAcademicData"
+                                                   checked={requiresAcademicData}
+                                                   onChange={e => setRequiresAcademicData(e.target.checked)}
+                                                   className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                               />
+                                               <label htmlFor="reqAcademicData" className="text-sm text-gray-700 font-medium cursor-pointer flex items-center">
+                                                    <GraduationCap className="w-4 h-4 mr-2 text-indigo-500" />
+                                                    Richiedi Dati Accademici (Matricola e Corso di Studi)
+                                                </label>
+                                           </div>
                                        </div>
                                        
                                        <div className="bg-white p-3 rounded-lg border border-gray-200">

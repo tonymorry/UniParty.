@@ -87,6 +87,7 @@ const eventSchema = new mongoose.Schema({
 
   // --- ACADEMIC / SEMINAR FEATURES ---
   requiresMatricola: { type: Boolean, default: false },
+  requiresCorsoStudi: { type: Boolean, default: false }, // New Field
   scanType: { type: String, enum: ['entry_only', 'entry_exit'], default: 'entry_only' }
 }, { timestamps: true });
 
@@ -102,6 +103,7 @@ const ticketSchema = new mongoose.Schema({
   
   // Academic Fields
   matricola: { type: String },
+  corsoStudi: { type: String }, // New Field
   entryTime: { type: Date },
   exitTime: { type: Date },
 
@@ -120,7 +122,8 @@ const orderSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
   ticketNames: [String], 
-  ticketMatricolas: [String], 
+  ticketMatricolas: [String],
+  ticketCorsoStudi: [String], // New Field
   prList: { type: String, default: 'Nessuna lista' },
   quantity: { type: Number, required: true },
   totalAmountCents: { type: Number, required: true },

@@ -604,7 +604,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         let { 
             title, description, longDescription, image, date, time, 
             location, price, maxCapacity, category, prLists, status,
-            requiresMatricola, scanType
+            requiresMatricola, requiresCorsoStudi, scanType
         } = req.body;
 
         if (price < 0) return res.status(400).json({ error: "Price cannot be negative" });
@@ -633,6 +633,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
             favoritesCount: 0,
             status: status || 'active',
             requiresMatricola: !!requiresMatricola,
+            requiresCorsoStudi: !!requiresCorsoStudi,
             scanType: scanType || 'entry_only'
         });
 
@@ -692,7 +693,7 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
         let { 
             title, description, longDescription, image, date, time, 
             location, maxCapacity, category, prLists, price, status,
-            requiresMatricola, scanType
+            requiresMatricola, requiresCorsoStudi, scanType
         } = req.body;
 
         const updated = await Event.findByIdAndUpdate(req.params.id, {
@@ -701,6 +702,7 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
             ...(price !== undefined && { price }),
             ...(status !== undefined && { status }),
             ...(requiresMatricola !== undefined && { requiresMatricola }),
+            ...(requiresCorsoStudi !== undefined && { requiresCorsoStudi }),
             ...(scanType !== undefined && { scanType })
         }, { new: true }).populate('organization', 'name _id');
 
@@ -775,7 +777,7 @@ app.get('/api/events/:id/attendees', authMiddleware, async (req, res) => {
         }
 
         const tickets = await Ticket.find({ event: eventId, status: { $ne: 'deleted' } })
-            .select('ticketHolderName matricola status entryTime exitTime prList purchaseDate')
+            .select('ticketHolderName matricola corsoStudi status entryTime exitTime prList purchaseDate')
             .sort({ ticketHolderName: 1 });
             
         res.json(tickets);

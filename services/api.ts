@@ -1,9 +1,5 @@
 
 
-
-
-
-
 import { Event, EventCategory, LoginResponse, Ticket, User, UserRole } from '../types';
 
 // ==========================================
@@ -281,11 +277,11 @@ const realApi = {
     }
   },
   payments: {
-    createCheckoutSession: async (eventId: string, quantity: number, userId: string, ticketNames: string[], prListName: string, ticketMatricolas?: string[]) => {
+    createCheckoutSession: async (eventId: string, quantity: number, userId: string, ticketNames: string[], prListName: string, ticketMatricolas?: string[], ticketCorsoStudi?: string[]) => {
         const res = await fetch(`${API_URL}/stripe/create-checkout-session`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ eventId, quantity, userId, ticketNames, prList: prListName, ticketMatricolas })
+            body: JSON.stringify({ eventId, quantity, userId, ticketNames, prList: prListName, ticketMatricolas, ticketCorsoStudi })
         });
         const data = await res.json();
         if(data.url) {

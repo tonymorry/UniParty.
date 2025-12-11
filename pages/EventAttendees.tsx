@@ -4,12 +4,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
-import { ArrowLeft, Clock, CheckCircle, Circle, User, GraduationCap, Users, Download } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Circle, User, GraduationCap, Users, Download, BookOpen } from 'lucide-react';
 
 interface Attendee {
     _id: string;
     ticketHolderName: string;
     matricola?: string;
+    corsoStudi?: string; // New
     status: 'valid' | 'entered' | 'completed' | 'active';
     entryTime?: string;
     exitTime?: string;
@@ -64,13 +65,14 @@ const EventAttendees: React.FC = () => {
     const downloadCSV = () => {
         if (!attendees.length) return;
 
-        // Header CSV
-        const headers = ["Nome", "Matricola", "Lista PR", "Stato", "Orario Ingresso", "Orario Uscita"];
+        // Header CSV - Added Corso Studi
+        const headers = ["Nome", "Matricola", "Corso di Studi", "Lista PR", "Stato", "Orario Ingresso", "Orario Uscita"];
         
         // Rows Data
         const rows = attendees.map(a => [
             `"${a.ticketHolderName.replace(/"/g, '""')}"`, // Escape quotes
             `"${a.matricola || ''}"`,
+            `"${a.corsoStudi ? a.corsoStudi.replace(/"/g, '""') : ''}"`,
             `"${a.prList || ''}"`,
             `"${a.status}"`,
             `"${a.entryTime ? new Date(a.entryTime).toLocaleString() : ''}"`,
@@ -98,7 +100,7 @@ const EventAttendees: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-7xl mx-auto">
                 <div className="mb-6 flex items-center justify-between">
                     <button onClick={() => navigate('/dashboard')} className="flex items-center text-gray-600 hover:text-indigo-600 transition">
                         <ArrowLeft className="w-5 h-5 mr-2" /> Torna alla Dashboard
@@ -145,6 +147,7 @@ const EventAttendees: React.FC = () => {
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partecipante</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matricola</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Corso Studi</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stato</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingresso</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uscita</th>
@@ -161,6 +164,13 @@ const EventAttendees: React.FC = () => {
                                                 {a.matricola ? (
                                                     <span className="flex items-center text-sm text-indigo-700 font-mono">
                                                         <GraduationCap className="w-3 h-3 mr-1" /> {a.matricola}
+                                                    </span>
+                                                ) : <span className="text-gray-400 text-xs">-</span>}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {a.corsoStudi ? (
+                                                    <span className="flex items-center text-sm text-gray-700">
+                                                        <BookOpen className="w-3 h-3 mr-1 text-gray-400" /> {a.corsoStudi}
                                                     </span>
                                                 ) : <span className="text-gray-400 text-xs">-</span>}
                                             </td>
@@ -184,7 +194,7 @@ const EventAttendees: React.FC = () => {
                                         </tr>
                                     )) : (
                                         <tr>
-                                            <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                                            <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                                                 Nessun partecipante trovato.
                                             </td>
                                         </tr>
