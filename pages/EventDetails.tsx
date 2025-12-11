@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Event, UserRole } from '../types';
@@ -537,10 +536,16 @@ const EventDetails: React.FC = () => {
                         <Clock className="w-5 h-5 mr-2" />
                         {event.time}
                     </div>
-                    <div className="flex items-center">
-                        <MapPin className="w-5 h-5 mr-2" />
-                        {event.location}
-                    </div>
+                    <a 
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group"
+                    >
+                        <MapPin className="w-5 h-5 mr-2 group-hover:text-red-400 transition-colors" />
+                        <span className="mr-2">{event.location}</span>
+                        <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full hidden sm:inline-block">View on Map</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -560,223 +565,208 @@ const EventDetails: React.FC = () => {
                     <div className="mt-8 pt-8 border-t border-gray-100">
                          <h3 className="text-lg font-bold text-gray-900 mb-4">Organized by</h3>
                          <div className="flex items-center">
-                             <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg mr-4">
-                                {typeof event.organization === 'object' ? event.organization.name.charAt(0) : 'A'}
+                             <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg mr-4 overflow-hidden border border-gray-200">
+                                {typeof event.organization === 'object' && 'profileImage' in event.organization && event.organization.profileImage ? (
+                                    <img src={event.organization.profileImage} alt="Org" className="w-full h-full object-cover" />
+                                ) : (
+                                    <span>{typeof event.organization === 'object' ? (event.organization as any).name?.charAt(0) : 'A'}</span>
+                                )}
                              </div>
                              <div>
-                                 <p className="font-bold text-gray-900">{typeof event.organization === 'object' ? event.organization.name : 'Unknown'}</p>
-                                 <Link 
-                                    to={`/association/${typeof event.organization === 'object' ? event.organization._id : event.organization}`} 
-                                    className="text-indigo-600 text-sm hover:underline"
-                                 >
-                                     View Profile
+                                 <Link to={`/association/${typeof event.organization === 'object' ? event.organization._id : event.organization}`} className="font-bold text-gray-900 text-lg hover:text-indigo-600 transition">
+                                    {typeof event.organization === 'object' ? (event.organization as any).name : 'Association'}
                                  </Link>
+                                 <p className="text-sm text-gray-500">Event Organizer</p>
                              </div>
                          </div>
                     </div>
                 </div>
-
-                {/* OWNER STATS PANEL */}
-                {isOwner && prStats && (
-                    <div className="bg-indigo-900 rounded-2xl p-6 md:p-8 shadow-lg text-white">
-                        <div className="flex items-center mb-6">
-                             <BarChart className="w-6 h-6 mr-2 text-indigo-300" />
-                             <h2 className="text-xl font-bold">Live Stats</h2>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                             <div className="bg-indigo-800/50 p-4 rounded-xl border border-indigo-700/50">
-                                 <p className="text-indigo-300 text-sm font-medium">Tickets Sold</p>
-                                 <p className="text-2xl font-bold mt-1">{event.ticketsSold} / {event.maxCapacity}</p>
-                             </div>
-                             <div className="bg-indigo-800/50 p-4 rounded-xl border border-indigo-700/50">
-                                 <p className="text-indigo-300 text-sm font-medium">Est. Revenue</p>
-                                 <p className="text-2xl font-bold mt-1">€{(event.ticketsSold * event.price).toFixed(2)}</p>
-                             </div>
-                        </div>
-
-                        <div>
-                             <h3 className="text-sm font-bold text-indigo-300 uppercase tracking-wider mb-3">Sales by PR List</h3>
-                             <div className="space-y-2">
-                                 {Object.entries(prStats)
-                                    .filter(([key]) => key !== 'favorites')
-                                    .map(([name, count]) => (
-                                     <div key={name} className="flex justify-between items-center bg-indigo-800 p-2 px-3 rounded-lg">
-                                         <span className="font-medium">{name}</span>
-                                         <span className="font-bold bg-white text-indigo-900 px-2 rounded">{count}</span>
-                                     </div>
-                                 ))}
-                                 {Object.keys(prStats).filter(k => k !== 'favorites').length === 0 && (
-                                     <p className="text-indigo-400 text-sm italic">No sales recorded yet.</p>
-                                 )}
-                             </div>
-                        </div>
-                    </div>
-                )}
             </div>
 
-            {/* Right Column: Ticket Purchase */}
+            {/* Right Column: Ticket Selection */}
             <div className="lg:col-span-1">
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sticky top-24 overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -mr-10 -mt-10 z-0"></div>
-                    
-                    <div className="relative z-10">
-                        <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm text-gray-500 font-medium">Price per person</span>
-                            {isAlmostSoldOut && (
-                                <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full font-bold flex items-center">
-                                    <span className="w-2 h-2 bg-orange-500 rounded-full mr-1 animate-pulse"></span>
-                                    Selling Fast
-                                </span>
-                            )}
-                        </div>
-                        <div className="flex items-baseline mb-6">
-                            <span className="text-4xl font-extrabold text-gray-900">
-                                {isFree ? 'Free' : `€${finalPrice.toFixed(2)}`}
-                            </span>
-                            {!isFree && <span className="text-gray-500 ml-2 text-sm">+ €0.40 fee</span>}
-                        </div>
+                <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 sticky top-24">
+                     {/* Price Header */}
+                     <div className="flex justify-between items-center mb-6">
+                         <div>
+                             <p className="text-sm text-gray-500 font-medium">Prezzo per persona</p>
+                             <h3 className="text-3xl font-bold text-gray-900">
+                                 {isFree ? 'Gratis' : `€${finalPrice.toFixed(2)}`}
+                             </h3>
+                         </div>
+                         {isAlmostSoldOut && (
+                             <span className="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                                 Ultimi posti!
+                             </span>
+                         )}
+                     </div>
 
-                        {/* Sold Out Logic */}
-                        {isSoldOut ? (
-                             <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-center">
-                                 <h3 className="text-red-700 font-bold text-lg mb-1">Sold Out</h3>
-                                 <p className="text-red-500 text-sm">Tickets are no longer available.</p>
+                     {/* Sales Controls */}
+                     {isSoldOut ? (
+                         <div className="bg-gray-100 rounded-lg p-4 text-center font-bold text-gray-500 mb-4">
+                             SOLD OUT
+                         </div>
+                     ) : (
+                         <div className="space-y-4">
+                             {/* Quantity */}
+                             <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                 <span className="text-sm font-medium text-gray-700 ml-2">Quantità</span>
+                                 <div className="flex items-center">
+                                     <button 
+                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                        className="p-2 bg-white rounded-md shadow-sm hover:bg-gray-100 text-indigo-600 disabled:opacity-50"
+                                        disabled={quantity <= 1}
+                                     >
+                                         <Minus className="w-4 h-4" />
+                                     </button>
+                                     <span className="w-12 text-center font-bold text-gray-900">{quantity}</span>
+                                     <button 
+                                        onClick={() => setQuantity(Math.min(maxPurchaseLimit, quantity + 1))}
+                                        className="p-2 bg-white rounded-md shadow-sm hover:bg-gray-100 text-indigo-600 disabled:opacity-50"
+                                        disabled={quantity >= maxPurchaseLimit}
+                                     >
+                                         <Plus className="w-4 h-4" />
+                                     </button>
+                                 </div>
                              </div>
-                        ) : (
-                            <>
-                                {/* Quantity Selector */}
-                                <div className="flex items-center justify-between bg-gray-50 p-3 rounded-xl mb-6 border border-gray-200">
-                                    <span className="font-medium text-gray-700">Quantity</span>
-                                    <div className="flex items-center space-x-3">
-                                        <button 
-                                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                            className="w-8 h-8 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100"
-                                        >
-                                            <Minus className="w-4 h-4" />
-                                        </button>
-                                        <span className="w-8 text-center font-bold text-lg">{quantity}</span>
-                                        <button 
-                                            onClick={() => setQuantity(Math.min(maxPurchaseLimit, quantity + 1))}
-                                            className="w-8 h-8 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100"
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
 
-                                {/* Dynamic Ticket Inputs */}
-                                <div className="space-y-3 mb-6 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                                    {ticketNames.map((name, idx) => (
-                                        <div key={idx} className="space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                            <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                                                Ticket #{idx + 1}
-                                            </div>
-                                            <input 
-                                                type="text" 
-                                                placeholder={`Nome Cognome (Voucher ${idx + 1})`}
-                                                value={name}
-                                                onChange={(e) => handleNameChange(idx, e.target.value)}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                                            />
-                                            
-                                            {/* Matricola Field if Required */}
-                                            {event.requiresMatricola && (
-                                                 <input 
-                                                    type="text" 
-                                                    placeholder={`Numero Matricola`}
-                                                    value={ticketMatricolas[idx] || ''}
-                                                    onChange={(e) => handleMatricolaChange(idx, e.target.value)}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none mt-2"
-                                                />
-                                            )}
+                             {/* Dynamic Inputs */}
+                             <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                                 {Array.from({ length: quantity }).map((_, i) => (
+                                     <div key={i} className="space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                         <p className="text-xs font-bold text-gray-500 uppercase">Voucher #{i + 1}</p>
+                                         <input
+                                             type="text"
+                                             placeholder="Nome e Cognome"
+                                             value={ticketNames[i]}
+                                             onChange={e => handleNameChange(i, e.target.value)}
+                                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-indigo-500 outline-none"
+                                         />
+                                         {event.requiresMatricola && (
+                                              <div className="flex items-center">
+                                                  <GraduationCap className="w-4 h-4 mr-2 text-gray-400" />
+                                                  <input
+                                                      type="text"
+                                                      placeholder="Matricola"
+                                                      value={ticketMatricolas[i]}
+                                                      onChange={e => handleMatricolaChange(i, e.target.value)}
+                                                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-indigo-500 outline-none"
+                                                  />
+                                              </div>
+                                         )}
+                                         {event.requiresCorsoStudi && (
+                                              <div className="flex items-center">
+                                                  <BookOpen className="w-4 h-4 mr-2 text-gray-400" />
+                                                  <input
+                                                      type="text"
+                                                      placeholder="Corso di Studi"
+                                                      value={ticketCorsoStudi[i]}
+                                                      onChange={e => handleCorsoStudiChange(i, e.target.value)}
+                                                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-indigo-500 outline-none"
+                                                  />
+                                              </div>
+                                         )}
+                                     </div>
+                                 ))}
+                             </div>
 
-                                            {/* Corso Studi Field if Required */}
-                                            {event.requiresCorsoStudi && (
-                                                 <input 
-                                                    type="text" 
-                                                    placeholder={`Corso di Studi`}
-                                                    value={ticketCorsoStudi[idx] || ''}
-                                                    onChange={(e) => handleCorsoStudiChange(idx, e.target.value)}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none mt-2"
-                                                />
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
+                             {/* PR List Selector */}
+                             {event.prLists && event.prLists.length > 0 && (
+                                 <div>
+                                     <label className="block text-sm font-medium text-gray-700 mb-1">Lista PR</label>
+                                     <select
+                                         value={selectedPrList}
+                                         onChange={e => setSelectedPrList(e.target.value)}
+                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                     >
+                                         <option value="">Seleziona una lista...</option>
+                                         <option value="Nessuna lista">Nessuna lista</option>
+                                         {event.prLists.map(list => (
+                                             <option key={list} value={list}>{list}</option>
+                                         ))}
+                                     </select>
+                                 </div>
+                             )}
+                         </div>
+                     )}
 
-                                {/* PR List Selection */}
-                                {event.prLists && event.prLists.length > 0 && (
-                                    <div className="mb-6">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Seleziona Lista (Opzionale)</label>
-                                        <select 
-                                            value={selectedPrList}
-                                            onChange={(e) => setSelectedPrList(e.target.value)}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white appearance-none"
-                                        >
-                                            <option value="">-- Seleziona Lista --</option>
-                                            <option value="Nessuna lista">Nessuna lista</option>
-                                            {event.prLists.map(list => (
-                                                <option key={list} value={list}>{list}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
+                     {/* Summary */}
+                     <div className="border-t border-gray-100 my-4 pt-4 space-y-2">
+                         <div className="flex justify-between text-sm text-gray-600">
+                             <span>Biglietti x {quantity}</span>
+                             <span>€{(priceInCents * quantity / 100).toFixed(2)}</span>
+                         </div>
+                         {!isFree && (
+                             <div className="flex justify-between text-sm text-gray-600">
+                                 <span className="flex items-center">Fee Servizio <Info className="w-3 h-3 ml-1 text-gray-400"/></span>
+                                 <span>€{(feeInCents * quantity / 100).toFixed(2)}</span>
+                             </div>
+                         )}
+                         <div className="flex justify-between text-lg font-bold text-gray-900 pt-2">
+                             <span>Totale</span>
+                             <span>€{totalAmount.toFixed(2)}</span>
+                         </div>
+                     </div>
 
-                                {/* Total Summary */}
-                                <div className="border-t border-gray-100 pt-4 mb-6">
-                                    <div className="flex justify-between mb-1 text-gray-600">
-                                        <span>{isFree ? '0' : `€${totalPricePerTicket.toFixed(2)}`} x {quantity}</span>
-                                        <span>{isFree ? 'Free' : `€${totalAmount.toFixed(2)}`}</span>
-                                    </div>
-                                    <div className="flex justify-between font-bold text-xl text-gray-900 mt-2">
-                                        <span>Total</span>
-                                        <span>{isFree ? 'Free' : `€${totalAmount.toFixed(2)}`}</span>
-                                    </div>
-                                </div>
+                     {/* Terms Checkbox */}
+                     {!isSoldOut && (
+                         <div className="mb-4 flex items-start">
+                             <input 
+                                 id="terms" 
+                                 type="checkbox" 
+                                 checked={acceptedTerms}
+                                 onChange={e => setAcceptedTerms(e.target.checked)}
+                                 className="mt-1 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                             />
+                             <label htmlFor="terms" className="ml-2 text-xs text-gray-500">
+                                 Accetto i <Link to="/terms" className="text-indigo-600 hover:underline">Termini e Condizioni</Link>. 
+                                 Comprendo che la fee di servizio non è rimborsabile.
+                             </label>
+                         </div>
+                     )}
 
-                                {/* Terms Checkbox */}
-                                <div className="flex items-start mb-6">
-                                    <div className="flex items-center h-5">
-                                        <input
-                                            id="terms"
-                                            name="terms"
-                                            type="checkbox"
-                                            checked={acceptedTerms}
-                                            onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
-                                        />
-                                    </div>
-                                    <div className="ml-3 text-xs">
-                                        <label htmlFor="terms" className="font-medium text-gray-600">
-                                            Ho letto e accetto i <Link to="/terms" target="_blank" className="text-indigo-600 underline">Termini e Condizioni</Link>. 
-                                            Sono consapevole che la Fee di servizio non è rimborsabile.
-                                        </label>
-                                    </div>
-                                </div>
+                     {/* Action Button */}
+                     <button
+                         onClick={handlePurchase}
+                         disabled={isSoldOut || purchasing || (!isFree && !user)}
+                         className={`w-full py-3 px-4 rounded-xl font-bold text-white shadow-lg transition transform active:scale-95 flex items-center justify-center ${
+                             isSoldOut 
+                             ? 'bg-gray-400 cursor-not-allowed' 
+                             : 'bg-indigo-600 hover:bg-indigo-700'
+                         }`}
+                     >
+                         {purchasing ? (
+                             'Elaborazione...'
+                         ) : isSoldOut ? (
+                             'Sold Out'
+                         ) : (
+                             <>
+                                Prenota Ora <ChevronRight className="w-4 h-4 ml-1" />
+                             </>
+                         )}
+                     </button>
+                     
+                     {!user && !isSoldOut && (
+                         <p className="text-xs text-center text-gray-500 mt-2">
+                             Devi effettuare il login per prenotare.
+                         </p>
+                     )}
+                </div>
 
-                                <button 
-                                    onClick={handlePurchase}
-                                    disabled={purchasing || !acceptedTerms}
-                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition shadow-lg transform active:scale-99 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                                >
-                                    {purchasing ? (
-                                        <span className="flex items-center">
-                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                            Processing...
-                                        </span>
-                                    ) : (
-                                        isFree ? 'Get Voucher' : 'Proceed to Payment'
-                                    )}
-                                </button>
-                                
-                                <p className="text-center text-xs text-gray-400 mt-4 flex items-center justify-center">
-                                    <ShieldCheck className="w-3 h-3 mr-1" />
-                                    Secure payment via Stripe
-                                </p>
-                            </>
-                        )}
-                    </div>
+                {/* Additional Info / When & Where Small */}
+                <div className="mt-6 bg-indigo-50 rounded-xl p-4 border border-indigo-100">
+                    <h4 className="font-bold text-indigo-900 mb-2 flex items-center"><Info className="w-4 h-4 mr-2"/> Info Utili</h4>
+                    <p className="text-xs text-indigo-800 mb-2">
+                        Mostra il QR Code all'ingresso. Non serve stampare il biglietto.
+                    </p>
+                     <a 
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="text-xs font-bold text-indigo-600 hover:underline flex items-center"
+                     >
+                         <MapPin className="w-3 h-3 mr-1" /> Apri Mappa
+                     </a>
                 </div>
             </div>
         </div>
