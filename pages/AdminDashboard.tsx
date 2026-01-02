@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { User, Event, Ticket, UserRole } from '../types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Shield, User as UserIcon, Calendar, CheckCircle, XCircle, Trash2, RefreshCw, Ticket as TicketIcon, Search, Eye, Filter, BarChart, X, TrendingUp, DollarSign, Heart, GraduationCap, Clock, Users } from 'lucide-react';
 
 type UserFilter = 'all' | 'studente' | 'associazione';
@@ -11,7 +10,10 @@ type UserFilter = 'all' | 'studente' | 'associazione';
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'users' | 'events'>('users');
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Tab State derived from URL
+  const activeTab = (searchParams.get('tab') as 'users' | 'events') || 'users';
   
   // Data State
   const [users, setUsers] = useState<User[]>([]);
@@ -57,6 +59,10 @@ const AdminDashboard: React.FC = () => {
       } finally {
           setLoading(false);
       }
+  };
+
+  const handleTabChange = (tab: 'users' | 'events') => {
+      setSearchParams({ tab });
   };
 
   const handleVerifyUser = async (userId: string) => {
@@ -149,7 +155,7 @@ const AdminDashboard: React.FC = () => {
             </div>
             <div className="bg-white rounded-lg shadow p-2 flex space-x-2">
                 <button 
-                    onClick={() => setActiveTab('users')}
+                    onClick={() => handleTabChange('users')}
                     className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'users' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
                 >
                     <div className="flex items-center">
@@ -158,7 +164,7 @@ const AdminDashboard: React.FC = () => {
                     </div>
                 </button>
                 <button 
-                    onClick={() => setActiveTab('events')}
+                    onClick={() => handleTabChange('events')}
                     className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'events' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
                 >
                     <div className="flex items-center">

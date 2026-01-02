@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -23,8 +22,13 @@ const BottomNav: React.FC = () => {
   const { user } = useAuth();
   const location = useLocation();
 
-  // Helper per determinare se un link è attivo
-  const isActive = (path: string) => location.pathname === path;
+  // Helper per determinare se un link è attivo (supporta query params)
+  const isActive = (path: string) => {
+      const [pathPart, queryPart] = path.split('?');
+      const matchesPath = location.pathname === pathPart;
+      if (!queryPart) return matchesPath;
+      return matchesPath && location.search.includes(queryPart);
+  };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-16 z-50 md:hidden flex justify-around items-center px-2 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
@@ -132,7 +136,7 @@ const BottomNav: React.FC = () => {
             <span className="text-[10px] font-medium mt-1">Home</span>
           </Link>
 
-          <Link to="/admin" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/admin') ? 'text-indigo-600' : 'text-gray-400'}`}>
+          <Link to="/admin?tab=users" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/admin?tab=users') ? 'text-indigo-600' : 'text-gray-400'}`}>
             <Users className="w-6 h-6" />
             <span className="text-[10px] font-medium mt-1">Utenti</span>
           </Link>
@@ -144,7 +148,7 @@ const BottomNav: React.FC = () => {
             </div>
           </Link>
 
-          <Link to="/admin" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/admin') ? 'text-indigo-600' : 'text-gray-400'}`}>
+          <Link to="/admin?tab=events" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/admin?tab=events') ? 'text-indigo-600' : 'text-gray-400'}`}>
             <Calendar className="w-6 h-6" />
             <span className="text-[10px] font-medium mt-1">Eventi</span>
           </Link>
