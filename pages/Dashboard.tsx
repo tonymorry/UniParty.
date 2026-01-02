@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -156,6 +155,7 @@ const Dashboard: React.FC = () => {
 
     setCreatingEvent(true);
     try {
+        // Fix: Call create with only one argument as per services/api.ts definition
         const newEvent = await api.events.create({
             title,
             description,
@@ -172,7 +172,7 @@ const Dashboard: React.FC = () => {
             requiresMatricola: requiresAcademicData, // Unified Flag
             requiresCorsoStudi: requiresAcademicData, // Unified Flag
             scanType
-        }, user);
+        });
 
         if (targetStatus === 'draft') {
             alert("Bozza salvata con successo!");
