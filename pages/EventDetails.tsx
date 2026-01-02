@@ -1,9 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Event, UserRole } from '../types';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck } from 'lucide-react';
+import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck, Flag, AlertTriangle, ArrowLeft } from 'lucide-react';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,6 +38,11 @@ const EventDetails: React.FC = () => {
   
   // Publishing State
   const [isPublishing, setIsPublishing] = useState(false);
+
+  // Report State
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   const isOwner = user && event && (
       (typeof event.organization === 'string' && event.organization === user._id) ||
@@ -84,6 +90,7 @@ const EventDetails: React.FC = () => {
     });
 
     // Also sync matricolas array length
+    // FIX: Using correct local variable 'newMats' instead of 'newNames'
     setTicketMatricolas(prev => {
         const newMats = [...prev];
         if (quantity > prev.length) {
@@ -182,6 +189,22 @@ const EventDetails: React.FC = () => {
         setPurchasing(false);
       }
     }
+  };
+
+  const handleReport = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!reportReason.trim()) return;
+      setIsSubmittingReport(true);
+      try {
+          await api.reports.create({ eventId: event!._id, reason: reportReason });
+          alert("Segnalazione inviata con successo. Verrà esaminata entro 24 ore.");
+          setIsReportModalOpen(false);
+          setReportReason('');
+      } catch (err) {
+          alert("Errore durante l'invio della segnalazione.");
+      } finally {
+          setIsSubmittingReport(false);
+      }
   };
 
   // --- EDIT FUNCTIONS ---
@@ -458,6 +481,53 @@ const EventDetails: React.FC = () => {
           </div>
       )}
 
+      {/* REPORT MODAL */}
+      {isReportModalOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                  <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                      <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                          <Flag className="w-5 h-5 mr-2 text-red-500" />
+                          Segnala Evento
+                      </h2>
+                      <button onClick={() => setIsReportModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                          <X className="w-6 h-6 text-gray-500" />
+                      </button>
+                  </div>
+                  <form onSubmit={handleReport} className="p-6 space-y-4">
+                      <p className="text-sm text-gray-600 mb-4">
+                          Aiutaci a mantenere la community sicura. Perché stai segnalando questo evento?
+                      </p>
+                      <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">Motivazione</label>
+                          <div className="space-y-2">
+                              {["Contenuto offensivo o inappropriato", "Spam o Truffa", "Informazioni false", "Illegale", "Altro"].map(r => (
+                                  <label key={r} className="flex items-center p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition">
+                                      <input 
+                                          type="radio" 
+                                          name="report_reason" 
+                                          value={r} 
+                                          checked={reportReason === r}
+                                          onChange={e => setReportReason(e.target.value)}
+                                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                                      />
+                                      <span className="ml-3 text-sm font-medium text-gray-700">{r}</span>
+                                  </label>
+                              ))}
+                          </div>
+                      </div>
+                      <button 
+                        type="submit" 
+                        disabled={isSubmittingReport || !reportReason}
+                        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                          {isSubmittingReport ? "Invio in corso..." : "Invia Segnalazione"}
+                      </button>
+                  </form>
+              </div>
+          </div>
+      )}
+
       {/* DRAFT BANNER (Owner Only) */}
       {isOwner && event.status === 'draft' && (
           <div className="bg-yellow-100 text-yellow-800 text-center py-3 font-bold sticky top-16 z-30 flex justify-center items-center shadow-md">
@@ -475,50 +545,59 @@ const EventDetails: React.FC = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent"></div>
         
-        {isOwner && (
-            <div className="absolute top-24 right-4 sm:right-8 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 z-20">
-                {event.status === 'draft' && (
-                     <button
+        <div className="absolute top-24 right-4 sm:right-8 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 z-20">
+            {isOwner ? (
+                <>
+                    {event.status === 'draft' && (
+                        <button
+                            type="button"
+                            onClick={handlePublish}
+                            disabled={isPublishing}
+                            className="bg-green-600/90 backdrop-blur hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition cursor-pointer"
+                        >
+                            {isPublishing ? (
+                                <>Pubblicazione...</>
+                            ) : (
+                                <><CheckCircle className="w-4 h-4 mr-2" /> PUBBLICA ORA</>
+                            )}
+                        </button>
+                    )}
+                    
+                    <button 
                         type="button"
-                        onClick={handlePublish}
-                        disabled={isPublishing}
-                        className="bg-green-600/90 backdrop-blur hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition cursor-pointer"
-                     >
-                        {isPublishing ? (
-                             <>Pubblicazione...</>
-                        ) : (
-                             <><CheckCircle className="w-4 h-4 mr-2" /> PUBBLICA ORA</>
-                        )}
-                     </button>
-                )}
-                
+                        onClick={() => setIsEditing(true)}
+                        className="bg-white/90 backdrop-blur hover:bg-white text-gray-900 px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition cursor-pointer"
+                    >
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Edit Event
+                    </button>
+                    <button 
+                        type="button"
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className="bg-red-600/90 backdrop-blur hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition cursor-pointer"
+                    >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {isDeleting ? 'Deleting...' : 'Delete'}
+                    </button>
+                </>
+            ) : user && (
                 <button 
                     type="button"
-                    onClick={() => setIsEditing(true)}
-                    className="bg-white/90 backdrop-blur hover:bg-white text-gray-900 px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition cursor-pointer"
+                    onClick={() => setIsReportModalOpen(true)}
+                    className="bg-white/20 backdrop-blur hover:bg-white/40 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition border border-white/30 cursor-pointer"
                 >
-                    <Pencil className="w-4 h-4 mr-2" />
-                    Edit Event
+                    <Flag className="w-4 h-4 mr-2" />
+                    Segnala
                 </button>
-                <button 
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className="bg-red-600/90 backdrop-blur hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition cursor-pointer"
-                >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    {isDeleting ? 'Deleting...' : 'Delete'}
-                </button>
-            </div>
-        )}
+            )}
+        </div>
 
         <button 
             onClick={() => navigate('/')} 
             className="absolute top-24 left-4 sm:left-8 bg-white/20 backdrop-blur hover:bg-white/30 text-white p-2 rounded-full transition z-20"
         >
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-             </svg>
+             <ArrowLeft className="h-6 w-6" />
         </button>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">

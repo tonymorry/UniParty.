@@ -1,6 +1,5 @@
 
-
-import { Event, EventCategory, LoginResponse, Ticket, User, UserRole } from '../types';
+import { Event, EventCategory, LoginResponse, Ticket, User, UserRole, Report } from '../types';
 
 // ==========================================
 // CONFIGURATION
@@ -51,6 +50,10 @@ const mockApi = {
     getAttendees: async () => [],
     validateTicket: async () => ({} as any)
   },
+  reports: {
+    create: async () => ({} as any),
+    getAll: async () => [],
+  },
   wallet: {
     getMyTickets: async () => []
   },
@@ -68,7 +71,8 @@ const mockApi = {
       getAllEvents: async () => [],
       getUserTickets: async () => [],
       verifyUser: async () => {},
-      restoreUser: async () => {}
+      restoreUser: async () => {},
+      deleteEventWithReason: async () => ({}),
   },
   notifications: {
       subscribe: async () => {},
@@ -151,6 +155,22 @@ const realApi = {
         return res.json();
     },
     toggleFollow: async (associationId: string) => {
+        const res = await fetch(`${API_URL}/users/follow/toggle`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ associationId })
+        });
+        if(!res.ok) throw new Error('Failed to toggle follow');
+        return res.json();
+    },
+    getFavoriteEventsForUser: async () => {
+        const res = await fetch(`${API_URL}/users/favorites/list`, {
+            headers: getHeaders()
+        });
+        if(!res.ok) throw new Error('Failed to fetch favorites');
+        return res.json();
+    },
+    toggleFollowAssociation: async (associationId: string) => {
         const res = await fetch(`${API_URL}/users/follow/toggle`, {
             method: 'POST',
             headers: getHeaders(),
@@ -256,6 +276,22 @@ const realApi = {
         return data;
     }
   },
+  reports: {
+    create: async (data: { eventId: string, reason: string }) => {
+        const res = await fetch(`${API_URL}/reports`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if(!res.ok) throw new Error('Failed to create report');
+        return res.json();
+    },
+    getAll: async () => {
+        const res = await fetch(`${API_URL}/admin/reports`, { headers: getHeaders() });
+        if(!res.ok) throw new Error('Failed to fetch reports');
+        return res.json();
+    }
+  },
   wallet: {
     getMyTickets: async (userId: string) => {
         const res = await fetch(`${API_URL}/tickets?owner=${userId}`, { headers: getHeaders() });
@@ -323,6 +359,15 @@ const realApi = {
       restoreUser: async (userId: string) => {
           const res = await fetch(`${API_URL}/admin/users/${userId}/restore`, { method: 'PUT', headers: getHeaders() });
           return res.json();
+      },
+      deleteEventWithReason: async (eventId: string, reason: string) => {
+        const res = await fetch(`${API_URL}/admin/events/${eventId}/delete-with-reason`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ reason })
+        });
+        if(!res.ok) throw new Error('Failed to delete event');
+        return res.json();
       }
   },
   notifications: {

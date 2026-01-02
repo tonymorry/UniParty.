@@ -1,5 +1,4 @@
 
-
 export enum UserRole {
   STUDENTE = 'studente',
   ASSOCIAZIONE = 'associazione',
@@ -73,6 +72,15 @@ export interface Ticket {
   entryTime?: string;
   exitTime?: string;
   status: 'valid' | 'entered' | 'completed' | 'archived' | 'deleted' | 'active'; // 'active' kept for legacy compatibility
+}
+
+export interface Report {
+  _id: string;
+  eventId: Event;
+  reporterId: User;
+  reason: string;
+  status: 'pending' | 'resolved' | 'dismissed';
+  createdAt: string;
 }
 
 export interface LoginResponse {

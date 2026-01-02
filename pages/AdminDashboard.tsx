@@ -1,9 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { User, Event, Ticket, UserRole } from '../types';
+import { User, Event, Ticket, UserRole, Report } from '../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Shield, User as UserIcon, Calendar, CheckCircle, XCircle, Trash2, RefreshCw, Ticket as TicketIcon, Search, Eye, Filter, BarChart, X, TrendingUp, DollarSign, Heart, GraduationCap, Clock, Users } from 'lucide-react';
+import { Shield, User as UserIcon, Calendar, CheckCircle, XCircle, Trash2, RefreshCw, Ticket as TicketIcon, Search, Eye, Filter, BarChart, X, TrendingUp, DollarSign, Heart, GraduationCap, Clock, Users, Flag, AlertTriangle } from 'lucide-react';
 
 type UserFilter = 'all' | 'studente' | 'associazione';
 
@@ -13,11 +14,12 @@ const AdminDashboard: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Tab State derived from URL
-  const activeTab = (searchParams.get('tab') as 'users' | 'events') || 'users';
+  const activeTab = (searchParams.get('tab') as 'users' | 'events' | 'reports') || 'users';
   
   // Data State
   const [users, setUsers] = useState<User[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [userFilter, setUserFilter] = useState<UserFilter>('all');
@@ -33,6 +35,12 @@ const AdminDashboard: React.FC = () => {
   const [selectedEventStats, setSelectedEventStats] = useState<{ [key: string]: number } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
+
+  // Moderation Modal State
+  const [isModModalOpen, setIsModModalOpen] = useState(false);
+  const [modTargetEvent, setModTargetEvent] = useState<Event | null>(null);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [isModLoading, setIsModLoading] = useState(false);
 
   useEffect(() => {
     // Access Control
@@ -50,9 +58,12 @@ const AdminDashboard: React.FC = () => {
           if (activeTab === 'users') {
               const data = await api.admin.getAllUsers();
               setUsers(data);
-          } else {
+          } else if (activeTab === 'events') {
               const data = await api.admin.getAllEvents();
               setEvents(data);
+          } else if (activeTab === 'reports') {
+              const data = await api.reports.getAll();
+              setReports(data);
           }
       } catch (e) {
           console.error("Admin fetch error", e);
@@ -61,7 +72,7 @@ const AdminDashboard: React.FC = () => {
       }
   };
 
-  const handleTabChange = (tab: 'users' | 'events') => {
+  const handleTabChange = (tab: 'users' | 'events' | 'reports') => {
       setSearchParams({ tab });
   };
 
@@ -112,6 +123,27 @@ const AdminDashboard: React.FC = () => {
           setSelectedEventStats(null);
       } finally {
           setStatsLoading(false);
+      }
+  };
+
+  const handleOpenModeration = (event: Event) => {
+      setModTargetEvent(event);
+      setIsModModalOpen(true);
+      setDeleteReason('');
+  };
+
+  const handleModDelete = async () => {
+      if (!modTargetEvent || !deleteReason.trim()) return;
+      setIsModLoading(true);
+      try {
+          await api.admin.deleteEventWithReason(modTargetEvent._id, deleteReason);
+          alert("Evento rimosso e organizzatore notificato.");
+          setIsModModalOpen(false);
+          fetchData();
+      } catch (err) {
+          alert("Errore durante la rimozione.");
+      } finally {
+          setIsModLoading(false);
       }
   };
 
@@ -172,37 +204,48 @@ const AdminDashboard: React.FC = () => {
                         Eventi
                     </div>
                 </button>
+                <button 
+                    onClick={() => handleTabChange('reports')}
+                    className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'reports' ? 'bg-red-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                    <div className="flex items-center">
+                        <Flag className="w-4 h-4 mr-2" />
+                        Segnalazioni
+                    </div>
+                </button>
             </div>
         </div>
 
         {/* Filter Bar */}
-        <div className="mb-6 flex flex-col md:flex-row gap-4">
-             <div className="relative flex-grow">
-                <input 
-                    type="text"
-                    placeholder={activeTab === 'users' ? "Cerca utente per nome o email..." : "Cerca evento per titolo o organizzatore..."}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
-             </div>
+        {activeTab !== 'reports' && (
+            <div className="mb-6 flex flex-col md:flex-row gap-4">
+                <div className="relative flex-grow">
+                    <input 
+                        type="text"
+                        placeholder={activeTab === 'users' ? "Cerca utente per nome o email..." : "Cerca evento per titolo o organizzatore..."}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <Search className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
+                </div>
 
-             {activeTab === 'users' && (
-                 <div className="flex items-center bg-white border border-gray-300 rounded-xl px-3 py-2 shadow-sm">
-                     <Filter className="w-5 h-5 text-gray-500 mr-2" />
-                     <select 
-                        value={userFilter}
-                        onChange={(e) => setUserFilter(e.target.value as UserFilter)}
-                        className="bg-transparent outline-none text-gray-700 font-medium cursor-pointer"
-                     >
-                         <option value="all">Tutti i Ruoli</option>
-                         <option value="studente">Studenti</option>
-                         <option value="associazione">Associazioni</option>
-                     </select>
-                 </div>
-             )}
-        </div>
+                {activeTab === 'users' && (
+                    <div className="flex items-center bg-white border border-gray-300 rounded-xl px-3 py-2 shadow-sm">
+                        <Filter className="w-5 h-5 text-gray-500 mr-2" />
+                        <select 
+                            value={userFilter}
+                            onChange={(e) => setUserFilter(e.target.value as UserFilter)}
+                            className="bg-transparent outline-none text-gray-700 font-medium cursor-pointer"
+                        >
+                            <option value="all">Tutti i Ruoli</option>
+                            <option value="studente">Studenti</option>
+                            <option value="associazione">Associazioni</option>
+                        </select>
+                    </div>
+                )}
+            </div>
+        )}
 
         {/* Content */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
@@ -355,6 +398,59 @@ const AdminDashboard: React.FC = () => {
                            </table>
                        </div>
                    )}
+
+                   {activeTab === 'reports' && (
+                       <div className="overflow-x-auto">
+                           <table className="min-w-full divide-y divide-gray-200">
+                               <thead className="bg-gray-50">
+                                   <tr>
+                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evento Segnalato</th>
+                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Motivo</th>
+                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reporter</th>
+                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Azioni</th>
+                                   </tr>
+                               </thead>
+                               <tbody className="bg-white divide-y divide-gray-200">
+                                   {reports.length > 0 ? reports.map(r => (
+                                       <tr key={r._id}>
+                                           <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center">
+                                                    <img src={r.eventId.image} className="w-8 h-8 rounded object-cover mr-3" />
+                                                    <span className="text-sm font-bold text-gray-900">{r.eventId.title}</span>
+                                                </div>
+                                           </td>
+                                           <td className="px-6 py-4">
+                                               <span className="bg-red-50 text-red-700 px-2 py-1 rounded-md text-xs font-bold border border-red-100">
+                                                   {r.reason}
+                                               </span>
+                                           </td>
+                                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                               {new Date(r.createdAt).toLocaleDateString()}
+                                           </td>
+                                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                               {r.reporterId.name} ({r.reporterId.email})
+                                           </td>
+                                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                               <button 
+                                                   onClick={() => handleOpenModeration(r.eventId)}
+                                                   className="bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition"
+                                               >
+                                                   Gestisci
+                                               </button>
+                                           </td>
+                                       </tr>
+                                   )) : (
+                                       <tr>
+                                           <td colSpan={5} className="px-6 py-12 text-center text-gray-500 italic">
+                                               Nessuna segnalazione in sospeso.
+                                           </td>
+                                       </tr>
+                                   )}
+                               </tbody>
+                           </table>
+                       </div>
+                   )}
                 </>
             )}
         </div>
@@ -424,6 +520,50 @@ const AdminDashboard: React.FC = () => {
                       <button onClick={() => setIsTicketModalOpen(false)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">
                           Chiudi
                       </button>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* MODERATION MODAL */}
+      {isModModalOpen && modTargetEvent && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                  <div className="bg-red-600 p-6 text-white flex justify-between items-center">
+                      <h3 className="text-xl font-bold flex items-center">
+                          <AlertTriangle className="w-6 h-6 mr-2" />
+                          Rimuovi Evento Segnalato
+                      </h3>
+                      <button onClick={() => setIsModModalOpen(false)}>
+                          <X className="w-6 h-6" />
+                      </button>
+                  </div>
+                  <div className="p-6 space-y-4">
+                      <p className="text-gray-700">
+                          Stai per rimuovere definitivamente l'evento: <strong className="text-red-600">{modTargetEvent.title}</strong>.
+                      </p>
+                      <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">Motivazione rimozione (inviata all'associazione)</label>
+                          <textarea 
+                              className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none h-32"
+                              placeholder="Es. Il contenuto viola le linee guida UniParty relative a..."
+                              value={deleteReason}
+                              onChange={e => setDeleteReason(e.target.value)}
+                          ></textarea>
+                      </div>
+                      <div className="flex gap-4">
+                          <button 
+                            onClick={() => setIsModModalOpen(false)}
+                            className="flex-1 py-3 bg-gray-100 font-bold rounded-xl text-gray-700"
+                          >Annulla</button>
+                          <button 
+                            onClick={handleModDelete}
+                            disabled={isModLoading || !deleteReason.trim()}
+                            className="flex-1 py-3 bg-red-600 text-white font-bold rounded-xl shadow-lg hover:bg-red-700 disabled:opacity-50"
+                          >
+                              {isModLoading ? "Rimozione..." : "Rimuovi Evento"}
+                          </button>
+                      </div>
                   </div>
               </div>
           </div>

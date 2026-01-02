@@ -1,5 +1,4 @@
 
-
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -8,7 +7,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const StripeController = require('./stripe');
-const { User, Event, Ticket, Order, Notification } = require('./models');
+const { User, Event, Ticket, Order, Notification, Report } = require('./models');
 const { authMiddleware, adminMiddleware } = require('./middleware');
 const mailer = require('./mailer'); // Import Mailer
 const webPushConfig = require('./webPush'); // Import Web Push Config
@@ -323,6 +322,78 @@ app.get('/api/users/favorites/list', authMiddleware, async (req, res) => {
             populate: { path: 'organization', select: 'name _id' }
         });
         res.json(user.favorites);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// --- REPORTS (UGC) ---
+
+app.post('/api/reports', authMiddleware, async (req, res) => {
+    try {
+        const { eventId, reason } = req.body;
+        if (!eventId || !reason) return res.status(400).json({ error: "Missing data" });
+
+        const event = await Event.findById(eventId);
+        if (!event) return res.status(404).json({ error: "Event not found" });
+
+        const report = await Report.create({
+            eventId,
+            reporterId: req.user.userId,
+            reason
+        });
+
+        // Notify Admins
+        const admins = await User.find({ role: 'admin' });
+        for (const admin of admins) {
+            await Notification.create({
+                recipient: admin._id,
+                title: `Nuova segnalazione`,
+                message: `L'evento "${event.title}" è stato segnalato. Motivo: ${reason}`,
+                url: `/admin?tab=reports`,
+            });
+        }
+
+        res.json(report);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/admin/reports', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const reports = await Report.find({ status: 'pending' })
+            .populate('eventId', 'title organization image')
+            .populate('reporterId', 'name email')
+            .sort({ createdAt: -1 });
+        res.json(reports);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/admin/events/:id/delete-with-reason', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { reason } = req.body;
+        const event = await Event.findById(req.params.id);
+        if (!event) return res.status(404).json({ error: "Event not found" });
+
+        // Soft Delete
+        event.status = 'deleted';
+        await event.save();
+
+        // Notify Organizer
+        await Notification.create({
+            recipient: event.organization,
+            title: `Evento rimosso`,
+            message: `Il tuo evento "${event.title}" è stato rimosso dalla moderazione. Motivo: ${reason}`,
+            url: `/dashboard`,
+        });
+
+        // Resolve Reports
+        await Report.updateMany({ eventId: req.params.id, status: 'pending' }, { $set: { status: 'resolved' } });
+
+        res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

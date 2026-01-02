@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Shield, Lock, Eye, Database, Server } from 'lucide-react';
+import { Shield, Lock, Eye, Database, Server, ShieldCheck } from 'lucide-react';
 
 const Privacy: React.FC = () => {
   return (
@@ -14,7 +15,7 @@ const Privacy: React.FC = () => {
             <p className="font-semibold text-gray-900">
                 Informativa ai sensi dell'art. 13 del Regolamento UE 2016/679 (GDPR)
                 <br />
-                Ultimo aggiornamento: 02 Dicembre 2025
+                Ultimo aggiornamento: 05 Dicembre 2025
             </p>
             
             <p>
@@ -28,20 +29,25 @@ const Privacy: React.FC = () => {
                     <strong>UniParty (Gestore della Piattaforma):</strong> Agisce come <strong>Titolare del Trattamento</strong> per i dati relativi alla registrazione dell'account, alla sicurezza della piattaforma, all'assistenza tecnica e alla gestione delle transazioni (limitatamente ai dati tecnici).
                 </li>
                 <li>
-                    <strong>Associazione/Organizzatore:</strong> Agisce come <strong>Titolare Autonomo del Trattamento</strong> per i dati relativi alla partecipazione allo specifico evento (es. liste ingressi, nominativi, dati accademici per crediti, gestione dell'evento in loco). UniParty trasmette tali dati all'Organizzatore per consentire l'erogazione del servizio acquistato.
+                    <strong>Associazione/Organizzatore:</strong> Agisce come <strong>Titolare Autonomo del Trattamento</strong> per i dati relativi alla partecipazione allo specifico evento (es. liste ingressi, nominativi, dati accademici per crediti, gestione dell'evento in loco). UniParty trasmette tali dati all'Organizzatore per consentive l'erogazione del servizio acquistato.
                 </li>
             </ul>
 
-            <h2 className="text-xl font-bold text-gray-900 mt-8">2. Tipologia di Dati Trattati</h2>
+            <h2 className="text-xl font-bold text-gray-900 mt-8">2. Moderazione e Segnalazioni (UGC)</h2>
+            <p>
+                Al fine di garantire la sicurezza della community e ottemperare alle linee guida sugli User Generated Content (UGC), UniParty raccoglie dati relativi alle <strong>segnalazioni di contenuti inappropriati</strong> inviate dagli utenti. Se invii una segnalazione, il tuo ID utente verrà associato alla stessa esclusivamente per fini di verifica e prevenzione di abusi del sistema di segnalazione. L'identità del segnalatore non verrà mai rivelata all'utente segnalato o all'organizzatore.
+            </p>
+
+            <h2 className="text-xl font-bold text-gray-900 mt-8">3. Tipologia di Dati Trattati</h2>
             <ul className="list-disc pl-5 space-y-1">
                 <li><strong>Dati di Navigazione:</strong> Indirizzi IP, log di sistema (necessari per il funzionamento tecnico).</li>
                 <li><strong>Dati di Account:</strong> Nome, Cognome, Email, Password (conservata in forma crittografata/hash).</li>
                 <li><strong>Dati Accademici (Opzionali):</strong> Numero di Matricola. Questi dati sono richiesti solo per eventi specifici (seminari) al fine di tracciare le presenze per fini accademici.</li>
-                <li><strong>Dati relativi agli Eventi:</strong> Storico acquisti, preferiti, orari di scansione dei voucher (check-in/check-out).</li>
+                <li><strong>Dati relativi agli Eventi:</strong> Storico acquisti, preferiti, orari di scansione dei voucher (check-in/check-out), eventuali segnalazioni inviate o ricevute.</li>
                 <li><strong>Dati di Pagamento:</strong> UniParty <strong>NON</strong> tratta né conserva i dati completi delle carte di credito. Tali dati sono gestiti interamente dal provider di pagamenti <strong>Stripe Inc.</strong></li>
             </ul>
 
-            <h2 className="text-xl font-bold text-gray-900 mt-8">3. Finalità e Base Giuridica</h2>
+            <h2 className="text-xl font-bold text-gray-900 mt-8">4. Finalità e Base Giuridica</h2>
             <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-sm border border-gray-200 mt-2">
                     <thead className="bg-gray-50 font-bold">
@@ -60,8 +66,8 @@ const Privacy: React.FC = () => {
                             <td className="p-2 border">Obbligo Legale / Esecuzione contratto</td>
                         </tr>
                         <tr>
-                            <td className="p-2 border">Certificazione Presenze (Matricola, Orari)</td>
-                            <td className="p-2 border">Esecuzione del contratto (su richiesta Utente)</td>
+                            <td className="p-2 border">Moderazione contenuti (UGC) e Sicurezza</td>
+                            <td className="p-2 border">Legittimo Interesse / Esecuzione del contratto</td>
                         </tr>
                         <tr>
                             <td className="p-2 border">Sicurezza Piattaforma e Prevenzione Frodi</td>
@@ -71,7 +77,7 @@ const Privacy: React.FC = () => {
                 </table>
             </div>
 
-            <h2 className="text-xl font-bold text-gray-900 mt-8">4. Conservazione dei Dati (Data Retention Policy)</h2>
+            <h2 className="text-xl font-bold text-gray-900 mt-8">5. Conservazione dei Dati (Data Retention Policy)</h2>
             <p>Il periodo di conservazione varia in base alla tipologia di interazione dell'utente con la Piattaforma:</p>
             <ul className="list-disc pl-5 space-y-2">
                 <li>
@@ -86,7 +92,7 @@ const Privacy: React.FC = () => {
                 </li>
             </ul>
 
-            <h2 className="text-xl font-bold text-gray-900 mt-8">5. Destinatari dei Dati</h2>
+            <h2 className="text-xl font-bold text-gray-900 mt-8">6. Destinatari dei Dati</h2>
             <p>I dati potranno essere comunicati a:</p>
             <ul className="list-disc pl-5 space-y-1">
                 <li><strong>Associazioni Organizzatrici:</strong> Ricevono i dati dei partecipanti ai propri eventi.</li>
@@ -94,9 +100,6 @@ const Privacy: React.FC = () => {
                 <li><strong>Cloudinary:</strong> Servizio di hosting immagini.</li>
                 <li><strong>Autorità Giudiziarie:</strong> Solo in caso di formale richiesta o per adempiere ad obblighi di legge.</li>
             </ul>
-
-            <h2 className="text-xl font-bold text-gray-900 mt-8">6. Trasferimento Dati Extra-UE</h2>
-            <p>La Piattaforma utilizza fornitori (es. Stripe) che potrebbero trasferire dati negli Stati Uniti. Tale trasferimento avviene sulla base delle Clausole Contrattuali Standard (SCC) approvate dalla Commissione Europea e del Data Privacy Framework EU-USA.</p>
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">7. Diritti dell'Interessato</h2>
             <p>In qualità di interessato, hai il diritto di chiedere a UniParty:</p>
@@ -109,9 +112,26 @@ const Privacy: React.FC = () => {
             <p>Per esercitare tali diritti, puoi contattare il DPO/Responsabile Privacy all'indirizzo email: <a href="mailto:uniparty.team@gmail.com" className="text-indigo-600 font-bold hover:underline">uniparty.team@gmail.com</a>.</p>
 
             <h2 className="text-xl font-bold text-gray-900 mt-8">8. Cookie</h2>
-            <p>Utilizziamo esclusivamente cookie tecnici necessari al funzionamento del sito (autenticazione) e cookie analitici di terze parti (Stripe) per la sicurezza dei pagamenti e la prevenzione frodi. Non utilizziamo cookie di profilazione pubblicitaria.</p>
+            <p>Utilizziamo esclusivamente cookie tecnici necessari al funzionamento del sito (autenticazione) e cookie di terze parti (Stripe) per la sicurezza dei pagamenti e la prevenzione frodi. Non utilizziamo cookie di profilazione pubblicitaria.</p>
 
             <hr className="my-8 border-gray-200" />
+
+            <section className="bg-red-50 border-l-4 border-red-600 p-6 rounded-r-xl shadow-sm mb-8">
+                <h3 className="text-lg font-bold text-red-900 mb-4 flex items-center">
+                    <ShieldCheck className="w-5 h-5 mr-2 text-red-600" />
+                    Sicurezza e Contenuti Generati dagli Utenti (UGC)
+                </h3>
+                <div className="space-y-4 text-sm text-red-900 leading-relaxed">
+                    <p>
+                        UniParty adotta una <strong>politica di tolleranza zero</strong> nei confronti di contenuti illegali, offensivi, abusivi o discutibili pubblicati sulla piattaforma.
+                    </p>
+                    <ul className="list-disc pl-5 space-y-2">
+                        <li><strong>Segnalazione:</strong> Ogni utente può segnalare in tempo reale eventi o profili inappropriati tramite l'apposito pulsante "Segnala" presente in ogni pagina evento.</li>
+                        <li><strong>Moderazione:</strong> UniParty si impegna a revisionare ogni segnalazione entro 24 ore. I contenuti che violano i termini verranno rimossi immediatamente.</li>
+                        <li><strong>Espulsione:</strong> Gli autori di contenuti che violano sistematicamente queste regole (Organizzatori o Utenti) verranno espulsi permanentemente dalla piattaforma senza preavviso.</li>
+                    </ul>
+                </div>
+            </section>
 
             <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-sm">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Contatti Privacy</h3>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Scale, ShieldAlert, FileText, CreditCard, AlertCircle, GraduationCap, Gavel, CheckCircle, Info } from 'lucide-react';
+import { Scale, ShieldAlert, FileText, CreditCard, AlertCircle, GraduationCap, Gavel, CheckCircle, Info, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Terms: React.FC = () => {
@@ -20,8 +20,8 @@ const Terms: React.FC = () => {
                 </div>
             </div>
             <div className="flex justify-between items-end text-xs uppercase tracking-wider font-semibold opacity-70 border-t border-indigo-700 pt-4 mt-4">
-                <span>Versione 1.2</span>
-                <span>Ultimo aggiornamento: 02 Dicembre 2025</span>
+                <span>Versione 1.3</span>
+                <span>Ultimo aggiornamento: 05 Dicembre 2025</span>
             </div>
         </div>
 
@@ -144,6 +144,24 @@ const Terms: React.FC = () => {
                         <li>
                             <strong>Malfunzionamenti:</strong> UniParty non risponde di mancati tracciamenti dovuti a guasti dei dispositivi di scansione dell'Organizzatore, assenza di connessione internet in loco o batteria scarica del dispositivo dell'Utente.
                         </li>
+                    </ul>
+                </div>
+            </section>
+
+            {/* UGC SECTION - MANDATORY FOR APP STORES */}
+            <section className="bg-red-50 border-l-4 border-red-600 p-6 rounded-r-xl shadow-sm">
+                <h3 className="text-xl font-bold text-red-900 border-b border-red-200 pb-2 mb-4 flex items-center">
+                    <ShieldCheck className="w-5 h-5 mr-2 text-red-600" />
+                    Sicurezza e Contenuti Generati dagli Utenti (UGC)
+                </h3>
+                <div className="space-y-4 text-sm text-red-900">
+                    <p>
+                        UniParty adotta una <strong>politica di tolleranza zero</strong> nei confronti di contenuti illegali, offensivi, abusivi o discutibili pubblicati sulla piattaforma.
+                    </p>
+                    <ul className="list-disc pl-5 space-y-2">
+                        <li><strong>Segnalazione:</strong> Ogni utente può segnalare in tempo reale eventi o profili inappropriati tramite l'apposito pulsante "Segnala" presente in ogni pagina evento.</li>
+                        <li><strong>Moderazione:</strong> UniParty si impegna a revisionare ogni segnalazione entro 24 ore. I contenuti che violano i termini verranno rimossi immediatamente.</li>
+                        <li><strong>Espulsione:</strong> Gli autori di contenuti che violano sistematicamente queste regole (Organizzatori o Utenti) verranno espulsi permanentemente dalla piattaforma senza preavviso.</li>
                     </ul>
                 </div>
             </section>
