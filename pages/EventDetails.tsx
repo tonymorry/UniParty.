@@ -4,7 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Event, UserRole } from '../types';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck, Flag, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck, Flag, AlertTriangle, ArrowLeft, DollarSign, Lock } from 'lucide-react';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +30,7 @@ const EventDetails: React.FC = () => {
   // Edit Mode State
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Event>>({});
+  const [editPriceString, setEditPriceString] = useState('0');
   const [currentEditPrInput, setCurrentEditPrInput] = useState('');
   const [saving, setSaving] = useState(false);
   
@@ -67,6 +68,7 @@ const EventDetails: React.FC = () => {
                   requiresMatricola: data.requiresMatricola || false,
                   requiresCorsoStudi: data.requiresCorsoStudi || false,
               });
+              setEditPriceString(data.price.toString());
           }
       }).finally(() => setLoading(false));
     }
@@ -248,8 +250,12 @@ const EventDetails: React.FC = () => {
       try {
           const isoDate = new Date(editForm.date!).toISOString();
           
+          const cleanPrice = parseFloat(editPriceString.replace(',', '.'));
+          const finalPrice = isNaN(cleanPrice) ? 0 : Number(cleanPrice.toFixed(2));
+          
           const updatedData = {
               ...editForm,
+              price: finalPrice,
               date: isoDate,
               // If we are forcing both, make sure backend receives both true if one is true
               requiresCorsoStudi: editForm.requiresMatricola // Since they are coupled in the UI
@@ -450,16 +456,48 @@ const EventDetails: React.FC = () => {
                             )}
                         </div>
                       </div>
-                      <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Total Capacity</label>
-                          <input 
-                              type="number" value={editForm.maxCapacity} 
-                              onChange={e => setEditForm({...editForm, maxCapacity: parseInt(e.target.value)})}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                              required
-                              min={event.ticketsSold}
-                          />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                  <DollarSign className="w-4 h-4 mr-1"/> Price (€)
+                              </label>
+                              <div className="relative">
+                                  <input 
+                                      type="number" 
+                                      value={user?.stripeOnboardingComplete ? editPriceString : '0'} 
+                                      onChange={e => {
+                                          if (user?.stripeOnboardingComplete) setEditPriceString(e.target.value);
+                                      }} 
+                                      className={`w-full px-4 py-2 border rounded-lg outline-none transition
+                                          ${!user?.stripeOnboardingComplete 
+                                              ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' 
+                                              : 'border-gray-300 focus:ring-2 focus:ring-indigo-500 bg-white'
+                                          }
+                                      `}
+                                      required
+                                      min="0"
+                                      step="0.01"
+                                  />
+                                  {!user?.stripeOnboardingComplete && (
+                                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                          <Lock className="h-4 w-4 text-gray-400" />
+                                      </div>
+                                  )}
+                              </div>
+                          </div>
+                          <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Total Capacity</label>
+                              <input 
+                                  type="number" value={editForm.maxCapacity} 
+                                  onChange={e => setEditForm({...editForm, maxCapacity: parseInt(e.target.value)})}
+                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                  required
+                                  min={event.ticketsSold}
+                              />
+                          </div>
                       </div>
+
                       <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                           <textarea 
