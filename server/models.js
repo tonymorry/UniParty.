@@ -1,3 +1,5 @@
+
+
 const mongoose = require('mongoose');
 
 // --- USER SCHEMA ---
@@ -11,7 +13,7 @@ const userSchema = new mongoose.Schema({
   },
   password: { type: String, required: true }, 
   name: { type: String, required: true },
-  role: { type: String, enum: ['studente', 'associazione', 'admin'], required: true },
+  role: { type: String, enum: ['studente', 'associazione'], required: true },
   profileImage: { type: String, default: '' },
   
   // Verification Status
@@ -54,7 +56,6 @@ const notificationSchema = new mongoose.Schema({
   message: { type: String, required: true },
   url: { type: String, default: '/' },
   isRead: { type: Boolean, default: false },
-  type: { type: String, default: 'general' }, // 'report', 'info', 'event'
   relatedEvent: { type: mongoose.Schema.Types.ObjectId, ref: 'Event' } // Linked Event for visibility logic
 }, { timestamps: true });
 
@@ -132,19 +133,10 @@ const orderSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now, expires: 86400 } 
 });
 
-// --- REPORT SCHEMA (UGC Moderation) ---
-const reportSchema = new mongoose.Schema({
-  eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
-  reporterId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  reason: { type: String, required: true },
-  status: { type: String, enum: ['pending', 'resolved', 'dismissed'], default: 'pending' }
-}, { timestamps: true });
-
 module.exports = {
   User: mongoose.model('User', userSchema),
   Event: mongoose.model('Event', eventSchema),
   Ticket: mongoose.model('Ticket', ticketSchema),
   Order: mongoose.model('Order', orderSchema),
-  Notification: mongoose.model('Notification', notificationSchema),
-  Report: mongoose.model('Report', reportSchema)
+  Notification: mongoose.model('Notification', notificationSchema)
 };

@@ -1,3 +1,5 @@
+
+
 export enum UserRole {
   STUDENTE = 'studente',
   ASSOCIAZIONE = 'associazione',
@@ -49,40 +51,38 @@ export interface Event {
   category: EventCategory; 
   favoritesCount?: number;
   status?: 'active' | 'draft' | 'archived' | 'deleted';
+  // New Academic Fields
   requiresMatricola?: boolean;
-  requiresCorsoStudi?: boolean; 
+  requiresCorsoStudi?: boolean; // New field
   scanType?: 'entry_only' | 'entry_exit';
 }
 
 export interface Ticket {
   _id: string;
-  event: Event; 
+  event: Event; // Populated in the UI for wallet
   owner: string | User;
   ticketHolderName: string;
   qrCodeId: string;
   purchaseDate: string;
-  prList?: string; 
-  used: boolean; 
-  checkInDate?: string; 
+  prList?: string; // The list chosen during purchase
+  used: boolean; // Has the ticket been scanned? (Legacy/Simple check)
+  checkInDate?: string; // When was it scanned
+  // New Fields
   matricola?: string;
-  corsoStudi?: string; 
+  corsoStudi?: string; // New field
   entryTime?: string;
   exitTime?: string;
-  status: 'valid' | 'entered' | 'completed' | 'archived' | 'deleted' | 'active'; 
-}
-
-export interface Report {
-  _id: string;
-  eventId: Event;
-  reporterId: User;
-  reason: string;
-  status: 'pending' | 'resolved' | 'dismissed';
-  createdAt: string;
+  status: 'valid' | 'entered' | 'completed' | 'archived' | 'deleted' | 'active'; // 'active' kept for legacy compatibility
 }
 
 export interface LoginResponse {
   token: string;
   user: User;
+}
+
+export interface CartItem {
+  eventId: string;
+  quantity: number;
 }
 
 declare global {
