@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -15,14 +16,14 @@ import {
   Shield, 
   Calendar,
   LogIn,
-  Search 
+  Search,
+  LogOut
 } from 'lucide-react';
 
 const BottomNav: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
 
-  // Helper per determinare se un link è attivo (supporta query params)
   const isActive = (path: string) => {
       const [pathPart, queryPart] = path.split('?');
       const matchesPath = location.pathname === pathPart;
@@ -34,7 +35,34 @@ const BottomNav: React.FC = () => {
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-16 z-50 md:hidden flex justify-around items-center px-2 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
       
       {/* ==========================================
-          GUEST (Non Loggato)
+          RUOLO: STAFF (NEW)
+         ========================================== */}
+      {user && user.role === UserRole.STAFF && (
+        <>
+          <Link to="/" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/') ? 'text-indigo-600' : 'text-gray-400'}`}>
+            <Home className="w-6 h-6" />
+            <span className="text-[10px] font-medium mt-1">Home</span>
+          </Link>
+
+          {/* CENTRALE - SCANNER */}
+          <Link to="/scanner" className="relative -top-5">
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-gray-50 transition-transform active:scale-95 ${isActive('/scanner') ? 'bg-indigo-700' : 'bg-indigo-600'}`}>
+              <ScanLine className="w-7 h-7 text-white" />
+            </div>
+          </Link>
+
+          <button 
+            onClick={() => logout()}
+            className="flex flex-col items-center justify-center w-12 h-full text-gray-400"
+          >
+            <LogOut className="w-6 h-6" />
+            <span className="text-[10px] font-medium mt-1">Esci</span>
+          </button>
+        </>
+      )}
+
+      {/* ==========================================
+          GUEST
          ========================================== */}
       {!user && (
         <>
@@ -43,7 +71,6 @@ const BottomNav: React.FC = () => {
             <span className="text-[10px] font-medium mt-1">Home</span>
           </Link>
 
-          {/* CENTRALE - LOGIN / JOIN */}
           <Link to="/auth" className="relative -top-5">
             <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-gray-50 transition-transform active:scale-95 ${isActive('/auth') ? 'bg-indigo-700' : 'bg-indigo-600'}`}>
               <LogIn className="w-7 h-7 text-white pl-1" />
@@ -72,14 +99,12 @@ const BottomNav: React.FC = () => {
             <span className="text-[10px] font-medium mt-1">Preferiti</span>
           </Link>
 
-          {/* CENTRALE - HOME */}
           <Link to="/" className="relative -top-5">
             <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-gray-50 transition-transform active:scale-95 ${isActive('/') ? 'bg-indigo-700' : 'bg-indigo-600'}`}>
               <Home className="w-7 h-7 text-white" />
             </div>
           </Link>
 
-          {/* Changed Support to Search */}
           <Link to="/search" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/search') ? 'text-indigo-600' : 'text-gray-400'}`}>
             <Search className="w-6 h-6" />
             <span className="text-[10px] font-medium mt-1">Cerca</span>
@@ -107,7 +132,6 @@ const BottomNav: React.FC = () => {
             <span className="text-[10px] font-medium mt-1">Scan</span>
           </Link>
 
-          {/* CENTRALE - CREA EVENTO */}
           <Link to="/dashboard?tab=create" className="relative -top-5">
             <div className="w-14 h-14 rounded-full bg-indigo-900 flex items-center justify-center shadow-lg border-4 border-gray-50 transition-transform active:scale-95">
               <Plus className="w-8 h-8 text-white" />
@@ -141,7 +165,6 @@ const BottomNav: React.FC = () => {
             <span className="text-[10px] font-medium mt-1">Utenti</span>
           </Link>
 
-          {/* CENTRALE - ADMIN HOME */}
           <Link to="/admin" className="relative -top-5">
             <div className="w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center shadow-lg border-4 border-gray-50 transition-transform active:scale-95">
               <Shield className="w-7 h-7 text-white" />

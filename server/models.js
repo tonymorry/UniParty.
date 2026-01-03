@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
   },
   password: { type: String, required: true }, 
   name: { type: String, required: true },
-  role: { type: String, enum: ['studente', 'associazione', 'admin'], required: true },
+  role: { type: String, enum: ['studente', 'associazione', 'admin', 'staff'], required: true },
   profileImage: { type: String, default: '' },
   
   // Verification Status
@@ -45,7 +45,10 @@ const userSchema = new mongoose.Schema({
   socialLinks: String,
   stripeAccountId: { type: String, default: '' }, 
   stripeOnboardingComplete: { type: Boolean, default: false },
-  followersCount: { type: Number, default: 0 } 
+  followersCount: { type: Number, default: 0 },
+
+  // Staff specific
+  parentOrganization: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 
 // --- NOTIFICATION SCHEMA ---

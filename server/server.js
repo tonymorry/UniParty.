@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -169,7 +170,11 @@ app.post('/api/auth/login', async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
 
-        const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        const token = jwt.sign({ 
+          userId: user._id, 
+          role: user.role, 
+          parentOrganization: user.parentOrganization 
+        }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
         res.json({ token, user });
     } catch (e) {
@@ -241,6 +246,48 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.userId).populate('followedAssociations', 'name profileImage');
     if (!user || user.isDeleted) return res.status(404).json({ error: "User not found" });
     res.json(user);
+});
+
+// Manage Staff Account (Add/Update)
+app.post('/api/auth/staff-account', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'associazione') return res.status(403).json({ error: "Solo le associazioni possono gestire lo staff" });
+    
+    try {
+        const { email, password } = req.body;
+        if (!email || !password) return res.status(400).json({ error: "Email e Password richieste" });
+
+        const escapedEmail = escapeRegex(email.trim());
+        let staffUser = await User.findOne({ 
+            email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } 
+        });
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        if (staffUser) {
+            // Update existing
+            if (staffUser.role !== 'staff' || staffUser.parentOrganization.toString() !== req.user.userId) {
+                return res.status(403).json({ error: "Questa email è già associata a un altro account non gestibile da te." });
+            }
+            staffUser.password = hashedPassword;
+            await staffUser.save();
+            return res.json({ message: "Account Staff aggiornato", user: staffUser });
+        } else {
+            // Create new
+            const newStaff = await User.create({
+                email: email.toLowerCase().trim(),
+                password: hashedPassword,
+                name: `Staff - ${req.user.userId.slice(-4)}`,
+                role: 'staff',
+                parentOrganization: req.user.userId,
+                isVerified: true
+            });
+            return res.json({ message: "Account Staff creato", user: newStaff });
+        }
+    } catch (e) {
+        console.error("Staff Management Error:", e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // Update Profile
@@ -736,9 +783,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         await newEvent.populate('organization', 'name _id');
 
         // --- NEW NOTIFICATION LOGIC (In-App + Web Push) ---
-        // Replacing email notifications with DB Notifications + Web Push
         if (newEvent.status === 'active') {
-             // Find all students following this organization
              const followers = await User.find({ followedAssociations: req.user.userId });
              
              if (followers.length > 0) {
@@ -748,18 +793,16 @@ app.post('/api/events', authMiddleware, async (req, res) => {
                      message: `${user.name} ha pubblicato un nuovo evento!`,
                      url: `/events/${newEvent._id}`,
                      isRead: false,
-                     relatedEvent: newEvent._id // Linked for time-based filtering
+                     relatedEvent: newEvent._id 
                  }));
 
-                 // 1. Save In-App Notifications
                  await Notification.insertMany(notificationDocs);
 
-                 // 2. Send Web Push
                  const payload = {
                      title: `Nuovo Evento: ${newEvent.title}`,
                      body: `${user.name} ha pubblicato un nuovo evento!`,
                      url: `/events/${newEvent._id}`,
-                     icon: '/icon-192x192.png' // Ensure this icon exists in public
+                     icon: '/icon-192x192.png' 
                  };
 
                  followers.forEach(follower => {
@@ -819,7 +862,6 @@ app.delete('/api/events/:id', authMiddleware, async (req, res) => {
         
         await Ticket.updateMany({ event: req.params.id }, { $set: { status: 'deleted' } });
         
-        // Delete associated notifications for this event
         await Notification.deleteMany({ relatedEvent: req.params.id });
 
         res.json({ success: true });
@@ -926,7 +968,9 @@ app.get('/api/tickets', authMiddleware, async (req, res) => {
 
 app.post('/api/tickets/validate', authMiddleware, async (req, res) => {
     try {
-        if (req.user.role !== 'associazione') return res.status(403).json({ error: "Unauthorized" });
+        if (req.user.role !== 'associazione' && req.user.role !== 'staff') {
+             return res.status(403).json({ error: "Unauthorized" });
+        }
 
         const { qrCodeId } = req.body;
         const ticket = await Ticket.findOne({ qrCodeId }).populate('event');
@@ -936,7 +980,10 @@ app.post('/api/tickets/validate', authMiddleware, async (req, res) => {
 
         const orgId = typeof ticket.event.organization === 'object' ? ticket.event.organization._id.toString() : ticket.event.organization.toString();
         
-        if (orgId !== req.user.userId) return res.status(403).json({ error: "WRONG_EVENT_ORGANIZER" });
+        const isStaffOfOrg = req.user.role === 'staff' && req.user.parentOrganization?.toString() === orgId;
+        if (orgId !== req.user.userId && !isStaffOfOrg) {
+             return res.status(403).json({ error: "WRONG_EVENT_ORGANIZER" });
+        }
 
         const event = ticket.event;
         const scanType = event.scanType || 'entry_only';

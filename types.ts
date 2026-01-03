@@ -3,6 +3,7 @@ export enum UserRole {
   STUDENTE = 'studente',
   ASSOCIAZIONE = 'associazione',
   ADMIN = 'admin',
+  STAFF = 'staff',
 }
 
 export enum EventCategory {
@@ -30,6 +31,7 @@ export interface User {
   isVerified?: boolean;
   isDeleted?: boolean; // For Admin view
   createdAt?: string;
+  parentOrganization?: string; // Only for staff
 }
 
 export interface Event {

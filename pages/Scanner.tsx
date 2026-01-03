@@ -22,7 +22,8 @@ const Scanner: React.FC = () => {
 
   // Initialize Scanner
   useEffect(() => {
-    if (!user || user.role !== UserRole.ASSOCIAZIONE) {
+    // UPDATED: Allow access for both ASSOCIAZIONE and STAFF roles
+    if (!user || (user.role !== UserRole.ASSOCIAZIONE && user.role !== UserRole.STAFF)) {
         navigate('/');
         return;
     }
@@ -76,7 +77,6 @@ const Scanner: React.FC = () => {
         } catch (err) {
             console.error("Error starting scanner", err);
             setCameraPermission(false);
-            // Don't set global error yet, let them use manual
         }
     };
 
@@ -114,7 +114,11 @@ const Scanner: React.FC = () => {
             ? ticket.event.organization 
             : ticket.event.organization._id;
 
-          if (orgId !== user?._id) {
+          // UPDATED: Relaxed check to include staff of the organization
+          const isStaffOfOrg = user?.role === UserRole.STAFF && user?.parentOrganization === orgId;
+          const isOrgOwner = user?._id === orgId;
+
+          if (!isOrgOwner && !isStaffOfOrg) {
              setError("Questo voucher appartiene all'evento di un'altra associazione!");
              return;
           }
@@ -149,7 +153,6 @@ const Scanner: React.FC = () => {
       setError(null);
       setManualCode('');
       setLoading(false);
-      // Changing state will trigger useEffect to restart scanner
   };
 
   return (
@@ -158,7 +161,7 @@ const Scanner: React.FC = () => {
           <h1 className="text-xl font-bold flex items-center">
               <ScanLine className="mr-2" /> Scanner Voucher
           </h1>
-          <button onClick={() => navigate('/dashboard')} className="text-sm text-indigo-200 hover:text-white">
+          <button onClick={() => navigate(user?.role === UserRole.STAFF ? '/' : '/dashboard')} className="text-sm text-indigo-200 hover:text-white">
               Esci
           </button>
       </div>
@@ -169,10 +172,7 @@ const Scanner: React.FC = () => {
           {(!scanResult && !error && !loading) && (
               <div className="w-full max-w-md relative">
                    <div className="bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-indigo-500 relative aspect-square">
-                        {/* Force height to prevent collapse */}
                         <div id="reader" className="w-full h-full" style={{ minHeight: '300px' }}></div>
-                        
-                        {/* Overlay Guide */}
                         <div className="absolute inset-0 border-2 border-white/30 rounded-2xl pointer-events-none">
                             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-indigo-400 rounded-lg bg-transparent box-border"></div>
                         </div>

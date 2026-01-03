@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { api } from '../services/api';
-import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell } from 'lucide-react';
+import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell, LogOut } from 'lucide-react';
 
 const UniPartyLogo = () => (
   <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-9 w-9">
@@ -76,6 +76,39 @@ const Navbar: React.FC = () => {
       }
   };
 
+  // --- STAFF SIMPLIFIED NAVBAR ---
+  if (user?.role === UserRole.STAFF) {
+      return (
+        <nav className="bg-slate-900 text-white shadow-lg sticky top-0 z-50 border-b border-indigo-500">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center space-x-2">
+                <UniPartyLogo />
+                <span className="text-xl font-bold tracking-wider">Staff Scanner</span>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <Link 
+                    to="/scanner" 
+                    className="flex items-center px-3 py-2 rounded-md text-sm font-bold bg-indigo-600 hover:bg-indigo-500 transition"
+                >
+                    <ScanLine className="h-4 w-4 mr-2" /> Scanner
+                </Link>
+                <button 
+                    onClick={handleLogout}
+                    className="p-2 text-indigo-300 hover:text-white transition"
+                    title="Logout"
+                >
+                    <LogOut className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </nav>
+      );
+  }
+
+  // --- ORIGINAL NAVBAR ---
   return (
     <nav className="bg-indigo-900 text-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -111,7 +144,7 @@ const Navbar: React.FC = () => {
                 </button>
               </div>
 
-              {/* Desktop Menu Button (Reuse hamburger logic for now on desktop to keep consistent with existing) */}
+              {/* Desktop Menu Button */}
               <div className="hidden md:flex">
                   <button
                     onClick={() => setIsOpen(!isOpen)}
@@ -240,7 +273,7 @@ const Navbar: React.FC = () => {
                     onClick={() => setIsOpen(false)}
                  >
                     <span>Notifications</span>
-                    {unreadCount > 0 && <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{unreadCount}</span>}
+                    {unreadCount > 0 && <span className="bg-red-50 text-white text-xs px-2 py-0.5 rounded-full">{unreadCount}</span>}
                  </Link>
                </div>
              )}
@@ -296,4 +329,3 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
-    

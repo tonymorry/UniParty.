@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -7,7 +6,7 @@ import { UserRole, EventCategory, Event } from '../types';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { 
     AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, 
-    ShieldCheck, Lock, Info, Upload, FileText, TrendingUp, Briefcase, Ticket, LayoutDashboard, Calendar, Settings, GraduationCap
+    ShieldCheck, Lock, Info, Upload, FileText, TrendingUp, Briefcase, Ticket, LayoutDashboard, Calendar, Settings, GraduationCap, UserPlus, Key
 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
@@ -15,12 +14,12 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // Tab State: 'overview' or 'create'
-  const [activeTab, setActiveTab] = useState<'overview' | 'create'>('overview');
+  // Tab State: 'overview', 'create', or 'staff'
+  const [activeTab, setActiveTab] = useState<'overview' | 'create' | 'staff'>('overview');
 
   const [isConnecting, setIsConnecting] = useState(false);
   
-  // Overview Data State (Moved from Profile)
+  // Overview Data State
   const [assocEvents, setAssocEvents] = useState<Event[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
 
@@ -36,7 +35,7 @@ const Dashboard: React.FC = () => {
   const [category, setCategory] = useState<EventCategory>(EventCategory.PARTY);
   
   // Advanced Options
-  const [requiresAcademicData, setRequiresAcademicData] = useState(false); // Controls both Matricola & Corso Studi
+  const [requiresAcademicData, setRequiresAcademicData] = useState(false); 
   const [scanType, setScanType] = useState<'entry_only' | 'entry_exit'>('entry_only');
 
   // PR Lists State
@@ -46,11 +45,18 @@ const Dashboard: React.FC = () => {
   const [creatingEvent, setCreatingEvent] = useState(false);
   const [targetStatus, setTargetStatus] = useState<'active' | 'draft'>('active');
 
+  // Staff Form State
+  const [staffEmail, setStaffEmail] = useState('');
+  const [staffPassword, setStaffPassword] = useState('');
+  const [isManagingStaff, setIsManagingStaff] = useState(false);
+
   // Handle Query Param for Tab
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam === 'create') {
         setActiveTab('create');
+    } else if (tabParam === 'staff') {
+        setActiveTab('staff');
     } else {
         setActiveTab('overview');
     }
@@ -76,9 +82,9 @@ const Dashboard: React.FC = () => {
   const totalTicketsSold = assocEvents.reduce((acc, curr) => acc + curr.ticketsSold, 0);
   const totalRevenue = assocEvents.reduce((acc, curr) => acc + (curr.ticketsSold * curr.price), 0);
 
-  const handleTabChange = (tab: 'overview' | 'create') => {
+  const handleTabChange = (tab: 'overview' | 'create' | 'staff') => {
       setActiveTab(tab);
-      setSearchParams(tab === 'create' ? { tab: 'create' } : {});
+      setSearchParams(tab !== 'overview' ? { tab } : {});
   };
 
   const handleStripeConnect = async () => {
@@ -134,14 +140,8 @@ const Dashboard: React.FC = () => {
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // 1. Pulisci la stringa (gestione virgola/punto)
     const cleanPriceStr = (user.stripeOnboardingComplete ? price : '0').toString().replace(',', '.');
     const tempPrice = parseFloat(cleanPriceStr);
-
-    // 2. FIX DEFINITIVO: Arrotondamento "Fixed"
-    // Converte 14.9999 -> "15.00" -> 15
-    // Questo assicura che al server arrivi un numero pulito a 2 decimali.
     const numericPrice = isNaN(tempPrice) ? 0 : Number(tempPrice.toFixed(2));
 
     if (isNaN(numericPrice) || numericPrice < 0) {
@@ -169,8 +169,8 @@ const Dashboard: React.FC = () => {
             category,
             prLists,
             status: targetStatus,
-            requiresMatricola: requiresAcademicData, // Unified Flag
-            requiresCorsoStudi: requiresAcademicData, // Unified Flag
+            requiresMatricola: requiresAcademicData, 
+            requiresCorsoStudi: requiresAcademicData, 
             scanType
         }, user);
 
@@ -187,6 +187,23 @@ const Dashboard: React.FC = () => {
     } finally {
         setCreatingEvent(false);
     }
+  };
+
+  const handleManageStaff = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!staffEmail || !staffPassword) return;
+
+      setIsManagingStaff(true);
+      try {
+          await api.auth.createStaffAccount({ email: staffEmail, password: staffPassword });
+          alert("Account Staff gestito con successo! Fornisci queste credenziali al tuo personale per lo scanner.");
+          setStaffEmail('');
+          setStaffPassword('');
+      } catch (e: any) {
+          alert("Errore: " + e.message);
+      } finally {
+          setIsManagingStaff(false);
+      }
   };
 
   return (
@@ -216,16 +233,21 @@ const Dashboard: React.FC = () => {
                        <Plus className="w-4 h-4 mr-2" />
                        Crea Evento
                    </button>
+                   <button
+                       onClick={() => handleTabChange('staff')}
+                       className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'staff' ? 'bg-indigo-100 text-indigo-800' : 'text-gray-600 hover:bg-gray-50'}`}
+                   >
+                       <Users className="w-4 h-4 mr-2" />
+                       Staff
+                   </button>
                </div>
            </div>
 
            {/* ==================================================================================
-               TAB 1: PANORAMICA (STATS & LISTA EVENTI)
+               TAB 1: PANORAMICA
                ================================================================================== */}
            {activeTab === 'overview' && (
                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                   
-                   {/* Stripe Status Section */}
                    <div className={`bg-white rounded-xl p-6 shadow-sm border-l-4 ${user.stripeOnboardingComplete ? 'border-green-500' : 'border-blue-500'}`}>
                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                            <div className="flex items-start md:items-center">
@@ -259,7 +281,6 @@ const Dashboard: React.FC = () => {
                        </div>
                    </div>
 
-                   {/* Dashboard Stats */}
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
                             <div className="p-3 rounded-full bg-indigo-50 text-indigo-600 mr-4">
@@ -290,16 +311,12 @@ const Dashboard: React.FC = () => {
                         </div>
                    </div>
 
-                   {/* Events List */}
                    <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8">
                         <div className="flex justify-between items-center mb-6">
                              <h2 className="text-xl font-bold text-gray-900 flex items-center">
                                 <Briefcase className="w-6 h-6 mr-2 text-indigo-600" />
                                 I Tuoi Eventi
                             </h2>
-                            <button onClick={() => handleTabChange('create')} className="text-sm text-indigo-600 hover:underline">
-                                + Nuovo Evento
-                            </button>
                         </div>
                         
                         {loadingEvents ? (
@@ -368,7 +385,7 @@ const Dashboard: React.FC = () => {
            )}
 
            {/* ==================================================================================
-               TAB 2: CREA EVENTO (FORM)
+               TAB 2: CREA EVENTO
                ================================================================================== */}
            {activeTab === 'create' && (
                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -380,7 +397,6 @@ const Dashboard: React.FC = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-2">Account in attesa di approvazione</h2>
                             <p className="text-gray-600 max-w-lg mx-auto mb-6">
                                 Il nostro team sta verificando i dati della tua associazione. 
-                                Una volta approvato, potrai iniziare a pubblicare eventi.
                             </p>
                         </div>
                    ) : (
@@ -390,7 +406,6 @@ const Dashboard: React.FC = () => {
                                    <Plus className="w-6 h-6 mr-2" />
                                    Crea Nuovo Evento
                                </h2>
-                               <p className="text-indigo-200 text-sm mt-1">Compila i dettagli del tuo prossimo evento.</p>
                            </div>
                            
                            <form onSubmit={handleCreateEvent} className="p-6 md:p-8 space-y-6">
@@ -465,23 +480,19 @@ const Dashboard: React.FC = () => {
                                            <Upload className="w-4 h-4 mr-2" />
                                            Carica Immagine
                                        </button>
-                                       {image ? (
+                                       {image && (
                                            <div className="w-16 h-10 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0 relative group">
                                                <img src={image} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
                                            </div>
-                                       ) : (
-                                           <span className="text-sm text-gray-400">Nessuna immagine selezionata</span>
                                        )}
                                    </div>
                                </div>
 
                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                   
                                    <div className="relative">
                                        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
                                            <DollarSign className="w-4 h-4 mr-1"/> Prezzo Biglietto (€)
                                        </label>
-                                       
                                        <div className="relative">
                                             <input 
                                                 type="number" 
@@ -489,15 +500,6 @@ const Dashboard: React.FC = () => {
                                                 onChange={e => {
                                                     if (user.stripeOnboardingComplete) setPrice(e.target.value);
                                                 }} 
-                                                onBlur={() => {
-                                                    // Strict formatting on blur to prevent floating point confusion
-                                                    if(price) {
-                                                        const p = parseFloat(price.replace(',', '.'));
-                                                        if(!isNaN(p)) {
-                                                            setPrice(p.toFixed(2));
-                                                        }
-                                                    }
-                                                }}
                                                 disabled={!user.stripeOnboardingComplete}
                                                 className={`w-full px-4 py-2 border rounded-lg outline-none transition
                                                     ${!user.stripeOnboardingComplete 
@@ -516,17 +518,7 @@ const Dashboard: React.FC = () => {
                                                 </div>
                                             )}
                                        </div>
-
-                                       {!user.stripeOnboardingComplete ? (
-                                           <p className="text-xs text-orange-600 mt-1 flex items-center">
-                                               <Info className="w-3 h-3 mr-1"/>
-                                               Abilita i pagamenti per vendere Voucher.
-                                           </p>
-                                       ) : (
-                                           <p className="text-xs text-gray-500 mt-1">Imposta 0 per eventi gratuiti.</p>
-                                       )}
                                    </div>
-
                                    <div>
                                        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><Users className="w-4 h-4 mr-1"/> Capacità Massima</label>
                                        <input 
@@ -540,121 +532,98 @@ const Dashboard: React.FC = () => {
                                    </div>
                                </div>
                                
-                               {/* ADVANCED OPTIONS */}
-                               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                   <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center">
-                                       <Settings className="w-4 h-4 mr-2" /> Opzioni Avanzate (Seminari / Accademico)
-                                   </h3>
-                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                       <div>
-                                           <div className="flex items-center space-x-3 bg-white p-3 rounded-lg border border-gray-200">
-                                               <input 
-                                                   type="checkbox" 
-                                                   id="reqAcademicData"
-                                                   checked={requiresAcademicData}
-                                                   onChange={e => setRequiresAcademicData(e.target.checked)}
-                                                   className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                               />
-                                               <label htmlFor="reqAcademicData" className="text-sm text-gray-700 font-medium cursor-pointer flex items-center">
-                                                    <GraduationCap className="w-4 h-4 mr-2 text-indigo-500" />
-                                                    Richiedi Dati Accademici (Matricola e Corso di Studi)
-                                                </label>
-                                           </div>
-                                       </div>
-                                       
-                                       <div className="bg-white p-3 rounded-lg border border-gray-200">
-                                           <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Tipo Scansione</label>
-                                           <select 
-                                               value={scanType}
-                                               onChange={e => setScanType(e.target.value as any)}
-                                               className="w-full text-sm bg-transparent outline-none font-medium text-gray-700"
-                                           >
-                                               <option value="entry_only">Solo Ingresso (Standard)</option>
-                                               <option value="entry_exit">Ingresso & Uscita (Tracciamento ore)</option>
-                                           </select>
-                                       </div>
-                                   </div>
-                               </div>
-
-                               <div>
-                                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><List className="w-4 h-4 mr-1"/> Liste PR (Opzionale)</label>
-                                   <div className="flex gap-2 mb-2">
-                                       <input 
-                                           type="text" 
-                                           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                           placeholder="Nome lista (es. Lista Marco)"
-                                           value={currentPrInput}
-                                           onChange={e => setCurrentPrInput(e.target.value)}
-                                           onKeyDown={e => { if(e.key === 'Enter') { e.preventDefault(); handleAddPrList(); }}}
-                                       />
-                                       <button 
-                                           type="button" 
-                                           onClick={handleAddPrList}
-                                           className="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition"
-                                       >
-                                           Aggiungi
-                                       </button>
-                                   </div>
-                                   {prLists.length > 0 && (
-                                       <div className="flex flex-wrap gap-2 mt-2">
-                                           {prLists.map((list, idx) => (
-                                               <span key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm flex items-center">
-                                                   {list}
-                                                   <button type="button" onClick={() => handleRemovePrList(list)} className="ml-2 hover:text-red-600">
-                                                       <X className="w-3 h-3" />
-                                                   </button>
-                                               </span>
-                                           ))}
-                                       </div>
-                                   )}
-                               </div>
-
-                               <div>
-                                   <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione Completa</label>
-                                   <textarea 
-                                       value={description} 
-                                       onChange={e => setDescription(e.target.value)} 
-                                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-32"
-                                       required
-                                       placeholder="Dettagli dell'evento, lineup, dress code..."
-                                   ></textarea>
-                               </div>
-
                                <div className="pt-4 flex gap-4">
                                    <button 
                                        type="submit" 
                                        onClick={() => setTargetStatus('draft')}
                                        disabled={creatingEvent}
-                                       className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 rounded-xl shadow-md transition transform active:scale-99 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center border border-gray-300"
+                                       className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 rounded-xl shadow-md transition border border-gray-300"
                                    >
-                                       {creatingEvent && targetStatus === 'draft' ? 'Salvataggio...' : (
-                                           <>
-                                             <FileText className="w-5 h-5 mr-2" />
-                                             Salva come Bozza
-                                           </>
-                                       )}
+                                       Salva come Bozza
                                    </button>
-
                                    <button 
                                        type="submit" 
                                        onClick={() => setTargetStatus('active')}
                                        disabled={creatingEvent}
-                                       className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-99 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+                                       className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition"
                                    >
-                                       {creatingEvent && targetStatus === 'active' ? (
-                                           <span className="flex items-center">
-                                               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                               Pubblicazione...
-                                           </span>
-                                       ) : (
-                                           "Pubblica Evento"
-                                       )}
+                                       Pubblica Evento
                                    </button>
                                </div>
-
                            </form>
                        </div>
                    )}
+               </div>
+           )}
+
+           {/* ==================================================================================
+               TAB 3: GESTIONE STAFF (NEW)
+               ================================================================================== */}
+           {activeTab === 'staff' && (
+               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
+                   <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                       <div className="bg-indigo-900 p-6 text-white">
+                           <h2 className="text-xl font-bold flex items-center">
+                               <Users className="w-6 h-6 mr-2" />
+                               Gestione Account Staff Temporaneo
+                           </h2>
+                           <p className="text-indigo-200 text-sm mt-1">
+                               Crea o aggiorna un account delegato per scansionare i voucher all'ingresso.
+                           </p>
+                       </div>
+                       
+                       <form onSubmit={handleManageStaff} className="p-6 md:p-8 space-y-4">
+                           <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg mb-6">
+                               <div className="flex">
+                                   <Info className="w-5 h-5 text-amber-600 mr-3 flex-shrink-0" />
+                                   <p className="text-sm text-amber-800">
+                                       Questi account hanno accesso <strong>solo allo scanner</strong>. Possono validare voucher esclusivamente per i tuoi eventi.
+                                   </p>
+                               </div>
+                           </div>
+
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div>
+                                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                       <UserPlus className="w-4 h-4 mr-1 text-indigo-500" />
+                                       Email Staff
+                                   </label>
+                                   <input 
+                                       type="email" 
+                                       value={staffEmail}
+                                       onChange={e => setStaffEmail(e.target.value)}
+                                       placeholder="staff-nome@uniparty.it"
+                                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                       required
+                                   />
+                               </div>
+                               <div>
+                                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                       <Key className="w-4 h-4 mr-1 text-indigo-500" />
+                                       Nuova Password
+                                   </label>
+                                   <input 
+                                       type="password" 
+                                       value={staffPassword}
+                                       onChange={e => setStaffPassword(e.target.value)}
+                                       placeholder="Password sicura"
+                                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                       required
+                                   />
+                               </div>
+                           </div>
+                           
+                           <div className="pt-4">
+                               <button 
+                                   type="submit" 
+                                   disabled={isManagingStaff}
+                                   className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-10 rounded-xl shadow-md transition disabled:opacity-50"
+                               >
+                                   {isManagingStaff ? "Salvataggio..." : "Crea / Aggiorna Staff"}
+                               </button>
+                           </div>
+                       </form>
+                   </div>
                </div>
            )}
 

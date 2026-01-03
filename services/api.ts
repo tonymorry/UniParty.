@@ -16,14 +16,9 @@ const API_URL = isLocalhost ? 'http://localhost:5000/api' : '/api';
 // ==========================================
 // MOCK DATA & IMPLEMENTATION (Fallback)
 // ==========================================
-// (Using a simplified mock implementation for brevity as real backend is focus)
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// ------------------------------------------------------------------
-// 1. MOCK IMPLEMENTATION
-// ------------------------------------------------------------------
 const mockApi = {
-  // ... (keeping structure compatible)
   auth: {
     login: async () => ({ token: 'mock', user: {} as any }),
     register: async () => ({ token: 'mock', user: {} as any }),
@@ -37,6 +32,7 @@ const mockApi = {
     getPublicProfile: async () => ({} as any),
     forgotPassword: async () => ({ message: "Mock: Email sent" }),
     resetPassword: async () => ({ message: "Mock: Password reset" }),
+    createStaffAccount: async () => ({}) as any,
   },
   events: {
     getAll: async () => [],
@@ -82,9 +78,6 @@ const mockApi = {
   }
 };
 
-// ------------------------------------------------------------------
-// 2. REAL BACKEND IMPLEMENTATION (FETCH WRAPPERS)
-// ------------------------------------------------------------------
 const getHeaders = () => {
     const token = localStorage.getItem('uniparty_token');
     return {
@@ -210,6 +203,16 @@ const realApi = {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to reset password');
         return data;
+    },
+    createStaffAccount: async (staffData: any) => {
+        const res = await fetch(`${API_URL}/auth/staff-account`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(staffData)
+        });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.error || 'Failed to manage staff account');
+        return data;
     }
   },
   events: {
@@ -222,12 +225,10 @@ const realApi = {
         if (!res.ok) return undefined;
         return res.json();
     },
-    // For Dashboard (Authenticated Owner)
     getByOrgId: async (orgId: string) => {
         const res = await fetch(`${API_URL}/events?organization=${orgId}`);
         return res.json();
     },
-    // For Public Profile (Active/Future only)
     getPublicEventsByOrg: async (orgId: string) => {
         const res = await fetch(`${API_URL}/events?organization=${orgId}&public=true`);
         return res.json();
@@ -394,6 +395,4 @@ const realApi = {
   }
 };
 
-// EXPORT THE API BASED ON CONFIG
-// Note: Casting to any to satisfy TS for the simplified mockApi above if strict.
 export const api = USE_MOCK ? (mockApi as any) : realApi;
