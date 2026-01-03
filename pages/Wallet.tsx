@@ -30,18 +30,18 @@ const Wallet: React.FC = () => {
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-900 py-12 text-white">
+    <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-white mb-8">I Miei Voucher</h1>
+        <h1 className="text-3xl font-bold text-indigo-900 mb-8">I Miei Voucher</h1>
         
         {loading ? (
-            <div className="text-center py-12 text-gray-400">Caricamento voucher...</div>
+            <div className="text-center py-12">Caricamento voucher...</div>
         ) : tickets.length === 0 ? (
-            <div className="bg-gray-800 rounded-xl shadow-sm p-12 text-center border border-gray-700">
-                <p className="text-gray-400 text-lg mb-4">Non hai ancora prenotato nessun evento.</p>
+            <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <p className="text-gray-500 text-lg mb-4">Non hai ancora prenotato nessun evento.</p>
                 <button 
                     onClick={() => navigate('/')}
-                    className="text-indigo-400 font-semibold hover:underline"
+                    className="text-indigo-600 font-semibold hover:underline"
                 >
                     Esplora Eventi
                 </button>
@@ -49,31 +49,32 @@ const Wallet: React.FC = () => {
         ) : (
             <div className="space-y-6">
                 {tickets.map(ticket => (
-                    <div key={ticket._id} className="bg-gray-800 rounded-xl shadow-sm overflow-hidden flex flex-col md:flex-row border border-gray-700">
+                    <div key={ticket._id} className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col md:flex-row border border-gray-100">
+                        {/* Event Info Left */}
                         <div className="p-6 flex-1 relative">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-900/20 rounded-bl-full -mr-10 -mt-10 z-0 opacity-50"></div>
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -mr-10 -mt-10 z-0 opacity-50"></div>
                             <div className="relative z-10">
-                                <h3 className="text-xl font-bold text-white mb-2">{ticket.event.title}</h3>
-                                <div className="flex items-center text-gray-400 text-sm mb-2">
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">{ticket.event.title}</h3>
+                                <div className="flex items-center text-gray-600 text-sm mb-2">
                                     <Calendar className="w-4 h-4 mr-2 text-indigo-500"/>
                                     {new Date(ticket.event.date).toLocaleDateString()} at {ticket.event.time}
                                 </div>
-                                <div className="flex items-center text-gray-400 text-sm mb-4">
+                                <div className="flex items-center text-gray-600 text-sm mb-4">
                                     <MapPin className="w-4 h-4 mr-2 text-indigo-500"/>
                                     {ticket.event.location}
                                 </div>
-                                <span className="inline-block bg-green-900/30 text-green-400 text-xs px-2 py-1 rounded-md font-semibold border border-green-900/50">
+                                <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-md font-semibold">
                                     PRENOTATO • {ticket.ticketHolderName}
                                 </span>
                             </div>
                         </div>
 
-                        <div className="bg-gray-950 p-6 flex flex-col items-center justify-center md:border-l border-gray-700 min-w-[200px]">
-                            {/* QR Code MUST have white background for scanability */}
-                            <div className="bg-white p-4 rounded-lg">
-                                <QRCodeSVG value={ticket.qrCodeId} size={120} />
+                        {/* QR Code Right (or Bottom) */}
+                        <div className="bg-gray-900 p-6 flex flex-col items-center justify-center md:border-l border-gray-200 min-w-[200px]">
+                            <div className="bg-white p-3 rounded-lg">
+                                <QRCodeSVG value={ticket.qrCodeId} size={100} />
                             </div>
-                            <p className="text-gray-500 text-xs mt-3 text-center font-mono uppercase">{ticket.qrCodeId.slice(0, 8)}...</p>
+                            <p className="text-gray-400 text-xs mt-3 text-center font-mono">{ticket.qrCodeId}</p>
                         </div>
                     </div>
                 ))}
