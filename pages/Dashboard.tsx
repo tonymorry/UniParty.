@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -14,16 +13,11 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // Tab State: 'overview', 'create', or 'staff'
   const [activeTab, setActiveTab] = useState<'overview' | 'create' | 'staff'>('overview');
-
   const [isConnecting, setIsConnecting] = useState(false);
-  
-  // Overview Data State
   const [assocEvents, setAssocEvents] = useState<Event[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
 
-  // Event Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('0');
@@ -34,37 +28,28 @@ const Dashboard: React.FC = () => {
   const [maxCapacity, setMaxCapacity] = useState('100');
   const [category, setCategory] = useState<EventCategory>(EventCategory.PARTY);
   
-  // Advanced Options
   const [requiresAcademicData, setRequiresAcademicData] = useState(false); 
   const [scanType, setScanType] = useState<'entry_only' | 'entry_exit'>('entry_only');
 
-  // PR Lists State
   const [prLists, setPrLists] = useState<string[]>([]);
   const [currentPrInput, setCurrentPrInput] = useState('');
 
   const [creatingEvent, setCreatingEvent] = useState(false);
   const [targetStatus, setTargetStatus] = useState<'active' | 'draft'>('active');
 
-  // Staff Management State
   const [staffEmail, setStaffEmail] = useState('');
   const [staffPassword, setStaffPassword] = useState('');
   const [isManagingStaff, setIsManagingStaff] = useState(false);
   const [staffList, setStaffList] = useState<User[]>([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
 
-  // Handle Query Param for Tab
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'create') {
-        setActiveTab('create');
-    } else if (tabParam === 'staff') {
-        setActiveTab('staff');
-    } else {
-        setActiveTab('overview');
-    }
+    if (tabParam === 'create') setActiveTab('create');
+    else if (tabParam === 'staff') setActiveTab('staff');
+    else setActiveTab('overview');
   }, [searchParams]);
 
-  // Fetch Events for Overview
   useEffect(() => {
     if (user && user.role === UserRole.ASSOCIAZIONE) {
       setLoadingEvents(true);
@@ -75,7 +60,6 @@ const Dashboard: React.FC = () => {
     }
   }, [user]);
 
-  // Fetch Staff Accounts
   useEffect(() => {
     if (activeTab === 'staff' && user && user.role === UserRole.ASSOCIAZIONE) {
         fetchStaff();
@@ -95,10 +79,9 @@ const Dashboard: React.FC = () => {
   };
 
   if (!user || user.role !== UserRole.ASSOCIAZIONE) {
-    return <div className="p-8">Access Denied</div>;
+    return <div className="p-8 bg-gray-900 min-h-screen text-white">Access Denied</div>;
   }
 
-  // Calculate Stats
   const totalEvents = assocEvents.length;
   const totalTicketsSold = assocEvents.reduce((acc, curr) => acc + curr.ticketsSold, 0);
   const totalRevenue = assocEvents.reduce((acc, curr) => acc + (curr.ticketsSold * curr.price), 0);
@@ -164,37 +147,26 @@ const Dashboard: React.FC = () => {
     const cleanPriceStr = (user.stripeOnboardingComplete ? price : '0').toString().replace(',', '.');
     const tempPrice = parseFloat(cleanPriceStr);
     const numericPrice = isNaN(tempPrice) ? 0 : Number(tempPrice.toFixed(2));
-
     if (isNaN(numericPrice) || numericPrice < 0) {
         alert("Prezzo non valido.");
         return;
     }
-
     if (!image) {
         alert("Per favore carica un'immagine per l'evento.");
         return;
     }
-
     setCreatingEvent(true);
     try {
         const newEvent = await api.events.create({
-            title,
-            description,
-            longDescription: description,
-            date,
-            time,
-            location,
-            image,
+            title, description, longDescription: description,
+            date, time, location, image,
             maxCapacity: parseInt(maxCapacity),
-            price: numericPrice,
-            category,
-            prLists,
+            price: numericPrice, category, prLists,
             status: targetStatus,
             requiresMatricola: requiresAcademicData, 
             requiresCorsoStudi: requiresAcademicData, 
             scanType
         }, user);
-
         if (targetStatus === 'draft') {
             alert("Bozza salvata con successo!");
             navigate(`/events/${newEvent._id}`);
@@ -213,11 +185,10 @@ const Dashboard: React.FC = () => {
   const handleManageStaff = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!staffEmail || !staffPassword) return;
-
       setIsManagingStaff(true);
       try {
           await api.auth.createStaffAccount({ email: staffEmail, password: staffPassword });
-          alert("Account Staff gestito con successo! Fornisci queste credenziali al tuo personale per lo scanner.");
+          alert("Account Staff gestito con successo!");
           setStaffEmail('');
           setStaffPassword('');
           fetchStaff();
@@ -239,35 +210,32 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8 text-white">
        <div className="max-w-5xl mx-auto space-y-6">
-           
-           {/* Header & Tab Switcher */}
            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                <div>
-                   <h1 className="text-3xl font-bold text-gray-900">Dashboard Associazione</h1>
-                   <p className="text-gray-500 text-sm mt-1">Benvenuto, {user.name}.</p>
+                   <h1 className="text-3xl font-bold text-white">Dashboard Associazione</h1>
+                   <p className="text-gray-400 text-sm mt-1">Benvenuto, {user.name}.</p>
                </div>
                
-               {/* Tab Switcher */}
-               <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
+               <div className="bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-700 flex">
                    <button
                        onClick={() => handleTabChange('overview')}
-                       className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'overview' ? 'bg-indigo-100 text-indigo-800' : 'text-gray-600 hover:bg-gray-50'}`}
+                       className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'overview' ? 'bg-indigo-900 text-indigo-100' : 'text-gray-400 hover:bg-gray-700'}`}
                    >
                        <LayoutDashboard className="w-4 h-4 mr-2" />
                        Panoramica
                    </button>
                    <button
                        onClick={() => handleTabChange('create')}
-                       className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'create' ? 'bg-indigo-100 text-indigo-800' : 'text-gray-600 hover:bg-gray-50'}`}
+                       className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'create' ? 'bg-indigo-900 text-indigo-100' : 'text-gray-400 hover:bg-gray-700'}`}
                    >
                        <Plus className="w-4 h-4 mr-2" />
                        Crea Evento
                    </button>
                    <button
                        onClick={() => handleTabChange('staff')}
-                       className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'staff' ? 'bg-indigo-100 text-indigo-800' : 'text-gray-600 hover:bg-gray-50'}`}
+                       className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'staff' ? 'bg-indigo-900 text-indigo-100' : 'text-gray-400 hover:bg-gray-700'}`}
                    >
                        <Users className="w-4 h-4 mr-2" />
                        Staff
@@ -275,26 +243,23 @@ const Dashboard: React.FC = () => {
                </div>
            </div>
 
-           {/* ==================================================================================
-               TAB 1: PANORAMICA
-               ================================================================================== */}
            {activeTab === 'overview' && (
                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                   <div className={`bg-white rounded-xl p-6 shadow-sm border-l-4 ${user.stripeOnboardingComplete ? 'border-green-500' : 'border-blue-500'}`}>
+                   <div className={`bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 ${user.stripeOnboardingComplete ? 'border-green-500' : 'border-indigo-500'}`}>
                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                            <div className="flex items-start md:items-center">
                                {user.stripeOnboardingComplete ? (
-                                   <div className="bg-green-100 p-3 rounded-full mr-4 shrink-0">
-                                       <CheckCircle className="w-6 h-6 text-green-600" />
+                                   <div className="bg-green-900/30 p-3 rounded-full mr-4 shrink-0">
+                                       <CheckCircle className="w-6 h-6 text-green-400" />
                                    </div>
                                ) : (
-                                   <div className="bg-blue-100 p-3 rounded-full mr-4 shrink-0">
-                                       <DollarSign className="w-6 h-6 text-blue-600" />
+                                   <div className="bg-indigo-900/30 p-3 rounded-full mr-4 shrink-0">
+                                       <DollarSign className="w-6 h-6 text-indigo-400" />
                                    </div>
                                )}
                                <div>
-                                   <h2 className="text-xl font-bold text-gray-900">Stato Pagamenti</h2>
-                                   <p className="text-gray-600 text-sm">
+                                   <h2 className="text-xl font-bold text-white">Stato Pagamenti</h2>
+                                   <p className="text-gray-400 text-sm">
                                        {user.stripeOnboardingComplete 
                                            ? "Il tuo account Stripe è attivo. Puoi ricevere pagamenti." 
                                            : "Connetti Stripe per poter vendere Voucher a pagamento."}
@@ -314,63 +279,63 @@ const Dashboard: React.FC = () => {
                    </div>
 
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
-                            <div className="p-3 rounded-full bg-indigo-50 text-indigo-600 mr-4">
+                        <div className="bg-gray-800 rounded-xl shadow-sm p-6 flex items-center border border-gray-700">
+                            <div className="p-3 rounded-full bg-indigo-900/30 text-indigo-400 mr-4">
                                 <TrendingUp className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-gray-500 text-sm font-medium">Totale Ricavi</p>
-                                <p className="text-2xl font-bold text-gray-900">€{totalRevenue.toFixed(2)}</p>
+                                <p className="text-gray-400 text-sm font-medium">Totale Ricavi</p>
+                                <p className="text-2xl font-bold text-white">€{totalRevenue.toFixed(2)}</p>
                             </div>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
-                            <div className="p-3 rounded-full bg-green-50 text-green-600 mr-4">
+                        <div className="bg-gray-800 rounded-xl shadow-sm p-6 flex items-center border border-gray-700">
+                            <div className="p-3 rounded-full bg-green-900/30 text-green-400 mr-4">
                                 <Ticket className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-gray-500 text-sm font-medium">Biglietti Venduti</p>
-                                <p className="text-2xl font-bold text-gray-900">{totalTicketsSold}</p>
+                                <p className="text-gray-400 text-sm font-medium">Biglietti Venduti</p>
+                                <p className="text-2xl font-bold text-white">{totalTicketsSold}</p>
                             </div>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
-                            <div className="p-3 rounded-full bg-orange-50 text-orange-600 mr-4">
+                        <div className="bg-gray-800 rounded-xl shadow-sm p-6 flex items-center border border-gray-700">
+                            <div className="p-3 rounded-full bg-orange-900/30 text-orange-400 mr-4">
                                 <Briefcase className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-gray-500 text-sm font-medium">Eventi Creati</p>
-                                <p className="text-2xl font-bold text-gray-900">{totalEvents}</p>
+                                <p className="text-gray-400 text-sm font-medium">Eventi Creati</p>
+                                <p className="text-2xl font-bold text-white">{totalEvents}</p>
                             </div>
                         </div>
                    </div>
 
-                   <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8">
+                   <div className="bg-gray-800 rounded-2xl shadow-sm p-6 md:p-8 border border-gray-700">
                         <div className="flex justify-between items-center mb-6">
-                             <h2 className="text-xl font-bold text-gray-900 flex items-center">
-                                <Briefcase className="w-6 h-6 mr-2 text-indigo-600" />
+                             <h2 className="text-xl font-bold text-white flex items-center">
+                                <Briefcase className="w-6 h-6 mr-2 text-indigo-500" />
                                 I Tuoi Eventi
                             </h2>
                         </div>
                         
                         {loadingEvents ? (
-                            <div className="text-center py-8">Caricamento eventi...</div>
+                            <div className="text-center py-8 text-gray-500">Caricamento eventi...</div>
                         ) : assocEvents.length > 0 ? (
-                            <div className="divide-y divide-gray-100">
+                            <div className="divide-y divide-gray-700">
                                 {assocEvents.map(event => (
                                     <div key={event._id} className="py-4 flex flex-col md:flex-row md:items-center justify-between group gap-4">
                                         <div className="flex items-center">
-                                            <div className="w-12 h-12 bg-gray-100 rounded-lg mr-4 overflow-hidden flex-shrink-0">
+                                            <div className="w-12 h-12 bg-gray-700 rounded-lg mr-4 overflow-hidden flex-shrink-0">
                                                 <img src={event.image} className="w-full h-full object-cover" alt="" onError={(e) => (e.currentTarget.style.display = 'none')}/>
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition line-clamp-1">{event.title}</h3>
+                                                    <h3 className="font-bold text-white group-hover:text-indigo-400 transition line-clamp-1">{event.title}</h3>
                                                     {event.status === 'draft' && (
-                                                        <span className="bg-yellow-100 text-yellow-800 text-[10px] px-2 py-0.5 rounded font-bold uppercase">
+                                                        <span className="bg-yellow-900/30 text-yellow-400 text-[10px] px-2 py-0.5 rounded font-bold uppercase border border-yellow-900/50">
                                                             BOZZA
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center text-xs text-gray-500 mt-1">
+                                                <div className="flex items-center text-xs text-gray-400 mt-1">
                                                     <Calendar className="w-3 h-3 mr-1" />
                                                     {new Date(event.date).toLocaleDateString()}
                                                 </div>
@@ -378,24 +343,24 @@ const Dashboard: React.FC = () => {
                                         </div>
                                         <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
                                             <div className="text-right">
-                                                <div className="font-mono font-medium text-gray-900 text-sm">
+                                                <div className="font-mono font-medium text-gray-300 text-sm">
                                                     {event.ticketsSold}/{event.maxCapacity}
                                                 </div>
-                                                <div className="text-xs text-green-600 font-semibold mt-1">
+                                                <div className="text-xs text-green-400 font-semibold mt-1">
                                                     +€{(event.ticketsSold * event.price).toFixed(2)}
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
                                                 <Link 
                                                     to={`/events/${event._id}/attendees`}
-                                                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-bold transition flex items-center"
+                                                    className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-xs font-bold transition flex items-center"
                                                 >
                                                     <Users className="w-3 h-3 mr-1" />
                                                     Lista
                                                 </Link>
                                                 <Link 
                                                     to={`/events/${event._id}`} 
-                                                    className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition"
+                                                    className="px-3 py-1.5 bg-indigo-900/30 hover:bg-indigo-900/50 text-indigo-300 rounded-lg text-xs font-bold transition border border-indigo-900/50"
                                                 >
                                                     Gestisci
                                                 </Link>
@@ -405,9 +370,9 @@ const Dashboard: React.FC = () => {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                            <div className="text-center py-12 bg-gray-900/50 rounded-xl border border-dashed border-gray-700">
                                 <p className="text-gray-500 mb-4">Non hai ancora creato nessun evento.</p>
-                                <button onClick={() => handleTabChange('create')} className="bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">
+                                <button onClick={() => handleTabChange('create')} className="bg-gray-800 border border-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 text-gray-300">
                                     Inizia ora
                                 </button>
                             </div>
@@ -416,26 +381,23 @@ const Dashboard: React.FC = () => {
                </div>
            )}
 
-           {/* ==================================================================================
-               TAB 2: CREA EVENTO
-               ================================================================================== */}
            {activeTab === 'create' && (
                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                    {!user.isVerified ? (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center shadow-sm">
-                            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <ShieldCheck className="w-8 h-8 text-yellow-600" />
+                        <div className="bg-gray-800 border border-gray-700 rounded-xl p-8 text-center shadow-sm">
+                            <div className="w-16 h-16 bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <ShieldCheck className="w-8 h-8 text-indigo-400" />
                             </div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-2">Account in attesa di approvazione</h2>
-                            <p className="text-gray-600 max-w-lg mx-auto mb-6">
+                            <h2 className="text-xl font-bold text-white mb-2">Account in attesa di approvazione</h2>
+                            <p className="text-gray-400 max-w-lg mx-auto mb-6">
                                 Il nostro team sta verificando i dati della tua associazione. 
                             </p>
                         </div>
                    ) : (
-                       <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-                           <div className="bg-indigo-900 p-6 text-white">
+                       <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
+                           <div className="bg-indigo-950 p-6 text-white border-b border-indigo-900/50">
                                <h2 className="text-xl font-bold flex items-center">
-                                   <Plus className="w-6 h-6 mr-2" />
+                                   <Plus className="w-6 h-6 mr-2 text-indigo-500" />
                                    Crea Nuovo Evento
                                </h2>
                            </div>
@@ -443,22 +405,22 @@ const Dashboard: React.FC = () => {
                            <form onSubmit={handleCreateEvent} className="p-6 md:p-8 space-y-6">
                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                    <div className="md:col-span-2">
-                                       <label className="block text-sm font-medium text-gray-700 mb-1">Titolo Evento</label>
+                                       <label className="block text-sm font-medium text-gray-300 mb-1">Titolo Evento</label>
                                        <input 
                                            type="text" 
                                            value={title} 
                                            onChange={e => setTitle(e.target.value)} 
-                                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                            required
                                            placeholder="Es. Halloween Party 2025"
                                        />
                                    </div>
                                    <div>
-                                       <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><Tag className="w-4 h-4 mr-1"/> Categoria</label>
+                                       <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center"><Tag className="w-4 h-4 mr-1"/> Categoria</label>
                                        <select 
                                            value={category}
                                            onChange={e => setCategory(e.target.value as EventCategory)}
-                                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                        >
                                            {Object.values(EventCategory).map(c => (
                                                <option key={c} value={c}>{c}</option>
@@ -469,32 +431,32 @@ const Dashboard: React.FC = () => {
 
                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                    <div>
-                                       <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><Clock className="w-4 h-4 mr-1"/> Data</label>
+                                       <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center"><Clock className="w-4 h-4 mr-1"/> Data</label>
                                        <input 
                                            type="date" 
                                            value={date} 
                                            onChange={e => setDate(e.target.value)} 
-                                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                            required
                                        />
                                    </div>
                                    <div>
-                                       <label className="block text-sm font-medium text-gray-700 mb-1">Ora</label>
+                                       <label className="block text-sm font-medium text-gray-300 mb-1">Ora</label>
                                        <input 
                                            type="time" 
                                            value={time} 
                                            onChange={e => setTime(e.target.value)} 
-                                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                            required
                                        />
                                    </div>
                                    <div>
-                                       <label className="block text-sm font-medium text-gray-700 mb-1">Luogo</label>
+                                       <label className="block text-sm font-medium text-gray-300 mb-1">Luogo</label>
                                        <input 
                                            type="text" 
                                            value={location} 
                                            onChange={e => setLocation(e.target.value)} 
-                                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                            required
                                            placeholder="Nome del locale o indirizzo"
                                        />
@@ -502,27 +464,27 @@ const Dashboard: React.FC = () => {
                                </div>
 
                                <div>
-                                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><ImageIcon className="w-4 h-4 mr-1"/> Immagine Evento</label>
+                                   <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center"><ImageIcon className="w-4 h-4 mr-1"/> Immagine Evento</label>
                                    <div className="flex gap-4 items-center">
                                        <button
                                            type="button"
                                            onClick={handleImageUpload}
-                                           className="flex items-center px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium border border-gray-300"
+                                           className="flex items-center px-4 py-2.5 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition font-medium border border-gray-600"
                                        >
                                            <Upload className="w-4 h-4 mr-2" />
                                            Carica Immagine
                                        </button>
                                        {image && (
-                                           <div className="w-16 h-10 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0 relative group">
+                                           <div className="w-16 h-10 rounded-lg overflow-hidden border border-gray-600 flex-shrink-0 relative group">
                                                <img src={image} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
                                            </div>
                                        )}
                                    </div>
                                </div>
 
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-900/50 rounded-xl border border-gray-700">
                                    <div className="relative">
-                                       <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                       <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center">
                                            <DollarSign className="w-4 h-4 mr-1"/> Prezzo Biglietto (€)
                                        </label>
                                        <div className="relative">
@@ -533,10 +495,10 @@ const Dashboard: React.FC = () => {
                                                     if (user.stripeOnboardingComplete) setPrice(e.target.value);
                                                 }} 
                                                 disabled={!user.stripeOnboardingComplete}
-                                                className={`w-full px-4 py-2 border rounded-lg outline-none transition
+                                                className={`w-full px-4 py-2 rounded-lg outline-none transition
                                                     ${!user.stripeOnboardingComplete 
-                                                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' 
-                                                        : 'border-gray-300 focus:ring-2 focus:ring-indigo-500 bg-white'
+                                                        ? 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed' 
+                                                        : 'bg-gray-700 border-gray-600 focus:ring-2 focus:ring-indigo-500 text-white'
                                                     }
                                                 `}
                                                 required
@@ -546,18 +508,18 @@ const Dashboard: React.FC = () => {
                                             />
                                             {!user.stripeOnboardingComplete && (
                                                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                                    <Lock className="h-4 w-4 text-gray-400" />
+                                                    <Lock className="h-4 w-4 text-gray-500" />
                                                 </div>
                                             )}
                                        </div>
                                    </div>
                                    <div>
-                                       <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center"><Users className="w-4 h-4 mr-1"/> Capacità Massima</label>
+                                       <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center"><Users className="w-4 h-4 mr-1"/> Capacità Massima</label>
                                        <input 
                                            type="number" 
                                            value={maxCapacity} 
                                            onChange={e => setMaxCapacity(e.target.value)} 
-                                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                            required
                                            min="1"
                                        />
@@ -569,7 +531,7 @@ const Dashboard: React.FC = () => {
                                        type="submit" 
                                        onClick={() => setTargetStatus('draft')}
                                        disabled={creatingEvent}
-                                       className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 rounded-xl shadow-md transition border border-gray-300"
+                                       className="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-200 font-bold py-4 rounded-xl shadow-md transition border border-gray-600"
                                    >
                                        Salva come Bozza
                                    </button>
@@ -588,15 +550,12 @@ const Dashboard: React.FC = () => {
                </div>
            )}
 
-           {/* ==================================================================================
-               TAB 3: GESTIONE STAFF (NEW)
-               ================================================================================== */}
            {activeTab === 'staff' && (
                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
-                   <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-                       <div className="bg-indigo-900 p-6 text-white">
+                   <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden">
+                       <div className="bg-indigo-950 p-6 text-white border-b border-indigo-900/50">
                            <h2 className="text-xl font-bold flex items-center">
-                               <Users className="w-6 h-6 mr-2" />
+                               <Users className="w-6 h-6 mr-2 text-indigo-500" />
                                Gestione Account Staff Temporaneo
                            </h2>
                            <p className="text-indigo-200 text-sm mt-1">
@@ -605,10 +564,10 @@ const Dashboard: React.FC = () => {
                        </div>
                        
                        <form onSubmit={handleManageStaff} className="p-6 md:p-8 space-y-4">
-                           <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg mb-6">
+                           <div className="bg-amber-950/30 border-l-4 border-amber-500 p-4 rounded-r-lg mb-6">
                                <div className="flex">
-                                   <Info className="w-5 h-5 text-amber-600 mr-3 flex-shrink-0" />
-                                   <p className="text-sm text-amber-800">
+                                   <Info className="w-5 h-5 text-amber-500 mr-3 flex-shrink-0" />
+                                   <p className="text-sm text-amber-200/80">
                                        Questi account hanno accesso <strong>solo allo scanner</strong>. Possono validare voucher esclusivamente per i tuoi eventi.
                                    </p>
                                </div>
@@ -616,8 +575,8 @@ const Dashboard: React.FC = () => {
 
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div>
-                                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                                       <UserPlus className="w-4 h-4 mr-1 text-indigo-500" />
+                                   <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center">
+                                       <UserPlus className="w-4 h-4 mr-1 text-indigo-400" />
                                        Email Staff
                                    </label>
                                    <input 
@@ -625,21 +584,21 @@ const Dashboard: React.FC = () => {
                                        value={staffEmail}
                                        onChange={e => setStaffEmail(e.target.value)}
                                        placeholder="staff-nome@uniparty.it"
-                                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                        required
                                    />
                                </div>
                                <div>
-                                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                                       <Key className="w-4 h-4 mr-1 text-indigo-500" />
+                                   <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center">
+                                       <Key className="w-4 h-4 mr-1 text-indigo-400" />
                                        Nuova Password
                                    </label>
                                    <input 
                                        type="password" 
                                        value={staffPassword}
-                                       onChange={e => setStaffPassword(e.target.value)}
+                                       onChange={e => staffPassword(e.target.value)}
                                        placeholder="Password sicura"
-                                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                        required
                                    />
                                </div>
@@ -656,31 +615,30 @@ const Dashboard: React.FC = () => {
                            </div>
                        </form>
 
-                       {/* Staff List Section */}
-                       <div className="p-6 md:p-8 border-t border-gray-100">
-                           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                               <List className="w-5 h-5 mr-2 text-indigo-600" />
+                       <div className="p-6 md:p-8 border-t border-gray-700">
+                           <h3 className="text-lg font-bold text-white mb-4 flex items-center">
+                               <List className="w-5 h-5 mr-2 text-indigo-500" />
                                Membri Staff Attivi
                            </h3>
                            {loadingStaff ? (
                                <div className="text-center py-4 text-gray-500">Caricamento staff...</div>
                            ) : staffList.length > 0 ? (
-                               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                                   <div className="divide-y divide-gray-100">
+                               <div className="bg-gray-900/50 rounded-xl border border-gray-700 overflow-hidden">
+                                   <div className="divide-y divide-gray-700">
                                        {staffList.map(staff => (
-                                           <div key={staff._id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition">
+                                           <div key={staff._id} className="p-4 flex items-center justify-between hover:bg-gray-800 transition">
                                                <div className="flex items-center">
-                                                   <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 mr-4">
+                                                   <div className="w-10 h-10 rounded-full bg-indigo-900/30 flex items-center justify-center text-indigo-400 mr-4">
                                                        <Users className="w-5 h-5" />
                                                    </div>
                                                    <div>
-                                                       <p className="font-bold text-gray-900">{staff.email}</p>
+                                                       <p className="font-bold text-white">{staff.email}</p>
                                                        <p className="text-xs text-gray-500">Creato il {new Date(staff.createdAt!).toLocaleDateString()}</p>
                                                    </div>
                                                </div>
                                                <button 
                                                    onClick={() => handleDeleteStaff(staff._id)}
-                                                   className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                                                   className="p-2 text-red-400 hover:bg-red-900/30 rounded-lg transition"
                                                    title="Elimina Staff"
                                                >
                                                    <Trash2 className="w-5 h-5" />
@@ -690,7 +648,7 @@ const Dashboard: React.FC = () => {
                                    </div>
                                </div>
                            ) : (
-                               <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-gray-500 text-sm">
+                               <div className="text-center py-8 bg-gray-900/50 rounded-xl border border-dashed border-gray-700 text-gray-500 text-sm">
                                    Nessun account staff creato.
                                </div>
                            )}
