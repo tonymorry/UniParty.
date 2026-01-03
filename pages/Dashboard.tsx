@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { UserRole, EventCategory, Event } from '../types';
+import { UserRole, EventCategory, Event, User } from '../types';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { 
     AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, 
-    ShieldCheck, Lock, Info, Upload, FileText, TrendingUp, Briefcase, Ticket, LayoutDashboard, Calendar, Settings, GraduationCap, UserPlus, Key
+    ShieldCheck, Lock, Info, Upload, FileText, TrendingUp, Briefcase, Ticket, LayoutDashboard, Calendar, Settings, GraduationCap, UserPlus, Key, Trash2
 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
@@ -45,10 +45,12 @@ const Dashboard: React.FC = () => {
   const [creatingEvent, setCreatingEvent] = useState(false);
   const [targetStatus, setTargetStatus] = useState<'active' | 'draft'>('active');
 
-  // Staff Form State
+  // Staff Management State
   const [staffEmail, setStaffEmail] = useState('');
   const [staffPassword, setStaffPassword] = useState('');
   const [isManagingStaff, setIsManagingStaff] = useState(false);
+  const [staffList, setStaffList] = useState<User[]>([]);
+  const [loadingStaff, setLoadingStaff] = useState(false);
 
   // Handle Query Param for Tab
   useEffect(() => {
@@ -72,6 +74,25 @@ const Dashboard: React.FC = () => {
         .finally(() => setLoadingEvents(false));
     }
   }, [user]);
+
+  // Fetch Staff Accounts
+  useEffect(() => {
+    if (activeTab === 'staff' && user && user.role === UserRole.ASSOCIAZIONE) {
+        fetchStaff();
+    }
+  }, [activeTab, user]);
+
+  const fetchStaff = async () => {
+    setLoadingStaff(true);
+    try {
+        const data = await api.auth.getStaffAccounts();
+        setStaffList(data);
+    } catch (e) {
+        console.error("Fetch staff error", e);
+    } finally {
+        setLoadingStaff(false);
+    }
+  };
 
   if (!user || user.role !== UserRole.ASSOCIAZIONE) {
     return <div className="p-8">Access Denied</div>;
@@ -199,11 +220,22 @@ const Dashboard: React.FC = () => {
           alert("Account Staff gestito con successo! Fornisci queste credenziali al tuo personale per lo scanner.");
           setStaffEmail('');
           setStaffPassword('');
+          fetchStaff();
       } catch (e: any) {
           alert("Errore: " + e.message);
       } finally {
           setIsManagingStaff(false);
       }
+  };
+
+  const handleDeleteStaff = async (id: string) => {
+    if (!window.confirm("Sei sicuro di voler eliminare questo account staff?")) return;
+    try {
+        await api.auth.deleteStaffAccount(id);
+        setStaffList(staffList.filter(s => s._id !== id));
+    } catch (e: any) {
+        alert("Errore: " + e.message);
+    }
   };
 
   return (
@@ -623,6 +655,46 @@ const Dashboard: React.FC = () => {
                                </button>
                            </div>
                        </form>
+
+                       {/* Staff List Section */}
+                       <div className="p-6 md:p-8 border-t border-gray-100">
+                           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                               <List className="w-5 h-5 mr-2 text-indigo-600" />
+                               Membri Staff Attivi
+                           </h3>
+                           {loadingStaff ? (
+                               <div className="text-center py-4 text-gray-500">Caricamento staff...</div>
+                           ) : staffList.length > 0 ? (
+                               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                                   <div className="divide-y divide-gray-100">
+                                       {staffList.map(staff => (
+                                           <div key={staff._id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition">
+                                               <div className="flex items-center">
+                                                   <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 mr-4">
+                                                       <Users className="w-5 h-5" />
+                                                   </div>
+                                                   <div>
+                                                       <p className="font-bold text-gray-900">{staff.email}</p>
+                                                       <p className="text-xs text-gray-500">Creato il {new Date(staff.createdAt!).toLocaleDateString()}</p>
+                                                   </div>
+                                               </div>
+                                               <button 
+                                                   onClick={() => handleDeleteStaff(staff._id)}
+                                                   className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                                                   title="Elimina Staff"
+                                               >
+                                                   <Trash2 className="w-5 h-5" />
+                                               </button>
+                                           </div>
+                                       ))}
+                                   </div>
+                               </div>
+                           ) : (
+                               <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-gray-500 text-sm">
+                                   Nessun account staff creato.
+                               </div>
+                           )}
+                       </div>
                    </div>
                </div>
            )}

@@ -33,6 +33,8 @@ const mockApi = {
     forgotPassword: async () => ({ message: "Mock: Email sent" }),
     resetPassword: async () => ({ message: "Mock: Password reset" }),
     createStaffAccount: async () => ({}) as any,
+    getStaffAccounts: async () => [],
+    deleteStaffAccount: async () => ({ success: true }),
   },
   events: {
     getAll: async () => [],
@@ -213,6 +215,19 @@ const realApi = {
         const data = await res.json();
         if(!res.ok) throw new Error(data.error || 'Failed to manage staff account');
         return data;
+    },
+    getStaffAccounts: async () => {
+        const res = await fetch(`${API_URL}/auth/staff-accounts`, { headers: getHeaders() });
+        if(!res.ok) throw new Error('Failed to fetch staff accounts');
+        return res.json();
+    },
+    deleteStaffAccount: async (id: string) => {
+        const res = await fetch(`${API_URL}/auth/staff-accounts/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if(!res.ok) throw new Error('Failed to delete staff account');
+        return res.json();
     }
   },
   events: {

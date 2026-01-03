@@ -290,6 +290,29 @@ app.post('/api/auth/staff-account', authMiddleware, async (req, res) => {
     }
 });
 
+// Get Staff accounts for this association
+app.get('/api/auth/staff-accounts', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'associazione') return res.status(403).json({ error: "Accesso negato" });
+    try {
+        const staff = await User.find({ role: 'staff', parentOrganization: req.user.userId }).select('email name createdAt');
+        res.json(staff);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Delete staff account
+app.delete('/api/auth/staff-accounts/:id', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'associazione') return res.status(403).json({ error: "Accesso negato" });
+    try {
+        const result = await User.findOneAndDelete({ _id: req.params.id, parentOrganization: req.user.userId, role: 'staff' });
+        if (!result) return res.status(404).json({ error: "Staff account non trovato o non autorizzato" });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Update Profile
 app.put('/api/users/:id', authMiddleware, async (req, res) => {
     if (req.user.userId !== req.params.id) return res.status(403).json({ error: "Unauthorized" });
