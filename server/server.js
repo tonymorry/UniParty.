@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -321,7 +320,33 @@ app.get('/api/users/favorites/list', authMiddleware, async (req, res) => {
             path: 'favorites',
             populate: { path: 'organization', select: 'name _id' }
         });
-        res.json(user.favorites);
+
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        // Calcola orario limite (identico alla route /api/events)
+        const now = new Date();
+        const currentHour = now.getHours();
+        const visibilityCutoff = new Date();
+        visibilityCutoff.setHours(0, 0, 0, 0); 
+
+        if (currentHour < 10) {
+            visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); 
+        }
+
+        // Filtra i preferiti per visibilità e stato
+        const filteredFavorites = (user.favorites || []).filter(event => {
+            if (!event) return false; // Evento rimosso dal database
+            
+            // 1. Verifica lo stato (deve essere 'active' o non impostato)
+            const isActive = event.status === 'active' || !event.status;
+            
+            // 2. Verifica la data rispetto al cutoff
+            const isVisible = new Date(event.date) >= visibilityCutoff;
+            
+            return isActive && isVisible;
+        });
+
+        res.json(filteredFavorites);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
