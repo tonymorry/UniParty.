@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users, Flame, Heart } from 'lucide-react';
@@ -17,16 +18,28 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
     month: 'short',
   });
 
+  // FIX: Strict Integer Math for Price Display
+  // 1. Get Base Price in Cents (e.g. 15.00 -> 1500)
   const priceInCents = Math.round(Number(event.price) * 100);
+  
+  // Use priceInCents === 0 to ensure strict FREE check
   const isFree = priceInCents === 0;
+
+  // 2. Add Fee in Cents (always 40 cents if paid, 0 if free)
   const feeInCents = isFree ? 0 : 40;
+  
+  // 3. Total in cents
   const totalInCents = priceInCents + feeInCents;
+  
+  // 4. Convert back to Euros for display (e.g. 1540 -> 15.40)
   const finalPrice = totalInCents / 100;
 
+  // Logic for ticket display
   const soldRatio = event.ticketsSold / event.maxCapacity;
   const isSoldOut = soldRatio >= 1;
   const isAlmostSoldOut = soldRatio >= 0.6 && !isSoldOut;
   
+  // FIX: Handle potential null organization (e.g. deleted user)
   const organizationId = typeof event.organization === 'string' 
     ? event.organization 
     : event.organization?._id;
@@ -52,7 +65,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
 
   return (
     <Link to={`/events/${event._id}`} className="group relative block h-full">
-      <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-xl hover:shadow-indigo-900/20 transition-all duration-300 border border-gray-700 h-full flex flex-col">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 h-full flex flex-col">
         <div className="relative h-48 overflow-hidden">
           <img
             src={event.image}
@@ -61,40 +74,42 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute top-4 right-4 flex gap-2">
+               {/* Favorite Button (Students Only) */}
                {(!user || user.role === UserRole.STUDENTE) && (
                    <button 
                         onClick={handleFavoriteClick}
-                        className="bg-gray-900/80 backdrop-blur-sm p-2 rounded-full shadow-sm hover:scale-110 transition z-10 border border-white/10"
+                        className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm hover:scale-110 transition z-10"
                    >
                        <Heart 
-                          className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'}`} 
+                          className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-500 hover:text-red-500'}`} 
                         />
                    </button>
                )}
+               {/* Owner sees favorite count */}
                {isOwner && (
-                   <div className="bg-gray-900/80 backdrop-blur-sm px-3 py-1 rounded-full text-pink-500 font-bold text-sm shadow-sm flex items-center border border-white/10">
-                       <Heart className="w-3 h-3 mr-1 fill-pink-500" />
+                   <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-pink-600 font-bold text-sm shadow-sm flex items-center">
+                       <Heart className="w-3 h-3 mr-1 fill-pink-600" />
                        {event.favoritesCount || 0}
                    </div>
                )}
-               <div className="bg-indigo-600 px-3 py-1 rounded-full text-white font-bold text-sm shadow-sm flex items-center">
+               <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-indigo-700 font-bold text-sm shadow-sm flex items-center">
                     {isFree ? 'Free' : `€${finalPrice.toFixed(2)}`}
                </div>
           </div>
         </div>
         
         <div className="p-5 flex-1 flex flex-col">
-          <div className="text-xs font-semibold text-indigo-400 mb-2 uppercase tracking-wide">
+          <div className="text-xs font-semibold text-indigo-600 mb-2 uppercase tracking-wide">
             {typeof event.organization === 'string' ? 'Association' : (event.organization?.name || 'Association')}
           </div>
-          <h3 className="text-lg font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors">
+          <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-700 transition-colors">
             {event.title}
           </h3>
-          <p className="text-gray-400 text-sm mb-4 line-clamp-2 flex-1">
+          <p className="text-gray-500 text-sm mb-4 line-clamp-2 flex-1">
             {event.description}
           </p>
           
-          <div className="space-y-2 text-sm text-gray-300 mt-auto pt-4 border-t border-gray-700">
+          <div className="space-y-2 text-sm text-gray-600 mt-auto pt-4 border-t border-gray-100">
             <div className="flex items-center">
               <Calendar className="h-4 w-4 mr-2 text-indigo-400" />
               <span>{eventDate} • {event.time}</span>
@@ -116,7 +131,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
               </span>
             </div>
             {isAlmostSoldOut && !isSoldOut && (
-               <div className="flex items-center text-orange-400 text-xs font-bold mt-1">
+               <div className="flex items-center text-orange-500 text-xs font-bold mt-1">
                  <Flame className="h-3 w-3 mr-1" />
                  Selling fast!
                </div>
