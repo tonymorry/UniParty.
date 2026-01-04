@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -58,18 +56,18 @@ const SearchAssociations: React.FC = () => {
 
   if (!user || user.role !== UserRole.STUDENTE) {
       return (
-          <div className="p-8 text-center">
-              <p>Questa funzione è riservata agli studenti.</p>
-              <button onClick={() => navigate('/')} className="text-indigo-600 mt-4 font-bold">Torna alla Home</button>
+          <div className="p-8 text-center bg-gray-900 text-white min-h-screen">
+              <p className="text-gray-400">Questa funzione è riservata agli studenti.</p>
+              <button onClick={() => navigate('/')} className="text-indigo-400 mt-4 font-bold hover:text-indigo-300 transition">Torna alla Home</button>
           </div>
       );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8 text-white">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <Search className="w-7 h-7 mr-2 text-indigo-600" />
+        <h1 className="text-2xl font-bold text-white mb-6 flex items-center">
+            <Search className="w-7 h-7 mr-2 text-indigo-400" />
             Cerca Associazioni
         </h1>
 
@@ -79,14 +77,14 @@ const SearchAssociations: React.FC = () => {
                 placeholder="Digita il nome di un'associazione..."
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 border-0 rounded-xl shadow-md focus:ring-2 focus:ring-indigo-500 outline-none text-lg"
+                className="w-full pl-12 pr-4 py-4 border border-gray-700 rounded-xl shadow-lg bg-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none text-lg text-white placeholder-gray-500"
             />
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-500" />
         </div>
 
         {loading ? (
              <div className="text-center py-12">
-                 <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-2"></div>
+                 <div className="w-10 h-10 border-4 border-indigo-900 border-t-indigo-500 rounded-full animate-spin mx-auto mb-2"></div>
                  <p className="text-gray-500">Ricerca in corso...</p>
              </div>
         ) : (
@@ -96,21 +94,21 @@ const SearchAssociations: React.FC = () => {
                         <div 
                             key={assoc._id} 
                             onClick={() => navigate(`/association/${assoc._id}`)}
-                            className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between transition hover:shadow-md cursor-pointer hover:bg-gray-50"
+                            className="bg-gray-800 rounded-xl shadow-sm p-4 flex items-center justify-between transition hover:shadow-indigo-500/5 cursor-pointer hover:bg-gray-750 border border-gray-700"
                         >
                             <div className="flex items-center">
-                                <div className="w-12 h-12 bg-gray-100 rounded-full overflow-hidden mr-4 flex-shrink-0 border border-gray-200">
+                                <div className="w-12 h-12 bg-gray-700 rounded-full overflow-hidden mr-4 flex-shrink-0 border border-gray-600 shadow-inner">
                                     {assoc.profileImage ? (
                                         <img src={assoc.profileImage} alt={assoc.name} className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-500">
+                                        <div className="w-full h-full flex items-center justify-center bg-gray-900 text-indigo-400">
                                             <Briefcase className="w-6 h-6" />
                                         </div>
                                     )}
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-gray-900 text-lg">{assoc.name}</h3>
-                                    <p className="text-sm text-gray-500">{assoc.followersCount || 0} Followers</p>
+                                    <h3 className="font-bold text-white text-lg">{assoc.name}</h3>
+                                    <p className="text-sm text-gray-400">{assoc.followersCount || 0} Followers</p>
                                 </div>
                             </div>
                             <button
@@ -119,9 +117,9 @@ const SearchAssociations: React.FC = () => {
                                     handleToggleFollow(assoc._id);
                                 }}
                                 disabled={followLoading === assoc._id}
-                                className={`px-4 py-2 rounded-full font-bold text-sm flex items-center transition ${
+                                className={`px-4 py-2 rounded-full font-bold text-sm flex items-center transition shadow-sm ${
                                     isFollowing(assoc._id) 
-                                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+                                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 border border-gray-600' 
                                     : 'bg-indigo-600 text-white hover:bg-indigo-700'
                                 }`}
                             >
@@ -150,9 +148,9 @@ const SearchAssociations: React.FC = () => {
                 )}
                 
                 {query.length <= 2 && (
-                     <div className="text-center py-12 text-gray-400">
+                     <div className="text-center py-12 text-gray-500 bg-gray-800/30 rounded-2xl border border-dashed border-gray-700 p-8">
                          Inizia a digitare per cercare organizzatori da seguire.
-                         <br/>Riceverai una notifica email quando pubblicheranno nuovi eventi!
+                         <br/><span className="text-indigo-400/80">Riceverai una notifica email quando pubblicheranno nuovi eventi!</span>
                      </div>
                 )}
             </div>

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Event, UserRole } from '../types';
@@ -294,8 +293,8 @@ const EventDetails: React.FC = () => {
     e.currentTarget.src = "https://picsum.photos/800/400?random=999"; 
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  if (!event) return <div className="min-h-screen flex items-center justify-center">Event not found or expired</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">Loading...</div>;
+  if (!event) return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">Event not found or expired</div>;
 
   // --- PRICE CALCULATION (SAFE MATH) ---
   // 1. Pulisci il prezzo base dal DB (es. 10.00)
@@ -329,60 +328,60 @@ const EventDetails: React.FC = () => {
   const isAlmostSoldOut = soldRatio >= 0.6 && !isSoldOut;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12 relative">
+    <div className="min-h-screen bg-gray-900 text-white pb-12 relative">
       
       {isEditing && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                      <h2 className="text-xl font-bold text-gray-900">Edit Event</h2>
-                      <button onClick={() => setIsEditing(false)} className="p-2 hover:bg-gray-100 rounded-full">
-                          <X className="w-6 h-6 text-gray-500" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+              <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-700">
+                  <div className="p-6 border-b border-gray-700 flex justify-between items-center sticky top-0 bg-gray-800 z-10">
+                      <h2 className="text-xl font-bold text-white">Edit Event</h2>
+                      <button onClick={() => setIsEditing(false)} className="p-2 hover:bg-gray-700 rounded-full transition">
+                          <X className="w-6 h-6 text-gray-400" />
                       </button>
                   </div>
                   <form onSubmit={handleUpdate} className="p-6 space-y-4">
                       <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                          <label className="block text-sm font-medium text-gray-300 mb-1">Title</label>
                           <input 
                               type="text" value={editForm.title} 
                               onChange={e => setEditForm({...editForm, title: e.target.value})}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
                               required
                           />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                              <label className="block text-sm font-medium text-gray-300 mb-1">Date</label>
                               <input 
                                   type="date" value={editForm.date} 
                                   onChange={e => setEditForm({...editForm, date: e.target.value})}
-                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
                                   required
                               />
                           </div>
                           <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                              <label className="block text-sm font-medium text-gray-300 mb-1">Time</label>
                               <input 
                                   type="text" value={editForm.time} 
                                   onChange={e => setEditForm({...editForm, time: e.target.value})}
-                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
                                   required
                               />
                           </div>
                       </div>
                       <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                          <label className="block text-sm font-medium text-gray-300 mb-1">Location</label>
                           <input 
                               type="text" value={editForm.location} 
                               onChange={e => setEditForm({...editForm, location: e.target.value})}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
                               required
                           />
                       </div>
 
                       {/* Advanced Settings in Edit */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                           <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                           <div className="flex items-center space-x-3 bg-gray-900/50 p-3 rounded-lg border border-gray-700">
                                <input 
                                    type="checkbox" 
                                    id="editReqAcademicData"
@@ -395,21 +394,21 @@ const EventDetails: React.FC = () => {
                                            requiresCorsoStudi: e.target.checked
                                        })
                                    }}
-                                   className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                   className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 bg-gray-700 border-gray-600 rounded"
                                />
-                               <label htmlFor="editReqAcademicData" className="text-sm text-gray-700 font-medium cursor-pointer flex items-center">
-                                   <GraduationCap className="w-4 h-4 mr-2 text-indigo-500" />
+                               <label htmlFor="editReqAcademicData" className="text-sm text-gray-300 font-medium cursor-pointer flex items-center">
+                                   <GraduationCap className="w-4 h-4 mr-2 text-indigo-400" />
                                    Richiedi Dati Accademici
                                </label>
                            </div>
                       </div>
                       
                       <div>
-                         <label className="block text-sm font-medium text-gray-700 mb-1">PR Lists</label>
+                         <label className="block text-sm font-medium text-gray-300 mb-1">PR Lists</label>
                          <div className="flex gap-2 mb-2">
                              <input 
                                  type="text" 
-                                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                 className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
                                  placeholder="Add list name"
                                  value={currentEditPrInput}
                                  onChange={e => setCurrentEditPrInput(e.target.value)}
@@ -418,7 +417,7 @@ const EventDetails: React.FC = () => {
                              <button 
                                  type="button" 
                                  onClick={handleAddPrList}
-                                 className="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition"
+                                 className="px-4 py-2 bg-gray-700 text-gray-200 font-semibold rounded-lg hover:bg-gray-600 transition border border-gray-600"
                              >
                                  Add
                              </button>
@@ -426,10 +425,10 @@ const EventDetails: React.FC = () => {
                          {editForm.prLists && editForm.prLists.length > 0 && (
                              <div className="flex flex-wrap gap-2 mt-2">
                                  {editForm.prLists.map((list, idx) => (
-                                     <span key={idx} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm flex items-center">
+                                     <span key={idx} className="bg-indigo-900/40 text-indigo-300 px-3 py-1 rounded-full text-sm flex items-center border border-indigo-900/50">
                                          <List className="w-3 h-3 mr-1" />
                                          {list}
-                                         <button type="button" onClick={() => handleRemovePrList(list)} className="ml-2 hover:text-red-600">
+                                         <button type="button" onClick={() => handleRemovePrList(list)} className="ml-2 hover:text-red-400 transition">
                                              <X className="w-3 h-3" />
                                          </button>
                                      </span>
@@ -439,19 +438,19 @@ const EventDetails: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Image URL</label>
                         <div className="flex gap-2 items-center">
                             <input 
                                 type="url" value={editForm.image} 
                                 onChange={e => setEditForm({...editForm, image: e.target.value})}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
                             />
                             {editForm.image && (
                                 <img 
                                     src={editForm.image} 
                                     onError={(e) => e.currentTarget.style.display = 'none'} 
                                     alt="Preview" 
-                                    className="w-10 h-10 rounded object-cover border" 
+                                    className="w-10 h-10 rounded object-cover border border-gray-600" 
                                 />
                             )}
                         </div>
@@ -459,8 +458,8 @@ const EventDetails: React.FC = () => {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                                  <DollarSign className="w-4 h-4 mr-1"/> Price (€)
+                              <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center">
+                                  <DollarSign className="w-4 h-4 mr-1 text-indigo-400"/> Price (€)
                               </label>
                               <div className="relative">
                                   <input 
@@ -471,8 +470,8 @@ const EventDetails: React.FC = () => {
                                       }} 
                                       className={`w-full px-4 py-2 border rounded-lg outline-none transition
                                           ${!user?.stripeOnboardingComplete 
-                                              ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' 
-                                              : 'border-gray-300 focus:ring-2 focus:ring-indigo-500 bg-white'
+                                              ? 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed' 
+                                              : 'bg-gray-700 border-gray-600 focus:ring-2 focus:ring-indigo-500 text-white'
                                           }
                                       `}
                                       required
@@ -481,17 +480,17 @@ const EventDetails: React.FC = () => {
                                   />
                                   {!user?.stripeOnboardingComplete && (
                                       <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                          <Lock className="h-4 w-4 text-gray-400" />
+                                          <Lock className="h-4 w-4 text-gray-500" />
                                       </div>
                                   )}
                               </div>
                           </div>
                           <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Total Capacity</label>
+                              <label className="block text-sm font-medium text-gray-300 mb-1">Total Capacity</label>
                               <input 
                                   type="number" value={editForm.maxCapacity} 
                                   onChange={e => setEditForm({...editForm, maxCapacity: parseInt(e.target.value)})}
-                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
                                   required
                                   min={event.ticketsSold}
                               />
@@ -499,18 +498,18 @@ const EventDetails: React.FC = () => {
                       </div>
 
                       <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                          <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
                           <textarea 
                               value={editForm.description} 
                               onChange={e => setEditForm({...editForm, description: e.target.value})}
                               rows={3}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
                               required
                           />
                       </div>
                       <div className="pt-4 flex space-x-3">
-                          <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-3 border border-gray-300 rounded-lg font-bold text-gray-700 hover:bg-gray-50">Cancel</button>
-                          <button type="submit" disabled={saving} className="flex-1 py-3 bg-indigo-600 rounded-lg font-bold text-white hover:bg-indigo-700 flex items-center justify-center">
+                          <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-3 border border-gray-600 rounded-lg font-bold text-gray-300 hover:bg-gray-700 transition">Cancel</button>
+                          <button type="submit" disabled={saving} className="flex-1 py-3 bg-indigo-600 rounded-lg font-bold text-white hover:bg-indigo-700 flex items-center justify-center transition shadow-lg">
                               {saving ? 'Saving...' : <><Save className="w-4 h-4 mr-2"/> Save Changes</>}
                           </button>
                       </div>
@@ -521,35 +520,35 @@ const EventDetails: React.FC = () => {
 
       {/* REPORT MODAL */}
       {isReportModalOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-                  <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                      <h2 className="text-xl font-bold text-gray-900 flex items-center">
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+              <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-700">
+                  <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-900/50">
+                      <h2 className="text-xl font-bold text-white flex items-center">
                           <Flag className="w-5 h-5 mr-2 text-red-500" />
                           Segnala Evento
                       </h2>
-                      <button onClick={() => setIsReportModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
-                          <X className="w-6 h-6 text-gray-500" />
+                      <button onClick={() => setIsReportModalOpen(false)} className="p-2 hover:bg-gray-700 rounded-full transition">
+                          <X className="w-6 h-6 text-gray-400" />
                       </button>
                   </div>
                   <form onSubmit={handleReport} className="p-6 space-y-4">
-                      <p className="text-sm text-gray-600 mb-4">
+                      <p className="text-sm text-gray-400 mb-4">
                           Aiutaci a mantenere la community sicura. Perché stai segnalando questo evento?
                       </p>
                       <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">Motivazione</label>
+                          <label className="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wide">Motivazione</label>
                           <div className="space-y-2">
                               {["Contenuto offensivo o inappropriato", "Spam o Truffa", "Informazioni false", "Illegale", "Altro"].map(r => (
-                                  <label key={r} className="flex items-center p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition">
+                                  <label key={r} className="flex items-center p-3 border border-gray-700 rounded-xl hover:bg-gray-700 cursor-pointer transition">
                                       <input 
                                           type="radio" 
                                           name="report_reason" 
                                           value={r} 
                                           checked={reportReason === r}
                                           onChange={e => setReportReason(e.target.value)}
-                                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 bg-gray-700 border-gray-600"
                                       />
-                                      <span className="ml-3 text-sm font-medium text-gray-700">{r}</span>
+                                      <span className="ml-3 text-sm font-medium text-gray-200">{r}</span>
                                   </label>
                               ))}
                           </div>
@@ -568,7 +567,7 @@ const EventDetails: React.FC = () => {
 
       {/* DRAFT BANNER (Owner Only) */}
       {isOwner && event.status === 'draft' && (
-          <div className="bg-yellow-100 text-yellow-800 text-center py-3 font-bold sticky top-16 z-30 flex justify-center items-center shadow-md">
+          <div className="bg-yellow-900/20 text-yellow-500 text-center py-3 font-bold sticky top-16 z-30 flex justify-center items-center shadow-md border-b border-yellow-900/30">
               <FileText className="w-5 h-5 mr-2" />
               Questo evento è una BOZZA e non è visibile al pubblico.
           </div>
@@ -581,7 +580,7 @@ const EventDetails: React.FC = () => {
             onError={handleImageError}
             className="w-full h-full object-cover" 
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent"></div>
         
         <div className="absolute top-24 right-4 sm:right-8 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 z-20">
             {isOwner ? (
@@ -604,9 +603,9 @@ const EventDetails: React.FC = () => {
                     <button 
                         type="button"
                         onClick={() => setIsEditing(true)}
-                        className="bg-white/90 backdrop-blur hover:bg-white text-gray-900 px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition cursor-pointer"
+                        className="bg-gray-800/90 backdrop-blur hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition cursor-pointer border border-white/10"
                     >
-                        <Pencil className="w-4 h-4 mr-2" />
+                        <Pencil className="w-4 h-4 mr-2 text-indigo-400" />
                         Edit Event
                     </button>
                     <button 
@@ -623,9 +622,9 @@ const EventDetails: React.FC = () => {
                 <button 
                     type="button"
                     onClick={() => setIsReportModalOpen(true)}
-                    className="bg-white/20 backdrop-blur hover:bg-white/40 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition border border-white/30 cursor-pointer"
+                    className="bg-white/10 backdrop-blur hover:bg-white/20 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition border border-white/20 cursor-pointer"
                 >
-                    <Flag className="w-4 h-4 mr-2" />
+                    <Flag className="w-4 h-4 mr-2 text-red-400" />
                     Segnala
                 </button>
             )}
@@ -633,24 +632,24 @@ const EventDetails: React.FC = () => {
 
         <button 
             onClick={() => navigate('/')} 
-            className="absolute top-24 left-4 sm:left-8 bg-white/20 backdrop-blur hover:bg-white/30 text-white p-2 rounded-full transition z-20"
+            className="absolute top-24 left-4 sm:left-8 bg-gray-900/40 backdrop-blur hover:bg-gray-900/60 text-white p-2 rounded-full transition z-20 border border-white/10"
         >
              <ArrowLeft className="h-6 w-6" />
         </button>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">
             <div className="max-w-7xl mx-auto">
-                <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 inline-block">
+                <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 inline-block shadow-lg">
                     {event.category}
                 </span>
-                <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">{event.title}</h1>
-                <div className="flex flex-wrap items-center text-gray-200 text-sm md:text-base gap-4 md:gap-8">
+                <h1 className="text-3xl md:text-5xl font-bold text-white mb-2 drop-shadow-md">{event.title}</h1>
+                <div className="flex flex-wrap items-center text-gray-300 text-sm md:text-base gap-4 md:gap-8">
                     <div className="flex items-center">
-                        <Calendar className="w-5 h-5 mr-2" />
+                        <Calendar className="w-5 h-5 mr-2 text-indigo-400" />
                         {new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </div>
                     <div className="flex items-center">
-                        <Clock className="w-5 h-5 mr-2" />
+                        <Clock className="w-5 h-5 mr-2 text-indigo-400" />
                         {event.time}
                     </div>
                     <a 
@@ -659,9 +658,9 @@ const EventDetails: React.FC = () => {
                         rel="noopener noreferrer"
                         className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group"
                     >
-                        <MapPin className="w-5 h-5 mr-2 group-hover:text-red-400 transition-colors" />
+                        <MapPin className="w-5 h-5 mr-2 text-indigo-400 group-hover:text-red-400 transition-colors" />
                         <span className="mr-2">{event.location}</span>
-                        <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full hidden sm:inline-block">View on Map</span>
+                        <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full hidden sm:inline-block border border-white/10">View on Map</span>
                     </a>
                 </div>
             </div>
@@ -673,16 +672,16 @@ const EventDetails: React.FC = () => {
             
             {/* Left Column: Description */}
             <div className="lg:col-span-2 space-y-8">
-                <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">About the Event</h2>
-                    <div className="prose prose-indigo text-gray-600 whitespace-pre-line leading-relaxed">
+                <div className="bg-gray-800 rounded-2xl p-6 md:p-8 shadow-sm border border-gray-700">
+                    <h2 className="text-xl font-bold text-white mb-4">About the Event</h2>
+                    <div className="prose prose-invert prose-indigo text-gray-300 whitespace-pre-line leading-relaxed max-w-none">
                         {event.longDescription}
                     </div>
 
-                    <div className="mt-8 pt-8 border-t border-gray-100">
-                         <h3 className="text-lg font-bold text-gray-900 mb-4">Organized by</h3>
+                    <div className="mt-8 pt-8 border-t border-gray-700">
+                         <h3 className="text-lg font-bold text-white mb-4">Organized by</h3>
                          <div className="flex items-center">
-                             <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg mr-4 overflow-hidden border border-gray-200">
+                             <div className="h-12 w-12 rounded-full bg-gray-700 flex items-center justify-center text-indigo-400 font-bold text-lg mr-4 overflow-hidden border border-gray-600">
                                 {typeof event.organization === 'object' && 'profileImage' in event.organization && event.organization.profileImage ? (
                                     <img src={event.organization.profileImage} alt="Org" className="w-full h-full object-cover" />
                                 ) : (
@@ -690,10 +689,10 @@ const EventDetails: React.FC = () => {
                                 )}
                              </div>
                              <div>
-                                 <Link to={`/association/${typeof event.organization === 'object' ? event.organization._id : event.organization}`} className="font-bold text-gray-900 text-lg hover:text-indigo-600 transition">
+                                 <Link to={`/association/${typeof event.organization === 'object' ? event.organization._id : event.organization}`} className="font-bold text-white text-lg hover:text-indigo-400 transition">
                                     {typeof event.organization === 'object' ? (event.organization as any).name : 'Association'}
                                  </Link>
-                                 <p className="text-sm text-gray-500">Event Organizer</p>
+                                 <p className="text-sm text-gray-500 font-medium">Event Organizer</p>
                              </div>
                          </div>
                     </div>
@@ -702,17 +701,17 @@ const EventDetails: React.FC = () => {
 
             {/* Right Column: Ticket Selection */}
             <div className="lg:col-span-1">
-                <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 sticky top-24">
+                <div className="bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-700 sticky top-24">
                      {/* Price Header */}
                      <div className="flex justify-between items-center mb-6">
                          <div>
-                             <p className="text-sm text-gray-500 font-medium">Prezzo per persona</p>
-                             <h3 className="text-3xl font-bold text-gray-900">
+                             <p className="text-sm text-gray-400 font-medium tracking-wide uppercase">Prezzo per persona</p>
+                             <h3 className="text-3xl font-bold text-white">
                                  {isFree ? 'Gratis' : `€${finalPrice.toFixed(2)}`}
                              </h3>
                          </div>
                          {isAlmostSoldOut && (
-                             <span className="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                             <span className="bg-orange-900/30 text-orange-400 text-xs font-bold px-3 py-1 rounded-full animate-pulse border border-orange-900/50">
                                  Ultimi posti!
                              </span>
                          )}
@@ -720,26 +719,26 @@ const EventDetails: React.FC = () => {
 
                      {/* Sales Controls */}
                      {isSoldOut ? (
-                         <div className="bg-gray-100 rounded-lg p-4 text-center font-bold text-gray-500 mb-4">
+                         <div className="bg-gray-900/50 rounded-lg p-4 text-center font-bold text-gray-500 mb-4 border border-gray-700">
                              SOLD OUT
                          </div>
                      ) : (
                          <div className="space-y-4">
                              {/* Quantity */}
-                             <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                 <span className="text-sm font-medium text-gray-700 ml-2">Quantità</span>
+                             <div className="flex items-center justify-between bg-gray-900 p-2 rounded-lg border border-gray-700">
+                                 <span className="text-sm font-medium text-gray-300 ml-2">Quantità</span>
                                  <div className="flex items-center">
                                      <button 
                                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                        className="p-2 bg-white rounded-md shadow-sm hover:bg-gray-100 text-indigo-600 disabled:opacity-50"
+                                        className="p-2 bg-gray-800 rounded-md shadow-sm hover:bg-gray-700 text-indigo-400 disabled:opacity-50 border border-gray-700 transition"
                                         disabled={quantity <= 1}
                                      >
                                          <Minus className="w-4 h-4" />
                                      </button>
-                                     <span className="w-12 text-center font-bold text-gray-900">{quantity}</span>
+                                     <span className="w-12 text-center font-bold text-white">{quantity}</span>
                                      <button 
                                         onClick={() => setQuantity(Math.min(maxPurchaseLimit, quantity + 1))}
-                                        className="p-2 bg-white rounded-md shadow-sm hover:bg-gray-100 text-indigo-600 disabled:opacity-50"
+                                        className="p-2 bg-gray-800 rounded-md shadow-sm hover:bg-gray-700 text-indigo-400 disabled:opacity-50 border border-gray-700 transition"
                                         disabled={quantity >= maxPurchaseLimit}
                                      >
                                          <Plus className="w-4 h-4" />
@@ -750,36 +749,36 @@ const EventDetails: React.FC = () => {
                              {/* Dynamic Inputs */}
                              <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
                                  {Array.from({ length: quantity }).map((_, i) => (
-                                     <div key={i} className="space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                         <p className="text-xs font-bold text-gray-500 uppercase">Voucher #{i + 1}</p>
+                                     <div key={i} className="space-y-2 p-3 bg-gray-900/30 rounded-lg border border-gray-700">
+                                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Voucher #{i + 1}</p>
                                          <input
                                              type="text"
                                              placeholder="Nome e Cognome"
                                              value={ticketNames[i]}
                                              onChange={e => handleNameChange(i, e.target.value)}
-                                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-indigo-500 outline-none"
+                                             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none placeholder-gray-400"
                                          />
                                          {event.requiresMatricola && (
                                               <div className="flex items-center">
-                                                  <GraduationCap className="w-4 h-4 mr-2 text-gray-400" />
+                                                  <GraduationCap className="w-4 h-4 mr-2 text-gray-500" />
                                                   <input
                                                       type="text"
                                                       placeholder="Matricola"
                                                       value={ticketMatricolas[i]}
                                                       onChange={e => handleMatricolaChange(i, e.target.value)}
-                                                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-indigo-500 outline-none"
+                                                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none placeholder-gray-400"
                                                   />
                                               </div>
                                          )}
                                          {event.requiresCorsoStudi && (
                                               <div className="flex items-center">
-                                                  <BookOpen className="w-4 h-4 mr-2 text-gray-400" />
+                                                  <BookOpen className="w-4 h-4 mr-2 text-gray-500" />
                                                   <input
                                                       type="text"
                                                       placeholder="Corso di Studi"
                                                       value={ticketCorsoStudi[i]}
                                                       onChange={e => handleCorsoStudiChange(i, e.target.value)}
-                                                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-indigo-500 outline-none"
+                                                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none placeholder-gray-400"
                                                   />
                                               </div>
                                          )}
@@ -790,11 +789,11 @@ const EventDetails: React.FC = () => {
                              {/* PR List Selector */}
                              {event.prLists && event.prLists.length > 0 && (
                                  <div>
-                                     <label className="block text-sm font-medium text-gray-700 mb-1">Lista PR</label>
+                                     <label className="block text-sm font-medium text-gray-300 mb-1">Lista PR</label>
                                      <select
                                          value={selectedPrList}
                                          onChange={e => setSelectedPrList(e.target.value)}
-                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                         className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                      >
                                          <option value="">Seleziona una lista...</option>
                                          <option value="Nessuna lista">Nessuna lista</option>
@@ -808,20 +807,20 @@ const EventDetails: React.FC = () => {
                      )}
 
                      {/* Summary */}
-                     <div className="border-t border-gray-100 my-4 pt-4 space-y-2">
-                         <div className="flex justify-between text-sm text-gray-600">
+                     <div className="border-t border-gray-700 my-4 pt-4 space-y-2">
+                         <div className="flex justify-between text-sm text-gray-400">
                              <span>Biglietti x {quantity}</span>
-                             <span>€{(priceInCents * quantity / 100).toFixed(2)}</span>
+                             <span className="text-gray-200">€{(priceInCents * quantity / 100).toFixed(2)}</span>
                          </div>
                          {!isFree && (
-                             <div className="flex justify-between text-sm text-gray-600">
-                                 <span className="flex items-center">Fee Servizio <Info className="w-3 h-3 ml-1 text-gray-400"/></span>
-                                 <span>€{(feeInCents * quantity / 100).toFixed(2)}</span>
+                             <div className="flex justify-between text-sm text-gray-400">
+                                 <span className="flex items-center">Fee Servizio <Info className="w-3 h-3 ml-1 text-gray-500"/></span>
+                                 <span className="text-gray-200">€{(feeInCents * quantity / 100).toFixed(2)}</span>
                              </div>
                          )}
-                         <div className="flex justify-between text-lg font-bold text-gray-900 pt-2">
+                         <div className="flex justify-between text-lg font-bold text-white pt-2 border-t border-gray-700/50 mt-2">
                              <span>Totale</span>
-                             <span>€{totalAmount.toFixed(2)}</span>
+                             <span className="text-indigo-400">€{totalAmount.toFixed(2)}</span>
                          </div>
                      </div>
 
@@ -833,10 +832,10 @@ const EventDetails: React.FC = () => {
                                  type="checkbox" 
                                  checked={acceptedTerms}
                                  onChange={e => setAcceptedTerms(e.target.checked)}
-                                 className="mt-1 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                 className="mt-1 h-4 w-4 text-indigo-600 bg-gray-700 border-gray-600 rounded focus:ring-indigo-500"
                              />
-                             <label htmlFor="terms" className="ml-2 text-xs text-gray-500">
-                                 Accetto i <Link to="/terms" className="text-indigo-600 hover:underline">Termini e Condizioni</Link>. 
+                             <label htmlFor="terms" className="ml-2 text-[10px] text-gray-500 leading-tight">
+                                 Accetto i <Link to="/terms" className="text-indigo-400 hover:underline">Termini e Condizioni</Link>. 
                                  Comprendo che la fee di servizio non è rimborsabile.
                              </label>
                          </div>
@@ -848,8 +847,8 @@ const EventDetails: React.FC = () => {
                          disabled={isSoldOut || purchasing || (!isFree && !user)}
                          className={`w-full py-3 px-4 rounded-xl font-bold text-white shadow-lg transition transform active:scale-95 flex items-center justify-center ${
                              isSoldOut 
-                             ? 'bg-gray-400 cursor-not-allowed' 
-                             : 'bg-indigo-600 hover:bg-indigo-700'
+                             ? 'bg-gray-700 cursor-not-allowed text-gray-500 border border-gray-600' 
+                             : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/10'
                          }`}
                      >
                          {purchasing ? (
@@ -864,25 +863,25 @@ const EventDetails: React.FC = () => {
                      </button>
                      
                      {!user && !isSoldOut && (
-                         <p className="text-xs text-center text-gray-500 mt-2">
+                         <p className="text-[10px] text-center text-indigo-400 mt-3 font-medium uppercase tracking-wider">
                              Devi effettuare il login per prenotare.
                          </p>
                      )}
                 </div>
 
                 {/* Additional Info / When & Where Small */}
-                <div className="mt-6 bg-indigo-50 rounded-xl p-4 border border-indigo-100">
-                    <h4 className="font-bold text-indigo-900 mb-2 flex items-center"><Info className="w-4 h-4 mr-2"/> Info Utili</h4>
-                    <p className="text-xs text-indigo-800 mb-2">
-                        Mostra il QR Code all'ingresso. Non serve stampare il biglietto.
+                <div className="mt-6 bg-indigo-900/20 rounded-xl p-4 border border-indigo-900/30">
+                    <h4 className="font-bold text-indigo-300 mb-2 flex items-center text-sm uppercase tracking-wide"><Info className="w-4 h-4 mr-2 text-indigo-400"/> Info Utili</h4>
+                    <p className="text-xs text-gray-400 mb-3 leading-relaxed">
+                        Mostra il QR Code all'ingresso direttamente dal tuo smartphone. Non serve stampare il biglietto.
                     </p>
                      <a 
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
                         target="_blank" 
                         rel="noreferrer"
-                        className="text-xs font-bold text-indigo-600 hover:underline flex items-center"
+                        className="text-xs font-bold text-indigo-400 hover:text-indigo-300 hover:underline flex items-center transition"
                      >
-                         <MapPin className="w-3 h-3 mr-1" /> Apri Mappa
+                         <MapPin className="w-3 h-3 mr-1" /> Apri su Google Maps
                      </a>
                 </div>
             </div>

@@ -1,5 +1,3 @@
-
-
 import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -99,7 +97,7 @@ function App() {
     <AuthProvider>
       <NotificationManager />
       <Router>
-        <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
+        <div className="min-h-screen bg-gray-900 font-sans text-white flex flex-col">
           <Navbar />
           <main className="flex-grow pb-20 md:pb-0">
             <Routes>

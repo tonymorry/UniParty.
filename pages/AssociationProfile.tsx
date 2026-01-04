@@ -74,38 +74,38 @@ const AssociationProfile: React.FC = () => {
 
   if (loading) {
       return (
-          <div className="min-h-screen flex items-center justify-center bg-gray-50">
-               <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+          <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+               <div className="w-12 h-12 border-4 border-indigo-900 border-t-indigo-500 rounded-full animate-spin"></div>
           </div>
       );
   }
 
   if (!association) {
       return (
-          <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Associazione non trovata</h2>
-              <button onClick={() => navigate('/')} className="text-indigo-600 font-semibold">Torna alla Home</button>
+          <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 p-4 text-white">
+              <h2 className="text-xl font-bold text-white mb-2">Associazione non trovata</h2>
+              <button onClick={() => navigate('/')} className="text-indigo-400 font-semibold hover:text-indigo-300 transition">Torna alla Home</button>
           </div>
       );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-900 pb-20 text-white">
       {/* HEADER / BANNER */}
-      <div className="bg-white shadow-sm border-b border-gray-100">
+      <div className="bg-gray-800 shadow-sm border-b border-gray-700">
           <div className="max-w-4xl mx-auto px-4 py-8">
-               <button onClick={() => navigate(-1)} className="mb-6 flex items-center text-gray-500 hover:text-indigo-600 transition">
+               <button onClick={() => navigate(-1)} className="mb-6 flex items-center text-gray-400 hover:text-white transition">
                    <ArrowLeft className="w-5 h-5 mr-2" /> Indietro
                </button>
 
                <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10">
                     {/* Avatar */}
                     <div className="flex-shrink-0">
-                        <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-100">
+                        <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-gray-700 shadow-lg overflow-hidden bg-gray-900">
                             {association.profileImage ? (
                                 <img src={association.profileImage} alt={association.name} className="w-full h-full object-cover" />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-300">
+                                <div className="w-full h-full flex items-center justify-center bg-indigo-900/20 text-indigo-400">
                                     <Briefcase className="w-16 h-16" />
                                 </div>
                             )}
@@ -115,23 +115,23 @@ const AssociationProfile: React.FC = () => {
                     {/* Info */}
                     <div className="flex-1 text-center md:text-left space-y-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">{association.name}</h1>
+                            <h1 className="text-3xl font-bold text-white">{association.name}</h1>
                             {association.description && (
-                                <p className="text-gray-600 mt-2 whitespace-pre-line leading-relaxed max-w-2xl">
+                                <p className="text-gray-400 mt-2 whitespace-pre-line leading-relaxed max-w-2xl">
                                     {association.description}
                                 </p>
                             )}
                         </div>
 
                         <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-sm">
-                            <div className="flex items-center text-gray-700 font-medium bg-gray-100 px-3 py-1 rounded-full">
-                                <Users className="w-4 h-4 mr-2 text-indigo-600" />
+                            <div className="flex items-center text-gray-300 font-medium bg-gray-900 px-3 py-1 rounded-full border border-gray-700">
+                                <Users className="w-4 h-4 mr-2 text-indigo-400" />
                                 {association.followersCount || 0} Followers
                             </div>
                             
                             {association.socialLinks && (
-                                <div className="flex items-center text-gray-600">
-                                    <Globe className="w-4 h-4 mr-2 text-indigo-400" />
+                                <div className="flex items-center text-gray-500">
+                                    <Globe className="w-4 h-4 mr-2 text-indigo-900/50" />
                                     <span className="truncate max-w-[200px]">{association.socialLinks}</span>
                                 </div>
                             )}
@@ -143,9 +143,9 @@ const AssociationProfile: React.FC = () => {
                                  <button
                                     onClick={handleToggleFollow}
                                     disabled={followLoading}
-                                    className={`px-8 py-2.5 rounded-full font-bold shadow-md transition transform active:scale-95 flex items-center mx-auto md:mx-0 ${
+                                    className={`px-8 py-2.5 rounded-full font-bold shadow-lg transition transform active:scale-95 flex items-center mx-auto md:mx-0 ${
                                         isFollowing() 
-                                        ? 'bg-gray-100 text-gray-800 border border-gray-200 hover:bg-gray-200' 
+                                        ? 'bg-gray-700 text-gray-300 border border-gray-600 hover:bg-gray-650' 
                                         : 'bg-indigo-600 text-white hover:bg-indigo-700'
                                     }`}
                                 >
@@ -172,8 +172,8 @@ const AssociationProfile: React.FC = () => {
 
       {/* EVENTS GRID */}
       <div className="max-w-6xl mx-auto px-4 py-12">
-           <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
-               <Calendar className="w-6 h-6 mr-3 text-indigo-600" />
+           <h2 className="text-2xl font-bold text-white mb-8 flex items-center">
+               <Calendar className="w-6 h-6 mr-3 text-indigo-400" />
                Prossimi Eventi
            </h2>
            
@@ -184,12 +184,12 @@ const AssociationProfile: React.FC = () => {
                    ))}
                </div>
            ) : (
-               <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
-                   <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                       <Calendar className="w-8 h-8 text-gray-300" />
+               <div className="text-center py-20 bg-gray-800 rounded-2xl shadow-sm border border-gray-700">
+                   <div className="w-16 h-16 bg-gray-900/50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-700">
+                       <Calendar className="w-8 h-8 text-gray-600" />
                    </div>
-                   <p className="text-gray-500 font-medium">Nessun evento in programma al momento.</p>
-                   <p className="text-sm text-gray-400 mt-1">Segui l'associazione per ricevere notifiche sui nuovi eventi!</p>
+                   <p className="text-gray-400 font-medium">Nessun evento in programma al momento.</p>
+                   <p className="text-sm text-gray-500 mt-1 italic">Segui l'associazione per ricevere notifiche sui nuovi eventi!</p>
                </div>
            )}
       </div>

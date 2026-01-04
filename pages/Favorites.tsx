@@ -33,29 +33,29 @@ const Favorites: React.FC = () => {
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 text-white">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center mb-8">
             <Heart className="w-8 h-8 text-red-500 mr-3 fill-red-500" />
-            <h1 className="text-3xl font-bold text-gray-900">Your Favorite Events</h1>
+            <h1 className="text-3xl font-bold text-white">Your Favorite Events</h1>
         </div>
         
         {loading ? (
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="bg-gray-200 rounded-xl h-96 animate-pulse"></div>
+                  <div key={i} className="bg-gray-800 rounded-xl h-96 animate-pulse border border-gray-700"></div>
                 ))}
              </div>
         ) : events.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-2xl shadow-sm">
-                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center py-20 bg-gray-800 rounded-2xl shadow-sm border border-gray-700">
+                <div className="w-16 h-16 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-900/30">
                     <Heart className="w-8 h-8 text-red-400" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">No favorites yet</h3>
-                <p className="text-gray-500 mb-6">Start exploring events and click the heart icon to save them here!</p>
+                <h3 className="text-xl font-bold text-white mb-2">No favorites yet</h3>
+                <p className="text-gray-400 mb-6">Start exploring events and click the heart icon to save them here!</p>
                 <button 
                     onClick={() => navigate('/')}
-                    className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 transition"
+                    className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-lg"
                 >
                     Explore Events
                 </button>
