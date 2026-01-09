@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -78,10 +79,10 @@ const EventAttendees: React.FC = () => {
             `"${a.exitTime ? new Date(a.exitTime).toLocaleString() : ''}"`
         ]);
 
-        // Join content
+        // Join content using semicolon (;) for better compatibility with Excel (European locales)
         const csvContent = [
-            headers.join(','), 
-            ...rows.map(e => e.join(','))
+            headers.join(';'), 
+            ...rows.map(e => e.join(';'))
         ].join('\n');
 
         // Create Blob with BOM for Excel compatibility (UTF-8)
