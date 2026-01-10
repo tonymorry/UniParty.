@@ -14,6 +14,7 @@ const PaymentSuccess: React.FC = () => {
     const finalize = async () => {
       const sessionId = searchParams.get('session_id');
       
+      // If we are in real mode, we MUST have a session_id from Stripe
       if (sessionId && user) {
         try {
            await api.payments.verifyPayment(sessionId);
@@ -23,8 +24,10 @@ const PaymentSuccess: React.FC = () => {
             setStatus('error');
         }
       } else {
-         const eventId = searchParams.get('eventId') || searchParams.get('free_order_id');
+         // Fallback for Mock Mode testing if url params present
+         const eventId = searchParams.get('eventId');
          if(eventId) {
+             // Mock mode logic
              setStatus('success');
          } else {
              navigate('/');
@@ -36,28 +39,28 @@ const PaymentSuccess: React.FC = () => {
   }, [searchParams, user, navigate]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-dark-deep p-4">
-        <div className="bg-white/5 backdrop-blur-md p-10 rounded-3xl shadow-2xl max-w-md w-full text-center border border-white/10 animate-in fade-in zoom-in duration-500">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
             {status === 'processing' && (
-                <div className="space-y-6">
-                    <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mx-auto shadow-[0_0_15px_rgba(99,102,241,0.3)]"></div>
-                    <h2 className="text-2xl font-black text-white tracking-tight">Finalizing order...</h2>
-                    <p className="text-gray-500 font-medium">Please do not close this window.</p>
+                <div className="space-y-4">
+                    <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
+                    <h2 className="text-xl font-bold text-gray-900">Finalizing your order...</h2>
+                    <p className="text-gray-500">Please do not close this window.</p>
                 </div>
             )}
             
             {status === 'success' && (
-                <div className="space-y-8">
-                    <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto border border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.2)]">
-                        <CheckCircle className="w-12 h-12 text-green-400" />
+                <div className="space-y-6 animate-in fade-in zoom-in duration-300">
+                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                        <CheckCircle className="w-10 h-10 text-green-600" />
                     </div>
                     <div>
-                        <h2 className="text-4xl font-black text-white mb-3 tracking-tighter">Success!</h2>
-                        <p className="text-gray-400 font-medium">Your vouchers have been issued and sent to your email.</p>
+                        <h2 className="text-3xl font-bold text-gray-900 mb-2">Success!</h2>
+                        <p className="text-gray-600">Your vouchers have been issued and sent to your email.</p>
                     </div>
                     <button 
                         onClick={() => navigate('/wallet')}
-                        className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-2xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.4)] active:scale-95"
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition"
                     >
                         Go to My Wallet
                     </button>
@@ -65,17 +68,17 @@ const PaymentSuccess: React.FC = () => {
             )}
 
             {status === 'error' && (
-                <div className="space-y-8">
-                    <div className="w-24 h-24 bg-red-500/20 rounded-full flex items-center justify-center mx-auto border border-red-500/30 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
-                        <AlertTriangle className="w-12 h-12 text-red-400" />
+                <div className="space-y-6">
+                    <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                        <AlertTriangle className="w-10 h-10 text-red-600" />
                     </div>
                     <div>
-                        <h2 className="text-3xl font-black text-white mb-3 tracking-tight">Something went wrong</h2>
-                        <p className="text-gray-400 font-medium">We couldn't verify your payment instantly. Please check your email or contact support.</p>
+                        <h2 className="text-3xl font-bold text-gray-900 mb-2">Something went wrong</h2>
+                        <p className="text-gray-600">We couldn't verify your payment instantly. Please check your email or contact support.</p>
                     </div>
                     <button 
                         onClick={() => navigate('/')}
-                        className="w-full bg-white/10 hover:bg-white/20 text-white font-black py-4 rounded-2xl transition-all border border-white/10"
+                        className="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-lg transition"
                     >
                         Return Home
                     </button>
