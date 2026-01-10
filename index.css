@@ -3,58 +3,8 @@
 @tailwind utilities;
 
 @layer base {
-  html, body {
-    @apply bg-slate-950 text-slate-100 selection:bg-indigo-500/30;
+  body {
+    @apply bg-gray-900 text-white;
     font-family: 'Inter', sans-serif;
-    scroll-behavior: smooth;
-    overflow-x: hidden;
   }
-
-  h1, h2, h3, h4, .font-display {
-    font-family: 'Outfit', sans-serif;
-  }
-}
-
-@layer components {
-  .page-container {
-    @apply min-h-screen pt-28 pb-20 md:pb-12 relative z-10;
-  }
-
-  .glass-panel {
-    @apply backdrop-blur-xl bg-slate-900/60 border border-white/10 shadow-2xl;
-  }
-
-  .neon-border {
-    @apply border border-white/10 hover:border-indigo-500/50 transition-colors duration-300;
-  }
-
-  .neon-glow-purple {
-    @apply shadow-[0_0_20px_rgba(168,85,247,0.15)];
-  }
-
-  .neon-glow-indigo {
-    @apply shadow-[0_0_30px_rgba(99,102,241,0.2)];
-  }
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  @apply bg-slate-950;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-slate-800 rounded-full border-2 border-slate-950 hover:bg-slate-700 transition-colors;
-}
-
-/* Hide scrollbar for Chrome, Safari and Opera */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-/* Hide scrollbar for IE, Edge and Firefox */
-.no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
 }

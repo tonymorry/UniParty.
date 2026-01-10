@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -7,7 +8,7 @@ import { api } from '../services/api';
 import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell, LogOut, MapPin, ChevronDown } from 'lucide-react';
 
 const UniPartyLogo = () => (
-  <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 filter drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">
+  <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-9 w-9">
     <defs>
       <linearGradient id="logo_gradient" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#3b82f6" />
@@ -23,6 +24,12 @@ const UniPartyLogo = () => (
         d="M50 35 L54 45 H65 L56 52 L60 63 L50 56 L40 63 L44 52 L35 45 H46 L50 35 Z" 
         fill="white" 
       />
+      <circle cx="65" cy="35" r="2" fill="white" fillOpacity="0.8" />
+      <circle cx="35" cy="65" r="2" fill="white" fillOpacity="0.8" />
+      <path d="M50 25 V28" stroke="white" strokeWidth="2" strokeLinecap="round" />
+      <path d="M50 72 V75" stroke="white" strokeWidth="2" strokeLinecap="round" />
+      <path d="M25 50 H28" stroke="white" strokeWidth="2" strokeLinecap="round" />
+      <path d="M72 50 H75" stroke="white" strokeWidth="2" strokeLinecap="round" />
     </g>
   </svg>
 );
@@ -72,50 +79,80 @@ const Navbar: React.FC = () => {
       }
   };
 
+  // --- STAFF SIMPLIFIED NAVBAR ---
+  if (user?.role === UserRole.STAFF) {
+      return (
+        <nav className="bg-slate-950 text-white shadow-lg sticky top-0 z-50 border-b border-indigo-500/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center space-x-2">
+                <UniPartyLogo />
+                <span className="text-xl font-bold tracking-wider">Staff Scanner</span>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <Link 
+                    to="/scanner" 
+                    className="flex items-center px-3 py-2 rounded-md text-sm font-bold bg-indigo-600 hover:bg-indigo-500 transition shadow-md"
+                >
+                    <ScanLine className="h-4 w-4 mr-2" /> Scanner
+                </Link>
+                <button 
+                    onClick={handleLogout}
+                    className="p-2 text-indigo-300 hover:text-white transition"
+                    title="Logout"
+                >
+                    <LogOut className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </nav>
+      );
+  }
+
+  // --- ORIGINAL NAVBAR ---
   return (
-    <nav className="fixed top-4 left-0 right-0 z-50 px-4 pointer-events-none">
-      <div className="max-w-7xl mx-auto pointer-events-auto">
-        <div className="glass-panel backdrop-blur-2xl bg-slate-900/70 rounded-2xl border border-white/10 px-4 h-16 flex items-center justify-between shadow-2xl neon-glow-indigo">
-          
+    <nav className="bg-slate-950 text-white shadow-lg sticky top-0 z-50 border-b border-white/5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
           {/* Logo & City Selector */}
-          <div className="flex items-center space-x-3 sm:space-x-6">
-            <Link to="/" className="flex items-center space-x-2 group" onClick={() => setIsOpen(false)}>
+          <div className="flex items-center space-x-4">
+            <Link to="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
               <UniPartyLogo />
-              <span className="text-xl font-display font-bold tracking-tight text-white group-hover:text-indigo-400 transition-colors hidden sm:inline">UniParty</span>
+              <span className="text-xl font-bold tracking-wider hidden sm:inline">UniParty</span>
             </Link>
 
-            <div className="h-6 w-px bg-white/10 hidden sm:block"></div>
-
-            {/* City Selector */}
+            {/* City Selector with Groups */}
             <div className="relative">
               <button 
                 onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all duration-300 text-sm font-semibold text-slate-200"
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-full bg-gray-800 border border-gray-700 hover:bg-gray-700 transition shadow-sm text-sm font-semibold text-indigo-100"
               >
                 <MapPin className="h-3.5 w-3.5 text-indigo-400" />
                 <span className="max-w-[80px] sm:max-w-[120px] truncate">{selectedCity}</span>
-                <ChevronDown className={`h-3.5 w-3.5 text-slate-500 transition-transform duration-300 ${isCityDropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isCityDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setIsCityDropdownOpen(false)}></div>
-                  <div className="absolute top-12 left-0 w-64 z-20 bg-slate-900/95 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="max-h-[70vh] overflow-y-auto py-2 no-scrollbar">
+                  <div className="absolute top-10 left-0 w-64 z-20 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="max-h-[70vh] overflow-y-auto py-2">
                       <button
                         onClick={() => {
                           setSelectedCity('Tutte');
                           setIsCityDropdownOpen(false);
                           if (location.pathname !== '/') navigate('/');
                         }}
-                        className={`w-full text-left px-5 py-2.5 text-sm font-bold border-b border-white/5 transition ${selectedCity === 'Tutte' ? 'bg-indigo-600/20 text-indigo-400' : 'text-slate-400 hover:bg-white/5'}`}
+                        className={`w-full text-left px-4 py-2 text-sm font-bold border-b border-gray-700 transition ${selectedCity === 'Tutte' ? 'bg-indigo-600 text-white' : 'text-indigo-400 hover:bg-gray-700'}`}
                       >
                         Tutte le città
                       </button>
                       
                       {Object.entries(UNIVERSITY_LOCATIONS).map(([region, cities]) => (
                         <div key={region} className="mt-2">
-                          <div className="px-5 py-1 text-[10px] uppercase font-bold text-slate-500 tracking-widest">
+                          <div className="px-4 py-1 text-[10px] uppercase font-black text-gray-500 tracking-widest bg-gray-900/50">
                             {region}
                           </div>
                           {cities.map(city => (
@@ -126,7 +163,7 @@ const Navbar: React.FC = () => {
                                 setIsCityDropdownOpen(false);
                                 if (location.pathname !== '/') navigate('/');
                               }}
-                              className={`w-full text-left px-6 py-2 text-sm transition ${selectedCity === city ? 'bg-indigo-600/20 text-indigo-400 font-bold' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+                              className={`w-full text-left px-5 py-1.5 text-sm transition ${selectedCity === city ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`}
                             >
                               {city}
                             </button>
@@ -140,107 +177,213 @@ const Navbar: React.FC = () => {
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center space-x-2">
+          {/* Desktop Right Actions */}
+          <div className="flex items-center space-x-4">
+              {/* Notification Bell (User Only) */}
               {user && (
-                  <Link to="/notifications" className="relative p-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300">
-                      <Bell className="w-5 h-5" />
+                  <Link to="/notifications" className="relative p-2 text-indigo-200 hover:text-white transition">
+                      <Bell className="w-6 h-6" />
                       {unreadCount > 0 && (
-                          <span className="absolute top-2 right-2 flex h-4 w-4 rounded-full bg-indigo-500 border-2 border-slate-950 text-[10px] font-bold text-center items-center justify-center">
+                          <span className="absolute top-1 right-1 block h-4 w-4 rounded-full bg-red-500 ring-2 ring-slate-950 text-[10px] font-bold text-center flex items-center justify-center">
                               {unreadCount}
                           </span>
                       )}
                   </Link>
               )}
 
-              <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 focus:outline-none transition-all duration-300"
-              >
-                {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </button>
+              {/* HAMBURGER MENU TOGGLE BUTTON */}
+              <div className="md:hidden">
+                <button
+                  onClick={() => setIsOpen(!isOpen)}
+                  className="inline-flex items-center justify-center p-2 rounded-md text-indigo-200 hover:text-white hover:bg-gray-800 focus:outline-none transition-colors"
+                >
+                  <span className="sr-only">Open main menu</span>
+                  {isOpen ? <X className="h-8 w-8" /> : <Menu className="h-8 w-8" />}
+                </button>
+              </div>
+
+              {/* Desktop Menu Button */}
+              <div className="hidden md:flex">
+                  <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="inline-flex items-center justify-center p-2 rounded-md text-indigo-200 hover:text-white hover:bg-gray-800 focus:outline-none transition-colors"
+                  >
+                     <Menu className="h-8 w-8" />
+                  </button>
+              </div>
           </div>
         </div>
-
-        {/* Dropdown Menu Container */}
-        {isOpen && (
-          <div className="mt-2 glass-panel backdrop-blur-3xl bg-slate-900/90 rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-auto">
-            <div className="p-2 space-y-1">
-              <Link 
-                  to="/" 
-                  className={`block px-4 py-3 rounded-xl text-sm font-medium transition-colors ${isActive('/') ? 'bg-indigo-600/20 text-indigo-400 font-bold' : 'text-slate-300 hover:bg-white/5'}`}
-                  onClick={() => setIsOpen(false)}
-              >
-                  Events
-              </Link>
-
-              {!user && (
-                <Link 
-                  to="/auth" 
-                  className="block px-4 py-3 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 mt-2 text-center text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] transition-all duration-300"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Login / Register
-                </Link>
-              )}
-
-              {user && (
-                 <>
-                   <div className="h-px bg-white/5 my-2 mx-4"></div>
-                   {user.role === UserRole.STUDENTE && (
-                     <>
-                       <Link to="/wallet" className="flex items-center px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/5 transition" onClick={() => setIsOpen(false)}>
-                          <Ticket className="h-5 w-5 mr-3 text-indigo-400" /> My Wallet
-                       </Link>
-                       <Link to="/favorites" className="flex items-center px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/5 transition" onClick={() => setIsOpen(false)}>
-                          <Heart className="h-5 w-5 mr-3 text-pink-500" /> Favorites
-                       </Link>
-                     </>
-                   )}
-                   {user.role === UserRole.ASSOCIAZIONE && (
-                     <>
-                       <Link to="/dashboard" className="flex items-center px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/5 transition" onClick={() => setIsOpen(false)}>
-                          <LayoutDashboard className="h-5 w-5 mr-3 text-indigo-400" /> Dashboard
-                       </Link>
-                       <Link to="/scanner" className="flex items-center px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/5 transition" onClick={() => setIsOpen(false)}>
-                          <ScanLine className="h-5 w-5 mr-3 text-cyan-400" /> Scanner
-                       </Link>
-                     </>
-                   )}
-                   {user.role === UserRole.ADMIN && (
-                     <Link to="/admin" className="flex items-center px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition" onClick={() => setIsOpen(false)}>
-                        <Shield className="h-5 w-5 mr-3" /> Admin Dashboard
-                     </Link>
-                   )}
-                   
-                   <div className="h-px bg-white/5 my-2 mx-4"></div>
-                   
-                   <div className="flex items-center px-4 py-3 space-x-3">
-                      <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-                        {user.profileImage ? <img src={user.profileImage} className="w-full h-full object-cover rounded-full" /> : <UserIcon className="h-5 w-5 text-indigo-400" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{user.name}</p>
-                        <p className="text-xs text-slate-500 capitalize">{user.role}</p>
-                      </div>
-                      <Link to="/profile" className="text-xs font-bold text-indigo-400 hover:underline" onClick={() => setIsOpen(false)}>Edit</Link>
-                   </div>
-
-                   <button onClick={handleLogout} className="w-full text-left flex items-center px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-white/5 hover:text-white transition">
-                      <LogOut className="h-5 w-5 mr-3" /> Logout
-                   </button>
-                 </>
-              )}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* DROPDOWN MENU */}
+      {isOpen && (
+        <div className="absolute top-16 right-0 w-full sm:w-80 z-50 bg-gray-800 border-b-2 border-l-2 border-gray-700 shadow-2xl animate-in slide-in-from-top-2 duration-200 sm:rounded-bl-xl max-h-[calc(100vh-4rem)] overflow-y-auto">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            
+            <Link 
+                to="/" 
+                className="block px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 transition"
+                onClick={() => setIsOpen(false)}
+            >
+                Events
+            </Link>
+
+            {!user && (
+              <Link 
+                to="/auth" 
+                className="block px-3 py-3 rounded-md text-base font-medium bg-indigo-600 hover:bg-indigo-500 mt-2 text-center shadow-md transition"
+                onClick={() => setIsOpen(false)}
+              >
+                Login / Register
+              </Link>
+            )}
+
+            {user && user.role === UserRole.STUDENTE && (
+               <>
+                 <Link 
+                    to="/search" 
+                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 transition"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <Search className="h-5 w-5 mr-3 text-indigo-400" /> Search Associations
+                 </Link>
+                 <Link 
+                    to="/wallet" 
+                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 transition"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <Ticket className="h-5 w-5 mr-3 text-yellow-500" /> My Wallet
+                 </Link>
+                 <Link 
+                    to="/favorites" 
+                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 transition"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <Heart className="h-5 w-5 mr-3 text-red-500" /> Favorite Events
+                 </Link>
+               </>
+            )}
+
+            {/* Association Specific Links */}
+            {user && user.role === UserRole.ASSOCIAZIONE && (
+               <>
+                 <Link 
+                    to="/dashboard" 
+                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 transition"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <LayoutDashboard className="h-5 w-5 mr-3 text-indigo-400" /> Dashboard
+                 </Link>
+                 <Link 
+                    to="/dashboard?tab=create" 
+                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 transition"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <PlusCircle className="h-5 w-5 mr-3 text-green-500" /> Add Event
+                 </Link>
+                 <Link 
+                    to="/scanner" 
+                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 bg-gray-900 mt-1 transition shadow-inner"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <ScanLine className="h-5 w-5 mr-3 text-cyan-400" /> Scan Voucher
+                 </Link>
+               </>
+             )}
+
+             {/* Admin Link */}
+             {user && user.role === UserRole.ADMIN && (
+                 <Link 
+                    to="/admin" 
+                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-900 bg-slate-950 mt-1 transition shadow-inner border border-red-900/20"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <Shield className="h-5 w-5 mr-3 text-red-500" /> Admin Dashboard
+                 </Link>
+             )}
+
+             {/* User Profile Section */}
+             {user && (
+               <div className="border-t border-gray-700 mt-2 pt-2 pb-1">
+                 <div className="flex items-center px-3 mb-2 pt-2">
+                    <div className="flex-shrink-0">
+                       <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600 shadow-sm">
+                         <UserIcon className="h-6 w-6 text-indigo-400" />
+                       </div>
+                    </div>
+                    <div className="ml-3 overflow-hidden">
+                      <div className="text-base font-bold leading-none text-white truncate">{user.name}</div>
+                      <div className="text-xs font-medium leading-none text-gray-400 mt-1 capitalize">{user.role}</div>
+                    </div>
+                 </div>
+                 
+                 <Link 
+                    to="/profile" 
+                    className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition text-gray-300 hover:text-white"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    My Profile
+                 </Link>
+                 
+                 <Link 
+                    to="/notifications" 
+                    className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition text-gray-300 hover:text-white flex items-center justify-between"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <span>Notifications</span>
+                    {unreadCount > 0 && <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">{unreadCount}</span>}
+                 </Link>
+               </div>
+             )}
+
+             {/* Help & Legal Section */}
+             <div className="border-t border-gray-700 mt-2 pt-2">
+                <Link 
+                    to="/support" 
+                    className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition text-gray-400 hover:text-white"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <HelpCircle className="h-4 w-4 mr-3" /> Support
+                 </Link>
+                 <Link 
+                    to="/terms" 
+                    className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition text-gray-400 hover:text-white"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <FileText className="h-4 w-4 mr-3" /> Termini & Condizioni
+                 </Link>
+                 <Link 
+                    to="/privacy" 
+                    className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition text-gray-400 hover:text-white"
+                    onClick={() => setIsOpen(false)}
+                 >
+                    <Shield className="h-4 w-4 mr-3" /> Privacy Policy
+                 </Link>
+             </div>
+
+             {user && (
+                <div className="border-t border-gray-700 mt-2 pt-2 pb-2">
+                    <button
+                        onClick={handleLogout}
+                        className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-gray-700 transition mb-1"
+                    >
+                        Logout
+                    </button>
+                    
+                    <button
+                        onClick={handleDeleteAccount}
+                        className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium text-red-400 hover:text-red-300 hover:bg-red-900/20 transition"
+                    >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Account
+                    </button>
+                </div>
+             )}
+          </div>
+        </div>
+      )}
     </nav>
   );
-
-  function isActive(path: string) {
-    return location.pathname === path;
-  }
 };
 
 export default Navbar;
