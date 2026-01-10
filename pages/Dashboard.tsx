@@ -2,13 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { UserRole, EventCategory, Event, User } from '../types';
+import { UserRole, EventCategory, Event, User, UNIVERSITY_LOCATIONS } from '../types';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { 
     AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, 
     ShieldCheck, Lock, Info, Upload, FileText, TrendingUp, Briefcase, Ticket, LayoutDashboard, Calendar, Settings, GraduationCap, UserPlus, Key, Trash2, MapPin
 } from 'lucide-react';
-import { CITIES } from '../context/LocationContext';
 
 const Dashboard: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -31,6 +30,7 @@ const Dashboard: React.FC = () => {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('22:00');
   const [location, setLocation] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState('');
   const [city, setCity] = useState('');
   const [image, setImage] = useState('');
   const [maxCapacity, setMaxCapacity] = useState('100');
@@ -53,6 +53,11 @@ const Dashboard: React.FC = () => {
   const [isManagingStaff, setIsManagingStaff] = useState(false);
   const [staffList, setStaffList] = useState<User[]>([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
+
+  // Reset city if region changes
+  useEffect(() => {
+    setCity('');
+  }, [selectedRegion]);
 
   // Handle Query Param for Tab
   useEffect(() => {
@@ -283,9 +288,7 @@ const Dashboard: React.FC = () => {
                </div>
            </div>
 
-           {/* ==================================================================================
-               TAB 1: PANORAMICA
-               ================================================================================== */}
+           {/* PANORAMICA */}
            {activeTab === 'overview' && (
                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                    <div className={`bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 ${user.stripeOnboardingComplete ? 'border-green-500' : 'border-blue-500'}`}>
@@ -424,9 +427,7 @@ const Dashboard: React.FC = () => {
                </div>
            )}
 
-           {/* ==================================================================================
-               TAB 2: CREA EVENTO
-               ================================================================================== */}
+           {/* CREA EVENTO */}
            {activeTab === 'create' && (
                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                    {!user.isVerified ? (
@@ -496,32 +497,51 @@ const Dashboard: React.FC = () => {
                                            required
                                        />
                                    </div>
+                                   <div className="grid grid-cols-1 gap-2">
+                                       <div>
+                                           <label className="block text-sm font-medium text-gray-300 mb-1">Regione</label>
+                                           <select 
+                                               value={selectedRegion}
+                                               onChange={e => setSelectedRegion(e.target.value)}
+                                               className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
+                                               required
+                                           >
+                                               <option value="">Seleziona Regione...</option>
+                                               {Object.keys(UNIVERSITY_LOCATIONS).map(r => (
+                                                   <option key={r} value={r}>{r}</option>
+                                               ))}
+                                           </select>
+                                       </div>
+                                   </div>
+                               </div>
+
+                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                    <div>
                                        <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center"><MapPin className="w-4 h-4 mr-1 text-indigo-400"/> Città Universitaria</label>
                                        <select 
                                            value={city}
                                            onChange={e => setCity(e.target.value)}
-                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
+                                           className={`w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white ${!selectedRegion ? 'opacity-50 cursor-not-allowed' : ''}`}
                                            required
+                                           disabled={!selectedRegion}
                                        >
-                                           <option value="">Seleziona Città...</option>
-                                           {CITIES.map(c => (
+                                           <option value="">{selectedRegion ? 'Seleziona Città...' : 'Scegli prima una regione'}</option>
+                                           {selectedRegion && UNIVERSITY_LOCATIONS[selectedRegion].map(c => (
                                                <option key={c} value={c}>{c}</option>
                                            ))}
                                        </select>
                                    </div>
-                               </div>
-
-                               <div>
-                                   <label className="block text-sm font-medium text-gray-300 mb-1">Indirizzo Specifico (Location)</label>
-                                   <input 
-                                       type="text" 
-                                       value={location} 
-                                       onChange={e => setLocation(e.target.value)} 
-                                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
-                                       required
-                                       placeholder="Es. Via Roma 123, locale X"
-                                   />
+                                   <div>
+                                       <label className="block text-sm font-medium text-gray-300 mb-1">Indirizzo Specifico (Location)</label>
+                                       <input 
+                                           type="text" 
+                                           value={location} 
+                                           onChange={e => setLocation(e.target.value)} 
+                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
+                                           required
+                                           placeholder="Es. Via Roma 123, locale X"
+                                       />
+                                   </div>
                                </div>
 
                                <div>
@@ -611,9 +631,7 @@ const Dashboard: React.FC = () => {
                </div>
            )}
 
-           {/* ==================================================================================
-               TAB 3: GESTIONE STAFF (NEW)
-               ================================================================================== */}
+           {/* GESTIONE STAFF */}
            {activeTab === 'staff' && (
                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
                    <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden">

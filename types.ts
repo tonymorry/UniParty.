@@ -14,6 +14,32 @@ export enum EventCategory {
   OTHER = 'Other'
 }
 
+export const UNIVERSITY_LOCATIONS: Record<string, string[]> = {
+  "Abruzzo": ["L'Aquila", "Chieti", "Pescara", "Teramo"],
+  "Basilicata": ["Potenza", "Matera"],
+  "Calabria": ["Catanzaro", "Cosenza (Rende)", "Reggio Calabria"],
+  "Campania": ["Napoli", "Salerno", "Benevento", "Caserta", "Avellino"],
+  "Emilia-Romagna": ["Bologna", "Modena", "Reggio Emilia", "Parma", "Ferrara", "Ravenna", "Rimini", "Cesena", "Forlì", "Piacenza"],
+  "Friuli-Venezia Giulia": ["Trieste", "Udine", "Pordenone", "Gorizia"],
+  "Lazio": ["Roma", "Viterbo", "Cassino", "Rieti", "Latina"],
+  "Liguria": ["Genova", "Savona", "Imperia", "La Spezia"],
+  "Lombardia": ["Milano", "Bergamo", "Brescia", "Pavia", "Varese", "Como", "Cremona", "Mantova", "Lecco"],
+  "Marche": ["Ancona", "Urbino", "Macerata", "Camerino", "Ascoli Piceno", "Fermo"],
+  "Molise": ["Campobasso", "Isernia"],
+  "Piemonte": ["Torino", "Novara", "Vercelli", "Alessandria", "Cuneo", "Asti"],
+  "Puglia": ["Bari", "Lecce", "Foggia", "Taranto"],
+  "Sardegna": ["Cagliari", "Sassari", "Nuoro", "Oristano"],
+  "Sicilia": ["Palermo", "Catania", "Messina", "Enna", "Agrigento", "Trapani", "Ragusa", "Siracusa", "Caltanissetta"],
+  "Toscana": ["Firenze", "Pisa", "Siena", "Arezzo", "Lucca"],
+  "Trentino-Alto Adige": ["Trento", "Bolzano"],
+  "Umbria": ["Perugia", "Terni"],
+  "Valle d'Aosta": ["Aosta"],
+  "Veneto": ["Venezia", "Verona", "Padova", "Vicenza", "Treviso", "Rovigo"],
+  "Online": ["Evento Online"]
+};
+
+export const ALL_CITIES = Object.values(UNIVERSITY_LOCATIONS).flat();
+
 export interface User {
   _id: string;
   email: string;
@@ -43,7 +69,7 @@ export interface Event {
   date: string; // ISO Date string
   time: string;
   location: string;
-  city: string; // New field
+  city: string; 
   price: number;
   maxCapacity: number;
   ticketsSold: number;

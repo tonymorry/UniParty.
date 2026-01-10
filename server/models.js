@@ -1,6 +1,20 @@
 
 const mongoose = require('mongoose');
 
+// In una produzione reale, queste dovrebbero essere sincronizzate tramite un file condiviso
+// Qui le definiamo localmente per assicurare che il backend le conosca.
+const ALL_CITIES = [
+  "L'Aquila", "Chieti", "Pescara", "Teramo", "Potenza", "Matera", "Catanzaro", "Cosenza (Rende)", "Reggio Calabria",
+  "Napoli", "Salerno", "Benevento", "Caserta", "Avellino", "Bologna", "Modena", "Reggio Emilia", "Parma", "Ferrara",
+  "Ravenna", "Rimini", "Cesena", "Forlì", "Piacenza", "Trieste", "Udine", "Pordenone", "Gorizia", "Roma", "Viterbo",
+  "Cassino", "Rieti", "Latina", "Genova", "Savona", "Imperia", "La Spezia", "Milano", "Bergamo", "Brescia", "Pavia",
+  "Varese", "Como", "Cremona", "Mantova", "Lecco", "Ancona", "Urbino", "Macerata", "Camerino", "Ascoli Piceno", "Fermo",
+  "Campobasso", "Isernia", "Torino", "Novara", "Vercelli", "Alessandria", "Cuneo", "Asti", "Bari", "Lecce", "Foggia",
+  "Taranto", "Cagliari", "Sassari", "Nuoro", "Oristano", "Palermo", "Catania", "Messina", "Enna", "Agrigento", "Trapani",
+  "Ragusa", "Siracusa", "Caltanissetta", "Firenze", "Pisa", "Siena", "Arezzo", "Lucca", "Trento", "Bolzano", "Perugia",
+  "Terni", "Aosta", "Venezia", "Verona", "Padova", "Vicenza", "Treviso", "Rovigo", "Evento Online"
+];
+
 // --- USER SCHEMA ---
 const userSchema = new mongoose.Schema({
   email: { 
@@ -73,7 +87,7 @@ const eventSchema = new mongoose.Schema({
   city: { 
     type: String, 
     required: true,
-    enum: ['Palermo', 'Catania', 'Messina', 'Enna', 'Roma', 'Milano', 'Online']
+    enum: ALL_CITIES
   },
   price: { type: Number, required: true, default: 0 },
   maxCapacity: { type: Number, required: true },

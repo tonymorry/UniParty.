@@ -1,8 +1,8 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { ALL_CITIES } from '../types';
 
-export const CITIES = ['Palermo', 'Catania', 'Messina', 'Enna', 'Roma', 'Milano', 'Online'] as const;
-export type City = typeof CITIES[number] | 'Tutte';
+export type City = string | 'Tutte';
 
 interface LocationContextType {
   selectedCity: City;

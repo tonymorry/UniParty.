@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useLocationContext, CITIES, City } from '../context/LocationContext';
-import { UserRole } from '../types';
+import { useLocationContext } from '../context/LocationContext';
+import { UserRole, UNIVERSITY_LOCATIONS } from '../types';
 import { api } from '../services/api';
 import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell, LogOut, MapPin, ChevronDown } from 'lucide-react';
 
@@ -79,8 +79,6 @@ const Navbar: React.FC = () => {
       }
   };
 
-  const cityOptions: City[] = ['Tutte', ...CITIES];
-
   // --- STAFF SIMPLIFIED NAVBAR ---
   if (user?.role === UserRole.STAFF) {
       return (
@@ -125,34 +123,52 @@ const Navbar: React.FC = () => {
               <span className="text-xl font-bold tracking-wider hidden sm:inline">UniParty</span>
             </Link>
 
-            {/* City Selector */}
+            {/* City Selector with Groups */}
             <div className="relative">
               <button 
                 onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
                 className="flex items-center space-x-1 px-3 py-1.5 rounded-full bg-gray-800 border border-gray-700 hover:bg-gray-700 transition shadow-sm text-sm font-semibold text-indigo-100"
               >
                 <MapPin className="h-3.5 w-3.5 text-indigo-400" />
-                <span>{selectedCity}</span>
+                <span className="max-w-[80px] sm:max-w-[120px] truncate">{selectedCity}</span>
                 <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isCityDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setIsCityDropdownOpen(false)}></div>
-                  <div className="absolute top-10 left-0 w-40 z-20 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="py-1">
-                      {cityOptions.map((city) => (
-                        <button
-                          key={city}
-                          onClick={() => {
-                            setSelectedCity(city);
-                            setIsCityDropdownOpen(false);
-                            if (location.pathname !== '/') navigate('/');
-                          }}
-                          className={`w-full text-left px-4 py-2 text-sm transition ${selectedCity === city ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`}
-                        >
-                          {city}
-                        </button>
+                  <div className="absolute top-10 left-0 w-64 z-20 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="max-h-[70vh] overflow-y-auto py-2">
+                      <button
+                        onClick={() => {
+                          setSelectedCity('Tutte');
+                          setIsCityDropdownOpen(false);
+                          if (location.pathname !== '/') navigate('/');
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm font-bold border-b border-gray-700 transition ${selectedCity === 'Tutte' ? 'bg-indigo-600 text-white' : 'text-indigo-400 hover:bg-gray-700'}`}
+                      >
+                        Tutte le città
+                      </button>
+                      
+                      {Object.entries(UNIVERSITY_LOCATIONS).map(([region, cities]) => (
+                        <div key={region} className="mt-2">
+                          <div className="px-4 py-1 text-[10px] uppercase font-black text-gray-500 tracking-widest bg-gray-900/50">
+                            {region}
+                          </div>
+                          {cities.map(city => (
+                            <button
+                              key={city}
+                              onClick={() => {
+                                setSelectedCity(city);
+                                setIsCityDropdownOpen(false);
+                                if (location.pathname !== '/') navigate('/');
+                              }}
+                              className={`w-full text-left px-5 py-1.5 text-sm transition ${selectedCity === city ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`}
+                            >
+                              {city}
+                            </button>
+                          ))}
+                        </div>
                       ))}
                     </div>
                   </div>
