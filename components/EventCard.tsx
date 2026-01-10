@@ -18,27 +18,16 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
   });
 
   // FIX: Strict Integer Math for Price Display
-  // 1. Get Base Price in Cents (e.g. 15.00 -> 1500)
   const priceInCents = Math.round(Number(event.price) * 100);
-  
-  // Use priceInCents === 0 to ensure strict FREE check
   const isFree = priceInCents === 0;
-
-  // 2. Add Fee in Cents (always 40 cents if paid, 0 if free)
   const feeInCents = isFree ? 0 : 40;
-  
-  // 3. Total in cents
   const totalInCents = priceInCents + feeInCents;
-  
-  // 4. Convert back to Euros for display (e.g. 1540 -> 15.40)
   const finalPrice = totalInCents / 100;
 
-  // Logic for ticket display
   const soldRatio = event.ticketsSold / event.maxCapacity;
   const isSoldOut = soldRatio >= 1;
   const isAlmostSoldOut = soldRatio >= 0.6 && !isSoldOut;
   
-  // FIX: Handle potential null organization (e.g. deleted user)
   const organizationId = typeof event.organization === 'string' 
     ? event.organization 
     : event.organization?._id;
@@ -64,74 +53,77 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
 
   return (
     <Link to={`/events/${event._id}`} className="group relative block h-full">
-      <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 border border-gray-700 h-full flex flex-col">
+      <div className="bg-white/5 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] hover:border-indigo-500/30 transition-all duration-500 border border-white/10 h-full flex flex-col">
         <div className="relative h-48 overflow-hidden">
           <img
             src={event.image}
             alt={event.title}
             onError={handleImageError}
-            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
           />
           <div className="absolute top-4 right-4 flex gap-2">
                {/* Favorite Button (Students Only) */}
                {(!user || user.role === UserRole.STUDENTE) && (
                    <button 
                         onClick={handleFavoriteClick}
-                        className="bg-gray-900/80 backdrop-blur-sm p-2 rounded-full shadow-sm hover:scale-110 transition z-10 border border-white/10"
+                        className="bg-black/40 backdrop-blur-md p-2 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all z-10 border border-white/10"
                    >
                        <Heart 
-                          className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'}`} 
+                          className={`w-5 h-5 transition-colors ${isFavorite ? 'fill-neon-pink text-neon-pink' : 'text-white/70 hover:text-neon-pink'}`} 
                         />
                    </button>
                )}
                {/* Owner sees favorite count */}
                {isOwner && (
-                   <div className="bg-gray-900/80 backdrop-blur-sm px-3 py-1 rounded-full text-pink-500 font-bold text-sm shadow-sm flex items-center border border-white/10">
-                       <Heart className="w-3 h-3 mr-1 fill-pink-500" />
+                   <div className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-neon-pink font-bold text-sm shadow-sm flex items-center border border-white/10">
+                       <Heart className="w-3 h-3 mr-1 fill-neon-pink" />
                        {event.favoritesCount || 0}
                    </div>
                )}
-               <div className="bg-indigo-600 px-3 py-1 rounded-full text-white font-bold text-sm shadow-sm flex items-center shadow-lg">
-                    {isFree ? 'Free' : `€${finalPrice.toFixed(2)}`}
+               <div className="bg-indigo-600/90 backdrop-blur-md px-4 py-1.5 rounded-full text-white font-black text-sm shadow-[0_0_15px_rgba(79,70,229,0.5)] flex items-center border border-white/20">
+                    {isFree ? 'FREE' : `€${finalPrice.toFixed(2)}`}
                </div>
           </div>
+          
+          {/* Subtle gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent pointer-events-none"></div>
         </div>
         
-        <div className="p-5 flex-1 flex flex-col">
-          <div className="text-xs font-semibold text-indigo-400 mb-2 uppercase tracking-widest">
+        <div className="p-6 flex-1 flex flex-col">
+          <div className="text-[10px] font-black text-indigo-400 mb-2 uppercase tracking-[0.2em]">
             {typeof event.organization === 'string' ? 'Association' : (event.organization?.name || 'Association')}
           </div>
-          <h3 className="text-lg font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors">
+          <h3 className="text-xl font-extrabold text-white mb-3 group-hover:text-indigo-400 transition-colors leading-tight">
             {event.title}
           </h3>
-          <p className="text-gray-400 text-sm mb-4 line-clamp-2 flex-1 leading-relaxed">
+          <p className="text-gray-400 text-sm mb-6 line-clamp-2 flex-1 leading-relaxed font-medium">
             {event.description}
           </p>
           
-          <div className="space-y-2 text-sm text-gray-500 mt-auto pt-4 border-t border-gray-700">
+          <div className="space-y-3 text-sm text-gray-400 mt-auto pt-5 border-t border-white/5">
             <div className="flex items-center">
-              <Calendar className="h-4 w-4 mr-2 text-indigo-400" />
-              <span className="text-gray-300">{eventDate} • {event.time}</span>
+              <Calendar className="h-4 w-4 mr-3 text-indigo-400/80" />
+              <span className="font-semibold">{eventDate} • {event.time}</span>
             </div>
             <div className="flex items-center">
-              <MapPin className="h-4 w-4 mr-2 text-indigo-400" />
-              <span className="truncate text-gray-300">{event.location}</span>
+              <MapPin className="h-4 w-4 mr-3 text-indigo-400/80" />
+              <span className="truncate font-medium">{event.location}</span>
             </div>
             <div className="flex items-center">
-              <Users className="h-4 w-4 mr-2 text-indigo-400" />
-              <span className="text-gray-300">
+              <Users className="h-4 w-4 mr-3 text-indigo-400/80" />
+              <span className={`font-bold ${isSoldOut ? 'text-red-400' : 'text-gray-300'}`}>
                 {showExactNumbers 
                   ? `${event.ticketsSold}/${event.maxCapacity} Prenotati`
                   : isSoldOut 
-                    ? 'Sold Out' 
+                    ? 'SOLD OUT' 
                     : isAlmostSoldOut 
                       ? 'Ultimi posti!' 
-                      : 'Voucher disponibili'}
+                      : 'Posti disponibili'}
               </span>
             </div>
             {isAlmostSoldOut && !isSoldOut && (
-               <div className="flex items-center text-orange-400 text-xs font-bold mt-1 uppercase tracking-wider">
-                 <Flame className="h-3 w-3 mr-1" />
+               <div className="flex items-center text-orange-400 text-[10px] font-black mt-2 uppercase tracking-widest animate-pulse">
+                 <Flame className="h-3 w-3 mr-1.5" />
                  Selling fast!
                </div>
             )}
