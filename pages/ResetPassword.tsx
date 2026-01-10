@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -55,18 +54,18 @@ const ResetPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gray-100 px-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden p-8">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-[#020617] px-4">
+      <div className="bg-gray-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden p-8 border border-white/5">
         <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Lock className="w-8 h-8 text-indigo-600" />
+            <div className="w-16 h-16 bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-500/20">
+                <Lock className="w-8 h-8 text-indigo-400" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Reimposta Password</h2>
-            <p className="text-gray-500 mt-2">Inserisci la tua nuova password.</p>
+            <h2 className="text-2xl font-bold text-white">Reimposta Password</h2>
+            <p className="text-gray-400 mt-2 text-sm">Inserisci la tua nuova password.</p>
         </div>
 
         {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm text-center border border-red-100">
+            <div className="bg-red-900/20 text-red-400 p-3 rounded-lg mb-4 text-sm text-center border border-red-500/20">
                 {error}
             </div>
         )}
@@ -76,11 +75,11 @@ const ResetPassword: React.FC = () => {
                 <div className="flex justify-center mb-4">
                     <CheckCircle className="w-12 h-12 text-green-500" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Password Aggiornata!</h3>
-                <p className="text-gray-600 mb-4">Verrai reindirizzato al login a breve...</p>
+                <h3 className="text-xl font-bold text-white mb-2">Password Aggiornata!</h3>
+                <p className="text-gray-400 mb-4 text-sm">Verrai reindirizzato al login a breve...</p>
                 <button 
                     onClick={() => navigate('/auth')}
-                    className="text-indigo-600 font-semibold hover:underline"
+                    className="text-indigo-400 font-semibold hover:text-indigo-300 underline"
                 >
                     Vai al Login subito
                 </button>
@@ -88,11 +87,11 @@ const ResetPassword: React.FC = () => {
         ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nuova Password</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Nuova Password</label>
                     <div className="relative">
                         <input
                             type={showPassword ? 'text' : 'password'}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none pr-10"
+                            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-white pr-10"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
@@ -101,13 +100,13 @@ const ResetPassword: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white focus:outline-none"
                         >
                             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">
-                        Min. 6 caratteri, 1 maiuscola, 1 numero, 1 carattere speciale.
+                    <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">
+                        Min. 6 caratteri, 1 maiuscola, 1 numero, 1 speciale.
                     </p>
                 </div>
 
