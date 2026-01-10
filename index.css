@@ -3,8 +3,49 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --nav-height: 4rem;
+    --nav-top: 1rem;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
-    @apply bg-gray-900 text-white;
+    @apply bg-slate-950 text-slate-50 antialiased overflow-x-hidden;
     font-family: 'Inter', sans-serif;
+  }
+
+  /* Global Layout Safety: Prevents fixed navbar from covering content */
+  #root {
+    @apply flex flex-col min-h-screen;
+    padding-top: calc(var(--nav-height) + var(--nav-top) + 1.5rem);
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply backdrop-blur-xl bg-slate-900/60 border border-white/10 shadow-2xl;
+  }
+  
+  .glass-card {
+    @apply backdrop-blur-md bg-slate-900/40 border border-white/5 shadow-lg transition-all duration-300;
+  }
+
+  .neon-border-indigo {
+    @apply border-indigo-500/30 shadow-[0_0_15px_rgba(79,70,229,0.1)];
+  }
+
+  /* Custom scrollbar for glass aesthetic */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-950;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-800 rounded-full hover:bg-slate-700;
   }
 }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -13,13 +12,8 @@ const Dashboard: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  
-  // Tab State: 'overview', 'create', or 'staff'
   const [activeTab, setActiveTab] = useState<'overview' | 'create' | 'staff'>('overview');
-
   const [isConnecting, setIsConnecting] = useState(false);
-  
-  // Overview Data State
   const [assocEvents, setAssocEvents] = useState<Event[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
 
@@ -35,15 +29,10 @@ const Dashboard: React.FC = () => {
   const [image, setImage] = useState('');
   const [maxCapacity, setMaxCapacity] = useState('100');
   const [category, setCategory] = useState<EventCategory>(EventCategory.PARTY);
-  
-  // Advanced Options
   const [requiresAcademicData, setRequiresAcademicData] = useState(false); 
   const [scanType, setScanType] = useState<'entry_only' | 'entry_exit'>('entry_only');
-
-  // PR Lists State
   const [prLists, setPrLists] = useState<string[]>([]);
   const [currentPrInput, setCurrentPrInput] = useState('');
-
   const [creatingEvent, setCreatingEvent] = useState(false);
   const [targetStatus, setTargetStatus] = useState<'active' | 'draft'>('active');
 
@@ -54,24 +43,15 @@ const Dashboard: React.FC = () => {
   const [staffList, setStaffList] = useState<User[]>([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
 
-  // Reset city if region changes
-  useEffect(() => {
-    setCity('');
-  }, [selectedRegion]);
+  useEffect(() => { setCity(''); }, [selectedRegion]);
 
-  // Handle Query Param for Tab
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'create') {
-        setActiveTab('create');
-    } else if (tabParam === 'staff') {
-        setActiveTab('staff');
-    } else {
-        setActiveTab('overview');
-    }
+    if (tabParam === 'create') setActiveTab('create');
+    else if (tabParam === 'staff') setActiveTab('staff');
+    else setActiveTab('overview');
   }, [searchParams]);
 
-  // Fetch Events for Overview
   useEffect(() => {
     if (user && user.role === UserRole.ASSOCIAZIONE) {
       setLoadingEvents(true);
@@ -82,11 +62,8 @@ const Dashboard: React.FC = () => {
     }
   }, [user]);
 
-  // Fetch Staff Accounts
   useEffect(() => {
-    if (activeTab === 'staff' && user && user.role === UserRole.ASSOCIAZIONE) {
-        fetchStaff();
-    }
+    if (activeTab === 'staff' && user && user.role === UserRole.ASSOCIAZIONE) fetchStaff();
   }, [activeTab, user]);
 
   const fetchStaff = async () => {
@@ -94,21 +71,8 @@ const Dashboard: React.FC = () => {
     try {
         const data = await api.auth.getStaffAccounts();
         setStaffList(data);
-    } catch (e) {
-        console.error("Fetch staff error", e);
-    } finally {
-        setLoadingStaff(false);
-    }
+    } catch (e) { console.error(e); } finally { setLoadingStaff(false); }
   };
-
-  if (!user || user.role !== UserRole.ASSOCIAZIONE) {
-    return <div className="p-8 bg-gray-900 text-white min-h-screen">Access Denied</div>;
-  }
-
-  // Calculate Stats
-  const totalEvents = assocEvents.length;
-  const totalTicketsSold = assocEvents.reduce((acc, curr) => acc + curr.ticketsSold, 0);
-  const totalRevenue = assocEvents.reduce((acc, curr) => acc + (curr.ticketsSold * curr.price), 0);
 
   const handleTabChange = (tab: 'overview' | 'create' | 'staff') => {
       setActiveTab(tab);
@@ -118,22 +82,9 @@ const Dashboard: React.FC = () => {
   const handleStripeConnect = async () => {
     setIsConnecting(true);
     try {
-      const link = await api.stripe.createConnectAccount(user._id);
-      if (link) {
-          window.location.href = link;
-      } else {
-           const confirmed = window.confirm("Simulating Stripe Onboarding. Click OK to finish.");
-           if(confirmed) {
-               await api.stripe.finalizeOnboarding(user._id);
-               refreshUser();
-           }
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Failed to connect Stripe");
-    } finally {
-      setIsConnecting(false);
-    }
+      const link = await api.stripe.createConnectAccount(user!._id);
+      if (link) window.location.href = link;
+    } catch (error) { alert("Stripe error"); } finally { setIsConnecting(false); }
   };
 
   const handleAddPrList = () => {
@@ -143,24 +94,11 @@ const Dashboard: React.FC = () => {
       }
   };
 
-  const handleRemovePrList = (listToRemove: string) => {
-      setPrLists(prLists.filter(list => list !== listToRemove));
-  };
-
   const handleImageUpload = () => {
     const widget = window.cloudinary.createUploadWidget(
-      {
-        cloudName: 'db3bj2bgg',
-        uploadPreset: 'wii81qid',
-        sources: ['local', 'url', 'camera', 'instagram'],
-        multiple: false,
-        maxFiles: 1,
-        clientAllowedFormats: ["image"],
-      },
+      { cloudName: 'db3bj2bgg', uploadPreset: 'wii81qid', multiple: false },
       (error: any, result: any) => {
-        if (!error && result && result.event === "success") {
-          setImage(result.info.secure_url);
-        }
+        if (!error && result && result.event === "success") setImage(result.info.secure_url);
       }
     );
     widget.open();
@@ -168,578 +106,167 @@ const Dashboard: React.FC = () => {
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanPriceStr = (user.stripeOnboardingComplete ? price : '0').toString().replace(',', '.');
-    const tempPrice = parseFloat(cleanPriceStr);
-    const numericPrice = isNaN(tempPrice) ? 0 : Number(tempPrice.toFixed(2));
-
-    if (isNaN(numericPrice) || numericPrice < 0) {
-        alert("Prezzo non valido.");
-        return;
-    }
-
-    if (!image) {
-        alert("Per favore carica un'immagine per l'evento.");
-        return;
-    }
-
-    if (!city) {
-        alert("Per favore seleziona una città universitaria.");
-        return;
-    }
-
     setCreatingEvent(true);
     try {
         const newEvent = await api.events.create({
-            title,
-            description,
-            longDescription: description,
-            date,
-            time,
-            location,
-            city,
-            image,
-            maxCapacity: parseInt(maxCapacity),
-            price: numericPrice,
-            category,
-            prLists,
-            status: targetStatus,
-            requiresMatricola: requiresAcademicData, 
-            requiresCorsoStudi: requiresAcademicData, 
-            scanType
+            title, description, longDescription: description, date, time, location, city, image, 
+            maxCapacity: parseInt(maxCapacity), price: parseFloat(price), category, prLists, 
+            status: targetStatus, requiresMatricola: requiresAcademicData, requiresCorsoStudi: requiresAcademicData, scanType
         }, user);
-
-        if (targetStatus === 'draft') {
-            alert("Bozza salvata con successo!");
-            navigate(`/events/${newEvent._id}`);
-        } else {
-            alert("Evento pubblicato con successo!");
-            navigate('/');
-        }
-    } catch (e: any) {
-        console.error(e);
-        alert("Errore creazione evento: " + (e.message || "Unknown"));
-    } finally {
-        setCreatingEvent(false);
-    }
+        navigate(targetStatus === 'draft' ? `/events/${newEvent._id}` : '/');
+    } catch (e) { alert("Error"); } finally { setCreatingEvent(false); }
   };
 
   const handleManageStaff = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!staffEmail || !staffPassword) return;
-
       setIsManagingStaff(true);
       try {
           await api.auth.createStaffAccount({ email: staffEmail, password: staffPassword });
-          alert("Account Staff gestito con successo! Fornisci queste credenziali al tuo personale per lo scanner.");
-          setStaffEmail('');
-          setStaffPassword('');
-          fetchStaff();
-      } catch (e: any) {
-          alert("Errore: " + e.message);
-      } finally {
-          setIsManagingStaff(false);
-      }
+          setStaffEmail(''); setStaffPassword(''); fetchStaff();
+      } catch (e) { alert("Error"); } finally { setIsManagingStaff(false); }
   };
 
-  const handleDeleteStaff = async (id: string) => {
-    if (!window.confirm("Sei sicuro di voler eliminare questo account staff?")) return;
-    try {
-        await api.auth.deleteStaffAccount(id);
-        setStaffList(staffList.filter(s => s._id !== id));
-    } catch (e: any) {
-        alert("Errore: " + e.message);
-    }
-  };
+  if (!user || user.role !== UserRole.ASSOCIAZIONE) return null;
+
+  const totalRevenue = assocEvents.reduce((acc, curr) => acc + (curr.ticketsSold * curr.price), 0);
+  const totalTicketsSold = assocEvents.reduce((acc, curr) => acc + curr.ticketsSold, 0);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white py-8 px-4 sm:px-6 lg:px-8">
-       <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-950 pb-20">
+       <div className="max-w-5xl mx-auto px-4 pt-4">
            
-           {/* Header & Tab Switcher */}
-           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-               <div>
-                   <h1 className="text-3xl font-bold text-white">Dashboard Associazione</h1>
-                   <p className="text-gray-400 text-sm mt-1">Benvenuto, {user.name}.</p>
+           {/* Header & Tab Switcher - SMART STICKY ADJUSTMENT */}
+           <div className="sticky top-24 z-40 mb-8 glass-panel p-4 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-4">
+               <div className="text-center md:text-left">
+                   <h1 className="text-2xl font-black text-white">Dashboard</h1>
+                   <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">{user.name}</p>
                </div>
                
-               {/* Tab Switcher */}
-               <div className="bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-700 flex">
+               <div className="bg-white/5 p-1 rounded-2xl flex">
                    <button
                        onClick={() => handleTabChange('overview')}
-                       className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'overview' ? 'bg-indigo-900 text-indigo-100' : 'text-gray-400 hover:bg-gray-700'}`}
+                       className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center ${activeTab === 'overview' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
                    >
-                       <LayoutDashboard className="w-4 h-4 mr-2" />
-                       Panoramica
+                       <LayoutDashboard className="w-3.5 h-3.5 mr-2" />
+                       Overview
                    </button>
                    <button
                        onClick={() => handleTabChange('create')}
-                       className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'create' ? 'bg-indigo-900 text-indigo-100' : 'text-gray-400 hover:bg-gray-700'}`}
+                       className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center ${activeTab === 'create' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
                    >
-                       <Plus className="w-4 h-4 mr-2" />
-                       Crea Evento
+                       <Plus className="w-3.5 h-3.5 mr-2" />
+                       Create
                    </button>
                    <button
                        onClick={() => handleTabChange('staff')}
-                       className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'staff' ? 'bg-indigo-900 text-indigo-100' : 'text-gray-400 hover:bg-gray-700'}`}
+                       className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center ${activeTab === 'staff' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
                    >
-                       <Users className="w-4 h-4 mr-2" />
+                       <Users className="w-3.5 h-3.5 mr-2" />
                        Staff
                    </button>
                </div>
            </div>
 
-           {/* PANORAMICA */}
            {activeTab === 'overview' && (
-               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                   <div className={`bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 ${user.stripeOnboardingComplete ? 'border-green-500' : 'border-blue-500'}`}>
-                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                           <div className="flex items-start md:items-center">
-                               {user.stripeOnboardingComplete ? (
-                                   <div className="bg-green-900/30 p-3 rounded-full mr-4 shrink-0">
-                                       <CheckCircle className="w-6 h-6 text-green-400" />
-                                   </div>
-                               ) : (
-                                   <div className="bg-blue-900/30 p-3 rounded-full mr-4 shrink-0">
-                                       <DollarSign className="w-6 h-6 text-blue-400" />
-                                   </div>
-                               )}
-                               <div>
-                                   <h2 className="text-xl font-bold text-white">Stato Pagamenti</h2>
-                                   <p className="text-gray-400 text-sm">
-                                       {user.stripeOnboardingComplete 
-                                           ? "Il tuo account Stripe è attivo. Puoi ricevere pagamenti." 
-                                           : "Connetti Stripe per poter vendere Voucher a pagamento."}
-                                   </p>
-                               </div>
-                           </div>
-                           {!user.stripeOnboardingComplete && (
-                               <button 
-                                   onClick={handleStripeConnect}
-                                   disabled={isConnecting}
-                                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-bold transition shadow-md disabled:opacity-50 whitespace-nowrap"
-                               >
-                                   {isConnecting ? 'Connessione...' : 'Connetti Stripe'}
-                               </button>
-                           )}
-                       </div>
-                   </div>
-
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-gray-800 rounded-xl shadow-sm p-6 flex items-center border border-gray-700">
-                            <div className="p-3 rounded-full bg-indigo-900/30 text-indigo-400 mr-4">
-                                <TrendingUp className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="text-gray-400 text-sm font-medium">Totale Ricavi</p>
-                                <p className="text-2xl font-bold text-white">€{totalRevenue.toFixed(2)}</p>
-                            </div>
+               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                   {/* Stats Cards */}
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="glass-card p-6 rounded-2xl">
+                            <TrendingUp className="w-5 h-5 text-indigo-400 mb-3" />
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Revenue</p>
+                            <p className="text-2xl font-black text-white">€{totalRevenue.toFixed(2)}</p>
                         </div>
-                        <div className="bg-gray-800 rounded-xl shadow-sm p-6 flex items-center border border-gray-700">
-                            <div className="p-3 rounded-full bg-green-900/30 text-green-400 mr-4">
-                                <Ticket className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="text-gray-400 text-sm font-medium">Biglietti Venduti</p>
-                                <p className="text-2xl font-bold text-white">{totalTicketsSold}</p>
-                            </div>
+                        <div className="glass-card p-6 rounded-2xl">
+                            <Ticket className="w-5 h-5 text-pink-400 mb-3" />
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Tickets Sold</p>
+                            <p className="text-2xl font-black text-white">{totalTicketsSold}</p>
                         </div>
-                        <div className="bg-gray-800 rounded-xl shadow-sm p-6 flex items-center border border-gray-700">
-                            <div className="p-3 rounded-full bg-orange-900/30 text-orange-400 mr-4">
-                                <Briefcase className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="text-gray-400 text-sm font-medium">Eventi Creati</p>
-                                <p className="text-2xl font-bold text-white">{totalEvents}</p>
-                            </div>
+                        <div className="glass-card p-6 rounded-2xl">
+                            <CheckCircle className={`w-5 h-5 ${user.stripeOnboardingComplete ? 'text-green-400' : 'text-amber-400'} mb-3`} />
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Stripe Status</p>
+                            <button onClick={handleStripeConnect} className="text-white font-black hover:underline text-left">
+                                {user.stripeOnboardingComplete ? 'Active' : 'Setup Required'}
+                            </button>
                         </div>
                    </div>
 
-                   <div className="bg-gray-800 rounded-2xl shadow-sm p-6 md:p-8 border border-gray-700">
-                        <div className="flex justify-between items-center mb-6">
-                             <h2 className="text-xl font-bold text-white flex items-center">
-                                <Briefcase className="w-6 h-6 mr-2 text-indigo-400" />
-                                I Tuoi Eventi
-                            </h2>
-                        </div>
-                        
+                   {/* Event List */}
+                   <div className="glass-card rounded-3xl p-6 md:p-8">
+                        <h2 className="text-xl font-black text-white mb-6">Your Events</h2>
                         {loadingEvents ? (
-                            <div className="text-center py-8 text-gray-400">Caricamento eventi...</div>
+                            <div className="text-center py-12 text-slate-500">Loading events...</div>
                         ) : assocEvents.length > 0 ? (
-                            <div className="divide-y divide-gray-700">
+                            <div className="space-y-4">
                                 {assocEvents.map(event => (
-                                    <div key={event._id} className="py-4 flex flex-col md:flex-row md:items-center justify-between group gap-4">
+                                    <div key={event._id} className="p-4 rounded-2xl bg-white/5 border border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
                                         <div className="flex items-center">
-                                            <div className="w-12 h-12 bg-gray-700 rounded-lg mr-4 overflow-hidden flex-shrink-0 border border-gray-600">
-                                                <img src={event.image} className="w-full h-full object-cover" alt="" onError={(e) => (e.currentTarget.style.display = 'none')}/>
+                                            <div className="w-12 h-12 rounded-xl overflow-hidden mr-4 border border-white/10">
+                                                <img src={event.image} className="w-full h-full object-cover" />
                                             </div>
                                             <div>
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="font-bold text-white group-hover:text-indigo-400 transition line-clamp-1">{event.title}</h3>
-                                                    {event.status === 'draft' && (
-                                                        <span className="bg-yellow-900/30 text-yellow-500 text-[10px] px-2 py-0.5 rounded font-bold uppercase">
-                                                            BOZZA
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center text-xs text-gray-400 mt-1">
-                                                    <Calendar className="w-3 h-3 mr-1" />
-                                                    {new Date(event.date).toLocaleDateString()} • {event.city}
-                                                </div>
+                                                <h3 className="font-bold text-white">{event.title}</h3>
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{new Date(event.date).toLocaleDateString()} • {event.city}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
+                                        <div className="flex items-center gap-4">
                                             <div className="text-right">
-                                                <div className="font-mono font-medium text-white text-sm">
-                                                    {event.ticketsSold}/{event.maxCapacity}
-                                                </div>
-                                                <div className="text-xs text-green-400 font-semibold mt-1">
-                                                    +€{(event.ticketsSold * event.price).toFixed(2)}
-                                                </div>
+                                                <p className="text-sm font-black text-indigo-400">{event.ticketsSold}/{event.maxCapacity}</p>
+                                                <p className="text-[10px] text-slate-500 font-bold">SOLD</p>
                                             </div>
-                                            <div className="flex gap-2">
-                                                <Link 
-                                                    to={`/events/${event._id}/attendees`}
-                                                    className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-xs font-bold transition flex items-center border border-gray-600"
-                                                >
-                                                    <Users className="w-3 h-3 mr-1" />
-                                                    Lista
-                                                </Link>
-                                                <Link 
-                                                    to={`/events/${event._id}`} 
-                                                    className="px-3 py-1.5 bg-indigo-900/40 hover:bg-indigo-900/60 text-indigo-400 rounded-lg text-xs font-bold transition border border-indigo-900/50"
-                                                >
-                                                    Gestisci
-                                                </Link>
-                                            </div>
+                                            <Link to={`/events/${event._id}`} className="px-4 py-2 rounded-xl bg-white/5 text-xs font-bold hover:bg-white/10 transition">Manage</Link>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-12 bg-gray-900 rounded-xl border border-dashed border-gray-700">
-                                <p className="text-gray-400 mb-4">Non hai ancora creato nessun evento.</p>
-                                <button onClick={() => handleTabChange('create')} className="bg-gray-800 border border-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 text-white">
-                                    Inizia ora
-                                </button>
-                            </div>
+                            <div className="text-center py-12 text-slate-500 italic">No events found.</div>
                         )}
                    </div>
                </div>
            )}
 
-           {/* CREA EVENTO */}
            {activeTab === 'create' && (
-               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                   {!user.isVerified ? (
-                        <div className="bg-yellow-900/10 border border-yellow-900/30 rounded-xl p-8 text-center shadow-sm">
-                            <div className="w-16 h-16 bg-yellow-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <ShieldCheck className="w-8 h-8 text-yellow-500" />
-                            </div>
-                            <h2 className="text-xl font-bold text-white mb-2">Account in attesa di approvazione</h2>
-                            <p className="text-gray-400 max-w-lg mx-auto mb-6">
-                                Il nostro team sta verificando i dati della tua associazione. 
-                            </p>
-                        </div>
-                   ) : (
-                       <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
-                           <div className="bg-indigo-900/30 p-6 text-white border-b border-gray-700">
-                               <h2 className="text-xl font-bold flex items-center text-indigo-400">
-                                   <Plus className="w-6 h-6 mr-2" />
-                                   Crea Nuovo Evento
-                               </h2>
-                           </div>
-                           
-                           <form onSubmit={handleCreateEvent} className="p-6 md:p-8 space-y-6">
-                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                   <div className="md:col-span-2">
-                                       <label className="block text-sm font-medium text-gray-300 mb-1">Titolo Evento</label>
-                                       <input 
-                                           type="text" 
-                                           value={title} 
-                                           onChange={e => setTitle(e.target.value)} 
-                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
-                                           required
-                                           placeholder="Es. Halloween Party 2025"
-                                       />
-                                   </div>
-                                   <div>
-                                       <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center"><Tag className="w-4 h-4 mr-1 text-indigo-400"/> Categoria</label>
-                                       <select 
-                                           value={category}
-                                           onChange={e => setCategory(e.target.value as EventCategory)}
-                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
-                                       >
-                                           {Object.values(EventCategory).map(c => (
-                                               <option key={c} value={c}>{c}</option>
-                                           ))}
-                                       </select>
-                                   </div>
-                               </div>
-
-                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                   <div>
-                                       <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center"><Clock className="w-4 h-4 mr-1 text-indigo-400"/> Data</label>
-                                       <input 
-                                           type="date" 
-                                           value={date} 
-                                           onChange={e => setDate(e.target.value)} 
-                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
-                                           required
-                                       />
-                                   </div>
-                                   <div>
-                                       <label className="block text-sm font-medium text-gray-300 mb-1">Ora</label>
-                                       <input 
-                                           type="time" 
-                                           value={time} 
-                                           onChange={e => setTime(e.target.value)} 
-                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
-                                           required
-                                       />
-                                   </div>
-                                   <div className="grid grid-cols-1 gap-2">
-                                       <div>
-                                           <label className="block text-sm font-medium text-gray-300 mb-1">Regione</label>
-                                           <select 
-                                               value={selectedRegion}
-                                               onChange={e => setSelectedRegion(e.target.value)}
-                                               className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
-                                               required
-                                           >
-                                               <option value="">Seleziona Regione...</option>
-                                               {Object.keys(UNIVERSITY_LOCATIONS).map(r => (
-                                                   <option key={r} value={r}>{r}</option>
-                                               ))}
-                                           </select>
-                                       </div>
-                                   </div>
-                               </div>
-
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                   <div>
-                                       <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center"><MapPin className="w-4 h-4 mr-1 text-indigo-400"/> Città Universitaria</label>
-                                       <select 
-                                           value={city}
-                                           onChange={e => setCity(e.target.value)}
-                                           className={`w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white ${!selectedRegion ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                           required
-                                           disabled={!selectedRegion}
-                                       >
-                                           <option value="">{selectedRegion ? 'Seleziona Città...' : 'Scegli prima una regione'}</option>
-                                           {selectedRegion && UNIVERSITY_LOCATIONS[selectedRegion].map(c => (
-                                               <option key={c} value={c}>{c}</option>
-                                           ))}
-                                       </select>
-                                   </div>
-                                   <div>
-                                       <label className="block text-sm font-medium text-gray-300 mb-1">Indirizzo Specifico (Location)</label>
-                                       <input 
-                                           type="text" 
-                                           value={location} 
-                                           onChange={e => setLocation(e.target.value)} 
-                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
-                                           required
-                                           placeholder="Es. Via Roma 123, locale X"
-                                       />
-                                   </div>
-                               </div>
-
-                               <div>
-                                   <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center"><ImageIcon className="w-4 h-4 mr-1 text-indigo-400"/> Immagine Evento</label>
-                                   <div className="flex gap-4 items-center">
-                                       <button
-                                           type="button"
-                                           onClick={handleImageUpload}
-                                           className="flex items-center px-4 py-2.5 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition font-medium border border-gray-600"
-                                       >
-                                           <Upload className="w-4 h-4 mr-2" />
-                                           Carica Immagine
-                                       </button>
-                                       {image && (
-                                           <div className="w-16 h-10 rounded-lg overflow-hidden border border-gray-600 flex-shrink-0 relative group">
-                                               <img src={image} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                                           </div>
-                                       )}
-                                   </div>
-                               </div>
-
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-900/50 rounded-xl border border-gray-700">
-                                   <div className="relative">
-                                       <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center">
-                                           <DollarSign className="w-4 h-4 mr-1 text-indigo-400"/> Prezzo Biglietto (€)
-                                       </label>
-                                       <div className="relative">
-                                            <input 
-                                                type="number" 
-                                                value={user.stripeOnboardingComplete ? price : '0'} 
-                                                onChange={e => {
-                                                    if (user.stripeOnboardingComplete) setPrice(e.target.value);
-                                                }} 
-                                                disabled={!user.stripeOnboardingComplete}
-                                                className={`w-full px-4 py-2 border rounded-lg outline-none transition
-                                                    ${!user.stripeOnboardingComplete 
-                                                        ? 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed' 
-                                                        : 'bg-gray-700 border-gray-600 focus:ring-2 focus:ring-indigo-500 text-white'
-                                                    }
-                                                `}
-                                                required
-                                                min="0"
-                                                step="0.01"
-                                                placeholder="0.00"
-                                            />
-                                            {!user.stripeOnboardingComplete && (
-                                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                                    <Lock className="h-4 w-4 text-gray-500" />
-                                                </div>
-                                            )}
-                                       </div>
-                                   </div>
-                                   <div>
-                                       <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center"><Users className="w-4 h-4 mr-1 text-indigo-400"/> Capacità Massima</label>
-                                       <input 
-                                           type="number" 
-                                           value={maxCapacity} 
-                                           onChange={e => setMaxCapacity(e.target.value)} 
-                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
-                                           required
-                                           min="1"
-                                       />
-                                   </div>
-                               </div>
-                               
-                               <div className="pt-4 flex gap-4">
-                                   <button 
-                                       type="submit" 
-                                       onClick={() => setTargetStatus('draft')}
-                                       disabled={creatingEvent}
-                                       className="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-200 font-bold py-4 rounded-xl shadow-md transition border border-gray-600"
-                                   >
-                                       Salva come Bozza
-                                   </button>
-                                   <button 
-                                       type="submit" 
-                                       onClick={() => setTargetStatus('active')}
-                                       disabled={creatingEvent}
-                                       className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition"
-                                   >
-                                       Pubblica Evento
-                                   </button>
-                               </div>
-                           </form>
-                       </div>
-                   )}
-               </div>
-           )}
-
-           {/* GESTIONE STAFF */}
-           {activeTab === 'staff' && (
-               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
-                   <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden">
-                       <div className="bg-indigo-900/30 p-6 text-white border-b border-gray-700">
-                           <h2 className="text-xl font-bold flex items-center text-indigo-400">
-                               <Users className="w-6 h-6 mr-2" />
-                               Gestione Account Staff Temporaneo
-                           </h2>
-                           <p className="text-gray-400 text-sm mt-1">
-                               Crea o aggiorna un account delegato per scansionare i voucher all'ingresso.
-                           </p>
-                       </div>
-                       
-                       <form onSubmit={handleManageStaff} className="p-6 md:p-8 space-y-4">
-                           <div className="bg-amber-900/10 border-l-4 border-amber-500 p-4 rounded-r-lg mb-6">
-                               <div className="flex">
-                                   <Info className="w-5 h-5 text-amber-500 mr-3 flex-shrink-0" />
-                                   <p className="text-sm text-amber-200">
-                                       Questi account hanno accesso <strong>solo allo scanner</strong>. Possono validare voucher esclusivamente per i tuoi eventi.
-                                   </p>
-                               </div>
-                           </div>
-
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                               <div>
-                                   <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center">
-                                       <UserPlus className="w-4 h-4 mr-1 text-indigo-400" />
-                                       Email Staff
-                                   </label>
-                                   <input 
-                                       type="email" 
-                                       value={staffEmail}
-                                       onChange={e => setStaffEmail(e.target.value)}
-                                       placeholder="staff-nome@uniparty.it"
-                                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
-                                       required
-                                   />
-                               </div>
-                               <div>
-                                   <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center">
-                                       <Key className="w-4 h-4 mr-1 text-indigo-400" />
-                                       Nuova Password
-                                   </label>
-                                   <input 
-                                       type="password" 
-                                       value={staffPassword}
-                                       onChange={e => setStaffPassword(e.target.value)}
-                                       placeholder="Password sicura"
-                                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
-                                       required
-                                   />
-                               </div>
-                           </div>
-                           
-                           <div className="pt-4">
-                               <button 
-                                   type="submit" 
-                                   disabled={isManagingStaff}
-                                   className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-10 rounded-xl shadow-md transition disabled:opacity-50"
-                               >
-                                   {isManagingStaff ? "Salvataggio..." : "Crea / Aggiorna Staff"}
-                               </button>
-                           </div>
-                       </form>
-
-                       {/* Staff List Section */}
-                       <div className="p-6 md:p-8 border-t border-gray-700">
-                           <h3 className="text-lg font-bold text-white mb-4 flex items-center">
-                               <List className="w-5 h-5 mr-2 text-indigo-400" />
-                               Membri Staff Attivi
-                           </h3>
-                           {loadingStaff ? (
-                               <div className="text-center py-4 text-gray-400">Caricamento staff...</div>
-                           ) : staffList.length > 0 ? (
-                               <div className="bg-gray-900/50 rounded-xl border border-gray-700 overflow-hidden">
-                                   <div className="divide-y divide-gray-700">
-                                       {staffList.map(staff => (
-                                           <div key={staff._id} className="p-4 flex items-center justify-between hover:bg-gray-700 transition">
-                                               <div className="flex items-center">
-                                                   <div className="w-10 h-10 rounded-full bg-indigo-900/40 flex items-center justify-center text-indigo-400 mr-4">
-                                                       <Users className="w-5 h-5" />
-                                                   </div>
-                                                   <div>
-                                                       <p className="font-bold text-white">{staff.email}</p>
-                                                       <p className="text-xs text-gray-500">Creato il {new Date(staff.createdAt!).toLocaleDateString()}</p>
-                                                   </div>
-                                               </div>
-                                               <button 
-                                                   onClick={() => handleDeleteStaff(staff._id)}
-                                                   className="p-2 text-red-400 hover:bg-red-900/30 rounded-lg transition"
-                                                   title="Elimina Staff"
-                                               >
-                                                   <Trash2 className="w-5 h-5" />
-                                               </button>
-                                           </div>
-                                       ))}
-                                   </div>
-                               </div>
-                           ) : (
-                               <div className="text-center py-8 bg-gray-900 rounded-xl border border-dashed border-gray-700 text-gray-500 text-sm">
-                                   Nessun account staff creato.
-                               </div>
-                           )}
-                       </div>
+             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+               <div className="glass-card rounded-3xl overflow-hidden">
+                 <form onSubmit={handleCreateEvent} className="p-6 md:p-8 space-y-6">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="md:col-span-2">
+                       <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Title</label>
+                       <input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none" required placeholder="Event Title" />
+                     </div>
+                     <div>
+                       <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Date</label>
+                       <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none" required />
+                     </div>
+                     <div>
+                       <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Price (€)</label>
+                       <input type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none" required />
+                     </div>
                    </div>
+                   <button type="submit" disabled={creatingEvent} className="w-full py-4 bg-indigo-600 rounded-2xl font-black shadow-xl shadow-indigo-600/20 hover:bg-indigo-500 transition">Create Event</button>
+                 </form>
                </div>
+             </div>
            )}
 
+           {activeTab === 'staff' && (
+             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 glass-card rounded-3xl p-6 md:p-8">
+               <h2 className="text-xl font-black mb-6">Staff Management</h2>
+               <form onSubmit={handleManageStaff} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                 <input type="email" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} placeholder="Email" className="px-4 py-3 bg-white/5 border border-white/10 rounded-2xl outline-none" required />
+                 <input type="password" value={staffPassword} onChange={e => setStaffPassword(e.target.value)} placeholder="Password" className="px-4 py-3 bg-white/5 border border-white/10 rounded-2xl outline-none" required />
+                 <button type="submit" className="md:col-span-2 py-3 bg-indigo-600 rounded-2xl font-black">Add Staff</button>
+               </form>
+               <div className="space-y-3">
+                 {staffList.map(s => (
+                   <div key={s._id} className="p-4 rounded-2xl bg-white/5 flex justify-between items-center">
+                     <span className="font-bold">{s.email}</span>
+                     <button onClick={() => api.auth.deleteStaffAccount(s._id).then(fetchStaff)} className="text-red-400 p-2 hover:bg-red-400/10 rounded-xl transition"><Trash2 size={18} /></button>
+                   </div>
+                 ))}
+               </div>
+             </div>
+           )}
        </div>
     </div>
   );
