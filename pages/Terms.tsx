@@ -5,34 +5,34 @@ import { Link } from 'react-router-dom';
 
 const Terms: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+    <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-5xl mx-auto bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-white/10">
         
         {/* HEADER LEGALE */}
-        <div className="bg-indigo-900 px-8 py-10 text-white">
+        <div className="bg-slate-950 px-8 py-10 text-white border-b border-white/5">
             <div className="flex items-center mb-4">
-                <div className="bg-white/10 p-3 rounded-xl mr-4 backdrop-blur-sm">
-                    <Scale className="w-10 h-10 text-white" />
+                <div className="bg-indigo-600/20 p-3 rounded-xl mr-4 backdrop-blur-sm border border-indigo-500/20">
+                    <Scale className="w-10 h-10 text-indigo-400" />
                 </div>
                 <div>
                     <h1 className="text-3xl font-bold">Termini e Condizioni Generali di Utilizzo</h1>
-                    <p className="text-indigo-200 text-sm mt-1">Contratto di Servizio Marketplace B2B2C</p>
+                    <p className="text-indigo-400/70 text-sm mt-1 uppercase tracking-widest font-black">Contratto di Servizio Marketplace B2B2C</p>
                 </div>
             </div>
-            <div className="flex justify-between items-end text-xs uppercase tracking-wider font-semibold opacity-70 border-t border-indigo-700 pt-4 mt-4">
+            <div className="flex justify-between items-end text-xs uppercase tracking-wider font-semibold opacity-50 border-t border-white/10 pt-4 mt-4">
                 <span>Versione 1.3</span>
                 <span>Ultimo aggiornamento: 05 Dicembre 2025</span>
             </div>
         </div>
 
-        <div className="p-8 md:p-12 space-y-10 text-gray-700 leading-relaxed text-justify">
+        <div className="p-8 md:p-12 space-y-10 text-gray-300 leading-relaxed text-justify">
 
             {/* DISCLAIMER / NOTA DI SINTESI */}
-            <div className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg shadow-sm flex items-start">
-                <ShieldAlert className="w-6 h-6 text-amber-600 mr-4 flex-shrink-0 mt-1" />
+            <div className="bg-amber-950/20 border-l-4 border-amber-600 p-6 rounded-r-lg shadow-sm flex items-start">
+                <ShieldAlert className="w-6 h-6 text-amber-500 mr-4 flex-shrink-0 mt-1" />
                 <div>
-                    <h4 className="text-amber-900 font-bold text-lg mb-2">Avvertenza Preliminare Importante</h4>
-                    <p className="text-sm text-amber-800">
+                    <h4 className="text-amber-500 font-bold text-lg mb-2">Avvertenza Preliminare Importante</h4>
+                    <p className="text-sm text-amber-200/80">
                         UniParty agisce esclusivamente come <strong>fornitore di servizi tecnologici (Intermediario)</strong>. 
                         Non siamo gli organizzatori degli eventi. Quando acquisti un Voucher, instauri un rapporto contrattuale diretto con l'Associazione organizzatrice.
                         UniParty non gestisce i fondi del prezzo del biglietto e non è responsabile per la sicurezza o lo svolgimento dell'evento.
@@ -42,8 +42,8 @@ const Terms: React.FC = () => {
 
             {/* ARTICOLO 1 - DEFINIZIONI */}
             <section>
-                <h3 className="text-xl font-bold text-gray-900 border-b-2 border-indigo-100 pb-2 mb-4 flex items-center">
-                    <FileText className="w-5 h-5 mr-2 text-indigo-600" />
+                <h3 className="text-xl font-bold text-white border-b-2 border-white/10 pb-2 mb-4 flex items-center">
+                    <FileText className="w-5 h-5 mr-2 text-indigo-400" />
                     Art. 1 - Definizioni
                 </h3>
                 <p className="mb-2">Ai fini dei presenti Termini e Condizioni:</p>
@@ -58,7 +58,7 @@ const Terms: React.FC = () => {
 
             {/* ARTICOLO 2 - OGGETTO DEL SERVIZIO */}
             <section>
-                <h3 className="text-xl font-bold text-gray-900 border-b-2 border-indigo-100 pb-2 mb-4">
+                <h3 className="text-xl font-bold text-white border-b-2 border-white/10 pb-2 mb-4">
                     Art. 2 - Oggetto del Servizio e Ruolo di UniParty
                 </h3>
                 <p>
@@ -74,7 +74,7 @@ const Terms: React.FC = () => {
 
             {/* ARTICOLO 3 - REGISTRAZIONE */}
             <section>
-                <h3 className="text-xl font-bold text-gray-900 border-b-2 border-indigo-100 pb-2 mb-4">
+                <h3 className="text-xl font-bold text-white border-b-2 border-white/10 pb-2 mb-4">
                     Art. 3 - Registrazione e Veridicità dei Dati
                 </h3>
                 <p>
@@ -83,9 +83,9 @@ const Terms: React.FC = () => {
             </section>
 
             {/* ARTICOLO 4 - PAGAMENTI E COMMISSIONI */}
-            <section className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                <h3 className="text-xl font-bold text-gray-900 border-b-2 border-gray-200 pb-2 mb-4 flex items-center">
-                    <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
+            <section className="bg-gray-900/50 p-6 rounded-xl border border-white/5">
+                <h3 className="text-xl font-bold text-white border-b-2 border-white/10 pb-2 mb-4 flex items-center">
+                    <CreditCard className="w-5 h-5 mr-2 text-indigo-400" />
                     Art. 4 - Pagamenti e Politica "No Refund" sulla Fee
                 </h3>
                 <div className="space-y-4 text-sm">
@@ -95,7 +95,7 @@ const Terms: React.FC = () => {
                     <p>
                         <strong>4.2. Fee di Servizio:</strong> Per l'utilizzo della Piattaforma, UniParty addebita all'Utente una "Fee di Servizio" fissa (es. €0,40 IVA incl.) aggiunta al prezzo del biglietto.
                     </p>
-                    <p className="bg-white p-3 rounded border-l-4 border-red-500 text-gray-800">
+                    <p className="bg-slate-950 p-3 rounded border-l-4 border-red-600 text-gray-200">
                         <strong>4.3. Non Rimborsabilità della Fee:</strong> La Fee di Servizio remunera l'attività tecnologica di elaborazione della prenotazione e generazione del Voucher. Tale prestazione si intende interamente eseguita al momento dell'emissione del Voucher. Pertanto, <strong>la Fee di Servizio non è mai rimborsabile</strong>, neanche in caso di annullamento dell'evento da parte dell'Organizzatore o rinuncia dell'Utente.
                     </p>
                 </div>
@@ -103,7 +103,7 @@ const Terms: React.FC = () => {
 
             {/* ARTICOLO 5 - DIRITTO DI RECESSO */}
             <section>
-                <h3 className="text-xl font-bold text-gray-900 border-b-2 border-indigo-100 pb-2 mb-4">
+                <h3 className="text-xl font-bold text-white border-b-2 border-white/10 pb-2 mb-4">
                     Art. 5 - Esclusione del Diritto di Recesso
                 </h3>
                 <p>
@@ -113,7 +113,7 @@ const Terms: React.FC = () => {
 
             {/* ARTICOLO 6 - RIMBORSI E ANNULLAMENTI */}
             <section>
-                <h3 className="text-xl font-bold text-gray-900 border-b-2 border-indigo-100 pb-2 mb-4">
+                <h3 className="text-xl font-bold text-white border-b-2 border-white/10 pb-2 mb-4">
                     Art. 6 - Annullamento Eventi e Rimborsi
                 </h3>
                 <p>
@@ -125,12 +125,12 @@ const Terms: React.FC = () => {
             </section>
 
              {/* ARTICOLO 7 - SEMINARI E CFU */}
-             <section className="bg-indigo-50 p-6 rounded-xl border border-indigo-200">
-                <h3 className="text-xl font-bold text-indigo-900 border-b-2 border-indigo-200 pb-2 mb-4 flex items-center">
-                    <GraduationCap className="w-5 h-5 mr-2 text-indigo-600" />
+             <section className="bg-indigo-950/20 p-6 rounded-xl border border-indigo-900/30">
+                <h3 className="text-xl font-bold text-indigo-300 border-b-2 border-indigo-900/30 pb-2 mb-4 flex items-center">
+                    <GraduationCap className="w-5 h-5 mr-2 text-indigo-400" />
                     Art. 7 - Eventi Accademici e Tracciamento Presenze
                 </h3>
-                <div className="space-y-3 text-sm text-indigo-900">
+                <div className="space-y-3 text-sm text-indigo-100/70">
                     <p>
                         Per gli eventi che prevedono il rilascio di Crediti Formativi Universitari (CFU) o attestati, la Piattaforma fornisce uno strumento tecnico di tracciamento orario (Check-in/Check-out).
                     </p>
@@ -149,12 +149,12 @@ const Terms: React.FC = () => {
             </section>
 
             {/* UGC SECTION - MANDATORY FOR APP STORES */}
-            <section className="bg-red-50 border-l-4 border-red-600 p-6 rounded-r-xl shadow-sm">
-                <h3 className="text-xl font-bold text-red-900 border-b border-red-200 pb-2 mb-4 flex items-center">
+            <section className="bg-red-950/20 border-l-4 border-red-600 p-6 rounded-r-xl shadow-sm">
+                <h3 className="text-xl font-bold text-red-400 border-b border-red-900/30 pb-2 mb-4 flex items-center">
                     <ShieldCheck className="w-5 h-5 mr-2 text-red-600" />
                     Sicurezza e Contenuti Generati dagli Utenti (UGC)
                 </h3>
-                <div className="space-y-4 text-sm text-red-900">
+                <div className="space-y-4 text-sm text-gray-300">
                     <p>
                         UniParty adotta una <strong>politica di tolleranza zero</strong> nei confronti di contenuti illegali, offensivi, abusivi o discutibili pubblicati sulla piattaforma.
                     </p>
@@ -168,8 +168,8 @@ const Terms: React.FC = () => {
 
             {/* ARTICOLO 8 - LIMITAZIONE RESPONSABILITA' */}
             <section>
-                <h3 className="text-xl font-bold text-gray-900 border-b-2 border-indigo-100 pb-2 mb-4 flex items-center">
-                    <AlertCircle className="w-5 h-5 mr-2 text-indigo-600" />
+                <h3 className="text-xl font-bold text-white border-b-2 border-white/10 pb-2 mb-4 flex items-center">
+                    <AlertCircle className="w-5 h-5 mr-2 text-indigo-400" />
                     Art. 8 - Limitazione di Responsabilità
                 </h3>
                 <p className="mb-2">UniParty non sarà in alcun caso responsabile per:</p>
@@ -184,7 +184,7 @@ const Terms: React.FC = () => {
 
             {/* ARTICOLO 9 - RISOLUZIONE */}
             <section>
-                <h3 className="text-xl font-bold text-gray-900 border-b-2 border-indigo-100 pb-2 mb-4">
+                <h3 className="text-xl font-bold text-white border-b-2 border-white/10 pb-2 mb-4">
                     Art. 9 - Sospensione e Risoluzione
                 </h3>
                 <p>
@@ -194,19 +194,19 @@ const Terms: React.FC = () => {
 
             {/* ARTICOLO 10 - PRIVACY */}
             <section>
-                <h3 className="text-xl font-bold text-gray-900 border-b-2 border-indigo-100 pb-2 mb-4">
+                <h3 className="text-xl font-bold text-white border-b-2 border-white/10 pb-2 mb-4">
                     Art. 10 - Privacy e Dati Personali
                 </h3>
                 <p>
-                    I dati personali sono trattati in conformità alla nostra <Link to="/privacy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link>. 
+                    I dati personali sono trattati in conformità alla nostra <Link to="/privacy" className="text-indigo-400 font-bold hover:underline">Privacy Policy</Link>. 
                     Si specifica che i dati relativi alla partecipazione all'evento (Nome, Cognome, Email, Matricola) vengono trasmessi all'Organizzatore per finalità organizzative e di sicurezza, il quale agisce come Titolare autonomo del trattamento per tali dati.
                 </p>
             </section>
 
             {/* ARTICOLO 11 - LEGGE E FORO */}
             <section>
-                <h3 className="text-xl font-bold text-gray-900 border-b-2 border-indigo-100 pb-2 mb-4 flex items-center">
-                    <Gavel className="w-5 h-5 mr-2 text-indigo-600" />
+                <h3 className="text-xl font-bold text-white border-b-2 border-white/10 pb-2 mb-4 flex items-center">
+                    <Gavel className="w-5 h-5 mr-2 text-indigo-400" />
                     Art. 11 - Legge Applicabile e Foro Competente
                 </h3>
                 <p>
@@ -220,11 +220,11 @@ const Terms: React.FC = () => {
                 </p>
             </section>
 
-            <div className="border-t-2 border-gray-200 pt-8 mt-12">
+            <div className="border-t-2 border-white/10 pt-8 mt-12">
                 <div className="flex items-start">
-                    <CheckCircle className="w-6 h-6 text-green-600 mr-4 flex-shrink-0 mt-1" />
+                    <CheckCircle className="w-6 h-6 text-green-500 mr-4 flex-shrink-0 mt-1" />
                     <div>
-                        <p className="text-sm text-gray-600 italic">
+                        <p className="text-sm text-gray-500 italic">
                             Ai sensi e per gli effetti degli artt. 1341 e 1342 c.c., l'Utente dichiara di aver letto attentamente e di approvare specificamente le pattuizioni contenute negli articoli: 
                             <strong> Art. 2</strong> (Ruolo di Intermediario ed Esonero Responsabilità); 
                             <strong> Art. 4.3</strong> (Non Rimborsabilità Fee); 
@@ -238,7 +238,7 @@ const Terms: React.FC = () => {
             </div>
 
             <div className="flex justify-center mt-8">
-                <Link to="/" className="text-indigo-600 font-bold hover:underline flex items-center">
+                <Link to="/" className="text-indigo-400 font-bold hover:underline flex items-center">
                      Torna alla Home
                 </Link>
             </div>
