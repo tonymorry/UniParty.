@@ -43,6 +43,7 @@ export interface Event {
   date: string; // ISO Date string
   time: string;
   location: string;
+  city: string; // New field
   price: number;
   maxCapacity: number;
   ticketsSold: number;

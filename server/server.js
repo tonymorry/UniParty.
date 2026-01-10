@@ -769,12 +769,13 @@ app.post('/api/events', authMiddleware, async (req, res) => {
 
         let { 
             title, description, longDescription, image, date, time, 
-            location, price, maxCapacity, category, prLists, status,
+            location, city, price, maxCapacity, category, prLists, status,
             requiresMatricola, requiresCorsoStudi, scanType
         } = req.body;
 
         if (price < 0) return res.status(400).json({ error: "Price cannot be negative" });
         if (maxCapacity <= 0) return res.status(400).json({ error: "Max capacity must be > 0" });
+        if (!city) return res.status(400).json({ error: "City is required" });
         
         const inputDate = new Date(date);
         const today = new Date();
@@ -789,6 +790,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
             date, 
             time, 
             location, 
+            city,
             price, 
             maxCapacity, 
             category, 
@@ -838,6 +840,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
 
         res.json(newEvent);
     } catch (e) {
+        console.error("Create Event Error:", e);
         res.status(500).json({ error: e.message });
     }
 });
@@ -854,13 +857,13 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
 
         let { 
             title, description, longDescription, image, date, time, 
-            location, maxCapacity, category, prLists, price, status,
+            location, city, maxCapacity, category, prLists, price, status,
             requiresMatricola, requiresCorsoStudi, scanType
         } = req.body;
 
         const updated = await Event.findByIdAndUpdate(req.params.id, {
             title, description, longDescription, image, date, time, 
-            location, maxCapacity, category, prLists,
+            location, city, maxCapacity, category, prLists,
             ...(price !== undefined && { price }),
             ...(status !== undefined && { status }),
             ...(requiresMatricola !== undefined && { requiresMatricola }),

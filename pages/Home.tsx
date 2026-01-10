@@ -1,13 +1,16 @@
+
 import React, { useEffect, useState } from 'react';
 import { Event, EventCategory } from '../types';
 import { api } from '../services/api';
 import EventCard from '../components/EventCard';
-import { Search, Filter, X, Calendar, Tag, DollarSign, Check } from 'lucide-react';
+import { useLocationContext } from '../context/LocationContext';
+import { Search, Filter, X, Calendar, Tag, DollarSign, Check, MapPin } from 'lucide-react';
 
 const Home: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const { selectedCity } = useLocationContext();
   
   // Filter States
   const [showFilters, setShowFilters] = useState(false);
@@ -31,6 +34,9 @@ const Home: React.FC = () => {
 
   // FILTER LOGIC
   const filteredEvents = events.filter(e => {
+    // 0. City Filter (Strict University City)
+    if (selectedCity !== 'Tutte' && e.city !== selectedCity) return false;
+
     // 1. Text Search (Title, Location, Organization Name)
     const lowerSearch = searchTerm.toLowerCase();
     
@@ -111,9 +117,13 @@ const Home: React.FC = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h1 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">Find Your Next UniParty</h1>
+          <h1 className="text-3xl md:text-5xl font-bold mb-2 tracking-tight">
+            {selectedCity === 'Tutte' ? 'Find Your Next UniParty' : `Eventi a ${selectedCity}`}
+          </h1>
           <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto">
-            The official platform for university events. Exclusive parties, networking, and fun.
+            {selectedCity === 'Tutte' 
+              ? 'The official platform for university events. Exclusive parties, networking, and fun.'
+              : `I migliori eventi universitari a ${selectedCity}. Feste, seminari e networking.`}
           </p>
           
           {/* Search Bar */}
@@ -222,9 +232,15 @@ const Home: React.FC = () => {
       )}
 
       {/* Active Filters Chips */}
-      {!showFilters && hasActiveFilters && (
+      {!showFilters && (hasActiveFilters || selectedCity !== 'Tutte') && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center space-x-2 overflow-x-auto">
               <span className="text-xs font-semibold text-gray-500 uppercase mr-2">Active:</span>
+              {selectedCity !== 'Tutte' && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-900 text-indigo-100 border border-indigo-700">
+                      <MapPin className="w-3 h-3 mr-1" />
+                      {selectedCity}
+                  </span>
+              )}
               {selectedTime !== 'all' && (
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-900 text-indigo-100 border border-indigo-700">
                       {selectedTime}
@@ -274,7 +290,11 @@ const Home: React.FC = () => {
                     <Search className="w-8 h-8 text-gray-600" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1">No events found</h3>
-                <p className="text-gray-500">Try adjusting your filters or search terms.</p>
+                <p className="text-gray-500">
+                  {selectedCity !== 'Tutte' 
+                    ? `Non ci sono eventi al momento a ${selectedCity}.`
+                    : 'Try adjusting your filters or search terms.'}
+                </p>
                 <button onClick={clearFilters} className="mt-4 text-indigo-400 font-semibold hover:underline transition">Clear all filters</button>
               </div>
             )}

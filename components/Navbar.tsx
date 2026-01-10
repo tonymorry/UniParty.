@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLocationContext, CITIES, City } from '../context/LocationContext';
 import { UserRole } from '../types';
 import { api } from '../services/api';
-import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell, LogOut } from 'lucide-react';
+import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell, LogOut, MapPin, ChevronDown } from 'lucide-react';
 
 const UniPartyLogo = () => (
   <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-9 w-9">
@@ -34,9 +36,11 @@ const UniPartyLogo = () => (
 
 const Navbar: React.FC = () => {
   const { user, logout, deleteAccount } = useAuth();
+  const { selectedCity, setSelectedCity } = useLocationContext();
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchUnreadCount = async () => {
@@ -75,6 +79,8 @@ const Navbar: React.FC = () => {
       }
   };
 
+  const cityOptions: City[] = ['Tutte', ...CITIES];
+
   // --- STAFF SIMPLIFIED NAVBAR ---
   if (user?.role === UserRole.STAFF) {
       return (
@@ -112,11 +118,48 @@ const Navbar: React.FC = () => {
     <nav className="bg-slate-950 text-white shadow-lg sticky top-0 z-50 border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
-            <UniPartyLogo />
-            <span className="text-xl font-bold tracking-wider">UniParty</span>
-          </Link>
+          {/* Logo & City Selector */}
+          <div className="flex items-center space-x-4">
+            <Link to="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
+              <UniPartyLogo />
+              <span className="text-xl font-bold tracking-wider hidden sm:inline">UniParty</span>
+            </Link>
+
+            {/* City Selector */}
+            <div className="relative">
+              <button 
+                onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-full bg-gray-800 border border-gray-700 hover:bg-gray-700 transition shadow-sm text-sm font-semibold text-indigo-100"
+              >
+                <MapPin className="h-3.5 w-3.5 text-indigo-400" />
+                <span>{selectedCity}</span>
+                <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isCityDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setIsCityDropdownOpen(false)}></div>
+                  <div className="absolute top-10 left-0 w-40 z-20 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="py-1">
+                      {cityOptions.map((city) => (
+                        <button
+                          key={city}
+                          onClick={() => {
+                            setSelectedCity(city);
+                            setIsCityDropdownOpen(false);
+                            if (location.pathname !== '/') navigate('/');
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm transition ${selectedCity === city ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`}
+                        >
+                          {city}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
 
           {/* Desktop Right Actions */}
           <div className="flex items-center space-x-4">

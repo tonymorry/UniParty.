@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -5,8 +6,9 @@ import { UserRole, EventCategory, Event, User } from '../types';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { 
     AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, 
-    ShieldCheck, Lock, Info, Upload, FileText, TrendingUp, Briefcase, Ticket, LayoutDashboard, Calendar, Settings, GraduationCap, UserPlus, Key, Trash2
+    ShieldCheck, Lock, Info, Upload, FileText, TrendingUp, Briefcase, Ticket, LayoutDashboard, Calendar, Settings, GraduationCap, UserPlus, Key, Trash2, MapPin
 } from 'lucide-react';
+import { CITIES } from '../context/LocationContext';
 
 const Dashboard: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -29,6 +31,7 @@ const Dashboard: React.FC = () => {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('22:00');
   const [location, setLocation] = useState('');
+  const [city, setCity] = useState('');
   const [image, setImage] = useState('');
   const [maxCapacity, setMaxCapacity] = useState('100');
   const [category, setCategory] = useState<EventCategory>(EventCategory.PARTY);
@@ -174,6 +177,11 @@ const Dashboard: React.FC = () => {
         return;
     }
 
+    if (!city) {
+        alert("Per favore seleziona una città universitaria.");
+        return;
+    }
+
     setCreatingEvent(true);
     try {
         const newEvent = await api.events.create({
@@ -183,6 +191,7 @@ const Dashboard: React.FC = () => {
             date,
             time,
             location,
+            city,
             image,
             maxCapacity: parseInt(maxCapacity),
             price: numericPrice,
@@ -371,7 +380,7 @@ const Dashboard: React.FC = () => {
                                                 </div>
                                                 <div className="flex items-center text-xs text-gray-400 mt-1">
                                                     <Calendar className="w-3 h-3 mr-1" />
-                                                    {new Date(event.date).toLocaleDateString()}
+                                                    {new Date(event.date).toLocaleDateString()} • {event.city}
                                                 </div>
                                             </div>
                                         </div>
@@ -488,16 +497,31 @@ const Dashboard: React.FC = () => {
                                        />
                                    </div>
                                    <div>
-                                       <label className="block text-sm font-medium text-gray-300 mb-1">Luogo</label>
-                                       <input 
-                                           type="text" 
-                                           value={location} 
-                                           onChange={e => setLocation(e.target.value)} 
-                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
+                                       <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center"><MapPin className="w-4 h-4 mr-1 text-indigo-400"/> Città Universitaria</label>
+                                       <select 
+                                           value={city}
+                                           onChange={e => setCity(e.target.value)}
+                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
                                            required
-                                           placeholder="Nome del locale o indirizzo"
-                                       />
+                                       >
+                                           <option value="">Seleziona Città...</option>
+                                           {CITIES.map(c => (
+                                               <option key={c} value={c}>{c}</option>
+                                           ))}
+                                       </select>
                                    </div>
+                               </div>
+
+                               <div>
+                                   <label className="block text-sm font-medium text-gray-300 mb-1">Indirizzo Specifico (Location)</label>
+                                   <input 
+                                       type="text" 
+                                       value={location} 
+                                       onChange={e => setLocation(e.target.value)} 
+                                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
+                                       required
+                                       placeholder="Es. Via Roma 123, locale X"
+                                   />
                                </div>
 
                                <div>

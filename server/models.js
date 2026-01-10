@@ -70,6 +70,11 @@ const eventSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   time: String,
   location: String,
+  city: { 
+    type: String, 
+    required: true,
+    enum: ['Palermo', 'Catania', 'Messina', 'Enna', 'Roma', 'Milano', 'Online']
+  },
   price: { type: Number, required: true, default: 0 },
   maxCapacity: { type: Number, required: true },
   ticketsSold: { type: Number, default: 0 },
