@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users, Flame, Heart } from 'lucide-react';
@@ -53,34 +54,34 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
 
   return (
     <Link to={`/events/${event._id}`} className="group relative block h-full">
-      <div className="bg-white/5 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] hover:border-indigo-500/30 transition-all duration-500 border border-white/10 h-full flex flex-col">
-        <div className="relative h-48 overflow-hidden">
+      <div className="bg-white/5 backdrop-blur-md rounded-xl md:rounded-2xl shadow-xl overflow-hidden hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] hover:border-indigo-500/30 transition-all duration-500 border border-white/10 h-full flex flex-col">
+        <div className="relative h-32 md:h-48 overflow-hidden">
           <img
             src={event.image}
             alt={event.title}
             onError={handleImageError}
             className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
           />
-          <div className="absolute top-4 right-4 flex gap-2">
+          <div className="absolute top-2 right-2 md:top-4 md:right-4 flex gap-1.5 md:gap-2">
                {/* Favorite Button (Students Only) */}
                {(!user || user.role === UserRole.STUDENTE) && (
                    <button 
                         onClick={handleFavoriteClick}
-                        className="bg-black/40 backdrop-blur-md p-2 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all z-10 border border-white/10"
+                        className="bg-black/40 backdrop-blur-md p-1.5 md:p-2 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all z-10 border border-white/10"
                    >
                        <Heart 
-                          className={`w-5 h-5 transition-colors ${isFavorite ? 'fill-neon-pink text-neon-pink' : 'text-white/70 hover:text-neon-pink'}`} 
+                          className={`w-3.5 h-3.5 md:w-5 md:h-5 transition-colors ${isFavorite ? 'fill-neon-pink text-neon-pink' : 'text-white/70 hover:text-neon-pink'}`} 
                         />
                    </button>
                )}
                {/* Owner sees favorite count */}
                {isOwner && (
-                   <div className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-neon-pink font-bold text-sm shadow-sm flex items-center border border-white/10">
-                       <Heart className="w-3 h-3 mr-1 fill-neon-pink" />
+                   <div className="bg-black/60 backdrop-blur-md px-2 md:px-3 py-0.5 md:py-1 rounded-full text-neon-pink font-bold text-[9px] md:text-sm shadow-sm flex items-center border border-white/10">
+                       <Heart className="w-2.5 h-2.5 md:w-3 h-3 mr-1 fill-neon-pink" />
                        {event.favoritesCount || 0}
                    </div>
                )}
-               <div className="bg-indigo-600/90 backdrop-blur-md px-4 py-1.5 rounded-full text-white font-black text-sm shadow-[0_0_15px_rgba(79,70,229,0.5)] flex items-center border border-white/20">
+               <div className="bg-indigo-600/90 backdrop-blur-md px-2.5 py-1 md:px-4 md:py-1.5 rounded-full text-white font-black text-[9px] md:text-sm shadow-[0_0_15px_rgba(79,70,229,0.5)] flex items-center border border-white/20">
                     {isFree ? 'FREE' : `€${finalPrice.toFixed(2)}`}
                </div>
           </div>
@@ -89,41 +90,41 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent pointer-events-none"></div>
         </div>
         
-        <div className="p-6 flex-1 flex flex-col">
-          <div className="text-[10px] font-black text-indigo-400 mb-2 uppercase tracking-[0.2em]">
+        <div className="p-3 md:p-6 flex-1 flex flex-col">
+          <div className="text-[8px] md:text-[10px] font-black text-indigo-400 mb-1 md:mb-2 uppercase tracking-[0.2em] truncate">
             {typeof event.organization === 'string' ? 'Association' : (event.organization?.name || 'Association')}
           </div>
-          <h3 className="text-xl font-extrabold text-white mb-3 group-hover:text-indigo-400 transition-colors leading-tight">
+          <h3 className="text-sm md:text-xl font-extrabold text-white mb-1.5 md:mb-3 group-hover:text-indigo-400 transition-colors leading-tight line-clamp-2">
             {event.title}
           </h3>
-          <p className="text-gray-400 text-sm mb-6 line-clamp-2 flex-1 leading-relaxed font-medium">
+          <p className="text-gray-400 text-[10px] md:text-sm mb-3 md:mb-6 line-clamp-1 md:line-clamp-2 flex-1 leading-relaxed font-medium hidden xs:block">
             {event.description}
           </p>
           
-          <div className="space-y-3 text-sm text-gray-400 mt-auto pt-5 border-t border-white/5">
+          <div className="space-y-1.5 md:space-y-3 text-[9px] md:text-sm text-gray-400 mt-auto pt-2 md:pt-5 border-t border-white/5">
             <div className="flex items-center">
-              <Calendar className="h-4 w-4 mr-3 text-indigo-400/80" />
-              <span className="font-semibold">{eventDate} • {event.time}</span>
+              <Calendar className="h-3 w-3 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-400/80 shrink-0" />
+              <span className="font-semibold truncate">{eventDate} • {event.time}</span>
             </div>
             <div className="flex items-center">
-              <MapPin className="h-4 w-4 mr-3 text-indigo-400/80" />
+              <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-400/80 shrink-0" />
               <span className="truncate font-medium">{event.location}</span>
             </div>
             <div className="flex items-center">
-              <Users className="h-4 w-4 mr-3 text-indigo-400/80" />
-              <span className={`font-bold ${isSoldOut ? 'text-red-400' : 'text-gray-300'}`}>
+              <Users className="h-3 w-3 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-400/80 shrink-0" />
+              <span className={`font-bold ${isSoldOut ? 'text-red-400' : 'text-gray-300'} truncate`}>
                 {showExactNumbers 
-                  ? `${event.ticketsSold}/${event.maxCapacity} Prenotati`
+                  ? `${event.ticketsSold}/${event.maxCapacity}`
                   : isSoldOut 
                     ? 'SOLD OUT' 
                     : isAlmostSoldOut 
                       ? 'Ultimi posti!' 
-                      : 'Posti disponibili'}
+                      : 'Disponibile'}
               </span>
             </div>
             {isAlmostSoldOut && !isSoldOut && (
-               <div className="flex items-center text-orange-400 text-[10px] font-black mt-2 uppercase tracking-widest animate-pulse">
-                 <Flame className="h-3 w-3 mr-1.5" />
+               <div className="flex items-center text-orange-400 text-[8px] md:text-[10px] font-black mt-1 uppercase tracking-widest animate-pulse">
+                 <Flame className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1.5" />
                  Selling fast!
                </div>
             )}
