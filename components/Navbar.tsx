@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +7,7 @@ import { api } from '../services/api';
 import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell, LogOut, MapPin, ChevronDown } from 'lucide-react';
 
 const UniPartyLogo = () => (
-  <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-9 w-9">
+  <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 filter drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">
     <defs>
       <linearGradient id="logo_gradient" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#3b82f6" />
@@ -24,12 +23,6 @@ const UniPartyLogo = () => (
         d="M50 35 L54 45 H65 L56 52 L60 63 L50 56 L40 63 L44 52 L35 45 H46 L50 35 Z" 
         fill="white" 
       />
-      <circle cx="65" cy="35" r="2" fill="white" fillOpacity="0.8" />
-      <circle cx="35" cy="65" r="2" fill="white" fillOpacity="0.8" />
-      <path d="M50 25 V28" stroke="white" strokeWidth="2" strokeLinecap="round" />
-      <path d="M50 72 V75" stroke="white" strokeWidth="2" strokeLinecap="round" />
-      <path d="M25 50 H28" stroke="white" strokeWidth="2" strokeLinecap="round" />
-      <path d="M72 50 H75" stroke="white" strokeWidth="2" strokeLinecap="round" />
     </g>
   </svg>
 );
@@ -79,29 +72,20 @@ const Navbar: React.FC = () => {
       }
   };
 
-  // --- STAFF SIMPLIFIED NAVBAR ---
   if (user?.role === UserRole.STAFF) {
       return (
-        <nav className="bg-slate-950 text-white shadow-lg sticky top-0 z-50 border-b border-indigo-500/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav className="fixed top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-7xl z-[100] bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="px-4 sm:px-6">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-2">
                 <UniPartyLogo />
-                <span className="text-xl font-bold tracking-wider">Staff Scanner</span>
+                <span className="text-xl font-bold tracking-wider font-outfit bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-blue-400">Staff Scanner</span>
               </div>
-              
               <div className="flex items-center space-x-4">
-                <Link 
-                    to="/scanner" 
-                    className="flex items-center px-3 py-2 rounded-md text-sm font-bold bg-indigo-600 hover:bg-indigo-500 transition shadow-md"
-                >
+                <Link to="/scanner" className="flex items-center px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 transition shadow-lg shadow-indigo-600/20">
                     <ScanLine className="h-4 w-4 mr-2" /> Scanner
                 </Link>
-                <button 
-                    onClick={handleLogout}
-                    className="p-2 text-indigo-300 hover:text-white transition"
-                    title="Logout"
-                >
+                <button onClick={handleLogout} className="p-2 text-indigo-300 hover:text-white transition">
                     <LogOut className="h-6 w-6" />
                 </button>
               </div>
@@ -111,23 +95,20 @@ const Navbar: React.FC = () => {
       );
   }
 
-  // --- ORIGINAL NAVBAR ---
   return (
-    <nav className="bg-slate-950 text-white shadow-lg sticky top-0 z-50 border-b border-white/5">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="fixed top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-7xl z-[100] bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transition-all duration-300">
+      <div className="px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Logo & City Selector */}
           <div className="flex items-center space-x-4">
             <Link to="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
               <UniPartyLogo />
-              <span className="text-xl font-bold tracking-wider hidden sm:inline">UniParty</span>
+              <span className="text-xl font-bold tracking-wider font-outfit hidden sm:inline bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">UniParty</span>
             </Link>
 
-            {/* City Selector with Groups */}
             <div className="relative">
               <button 
                 onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
-                className="flex items-center space-x-1 px-3 py-1.5 rounded-full bg-gray-800 border border-gray-700 hover:bg-gray-700 transition shadow-sm text-sm font-semibold text-indigo-100"
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition shadow-sm text-sm font-semibold text-indigo-100"
               >
                 <MapPin className="h-3.5 w-3.5 text-indigo-400" />
                 <span className="max-w-[80px] sm:max-w-[120px] truncate">{selectedCity}</span>
@@ -137,7 +118,7 @@ const Navbar: React.FC = () => {
               {isCityDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setIsCityDropdownOpen(false)}></div>
-                  <div className="absolute top-10 left-0 w-64 z-20 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute top-12 left-0 w-64 z-20 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="max-h-[70vh] overflow-y-auto py-2">
                       <button
                         onClick={() => {
@@ -145,14 +126,13 @@ const Navbar: React.FC = () => {
                           setIsCityDropdownOpen(false);
                           if (location.pathname !== '/') navigate('/');
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm font-bold border-b border-gray-700 transition ${selectedCity === 'Tutte' ? 'bg-indigo-600 text-white' : 'text-indigo-400 hover:bg-gray-700'}`}
+                        className={`w-full text-left px-4 py-2 text-sm font-bold transition ${selectedCity === 'Tutte' ? 'bg-indigo-600/20 text-indigo-400' : 'text-slate-400 hover:bg-white/5'}`}
                       >
                         Tutte le città
                       </button>
-                      
                       {Object.entries(UNIVERSITY_LOCATIONS).map(([region, cities]) => (
                         <div key={region} className="mt-2">
-                          <div className="px-4 py-1 text-[10px] uppercase font-black text-gray-500 tracking-widest bg-gray-900/50">
+                          <div className="px-4 py-1 text-[10px] uppercase font-black text-slate-500 tracking-widest bg-white/5">
                             {region}
                           </div>
                           {cities.map(city => (
@@ -163,7 +143,7 @@ const Navbar: React.FC = () => {
                                 setIsCityDropdownOpen(false);
                                 if (location.pathname !== '/') navigate('/');
                               }}
-                              className={`w-full text-left px-5 py-1.5 text-sm transition ${selectedCity === city ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`}
+                              className={`w-full text-left px-5 py-1.5 text-sm transition ${selectedCity === city ? 'bg-indigo-600/20 text-indigo-400' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
                             >
                               {city}
                             </button>
@@ -177,207 +157,67 @@ const Navbar: React.FC = () => {
             </div>
           </div>
 
-          {/* Desktop Right Actions */}
           <div className="flex items-center space-x-4">
-              {/* Notification Bell (User Only) */}
               {user && (
                   <Link to="/notifications" className="relative p-2 text-indigo-200 hover:text-white transition">
                       <Bell className="w-6 h-6" />
                       {unreadCount > 0 && (
-                          <span className="absolute top-1 right-1 block h-4 w-4 rounded-full bg-red-500 ring-2 ring-slate-950 text-[10px] font-bold text-center flex items-center justify-center">
+                          <span className="absolute top-1 right-1 block h-4 w-4 rounded-full bg-pink-500 ring-2 ring-slate-900 text-[10px] font-bold text-center flex items-center justify-center animate-pulse">
                               {unreadCount}
                           </span>
                       )}
                   </Link>
               )}
 
-              {/* HAMBURGER MENU TOGGLE BUTTON */}
-              <div className="md:hidden">
-                <button
-                  onClick={() => setIsOpen(!isOpen)}
-                  className="inline-flex items-center justify-center p-2 rounded-md text-indigo-200 hover:text-white hover:bg-gray-800 focus:outline-none transition-colors"
-                >
-                  <span className="sr-only">Open main menu</span>
-                  {isOpen ? <X className="h-8 w-8" /> : <Menu className="h-8 w-8" />}
-                </button>
-              </div>
-
-              {/* Desktop Menu Button */}
-              <div className="hidden md:flex">
-                  <button
-                    onClick={() => setIsOpen(!isOpen)}
-                    className="inline-flex items-center justify-center p-2 rounded-md text-indigo-200 hover:text-white hover:bg-gray-800 focus:outline-none transition-colors"
-                  >
-                     <Menu className="h-8 w-8" />
-                  </button>
-              </div>
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="inline-flex items-center justify-center p-2 rounded-xl text-indigo-200 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                {isOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
+              </button>
           </div>
         </div>
       </div>
 
-      {/* DROPDOWN MENU */}
       {isOpen && (
-        <div className="absolute top-16 right-0 w-full sm:w-80 z-50 bg-gray-800 border-b-2 border-l-2 border-gray-700 shadow-2xl animate-in slide-in-from-top-2 duration-200 sm:rounded-bl-xl max-h-[calc(100vh-4rem)] overflow-y-auto">
+        <div className="absolute top-20 right-0 w-full sm:w-80 z-50 bg-slate-900/95 backdrop-blur-2xl border border-white/10 shadow-2xl animate-in slide-in-from-top-2 duration-200 sm:rounded-2xl max-h-[calc(100vh-6rem)] overflow-y-auto m-0 sm:m-2">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            
-            <Link 
-                to="/" 
-                className="block px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 transition"
-                onClick={() => setIsOpen(false)}
-            >
-                Events
-            </Link>
-
+            <Link to="/" className="block px-4 py-3 rounded-xl text-base font-medium hover:bg-white/5 transition" onClick={() => setIsOpen(false)}>Events</Link>
             {!user && (
-              <Link 
-                to="/auth" 
-                className="block px-3 py-3 rounded-md text-base font-medium bg-indigo-600 hover:bg-indigo-500 mt-2 text-center shadow-md transition"
-                onClick={() => setIsOpen(false)}
-              >
-                Login / Register
-              </Link>
+              <Link to="/auth" className="block px-4 py-3 rounded-xl text-base font-bold bg-indigo-600 hover:bg-indigo-500 text-center shadow-lg shadow-indigo-600/20 transition" onClick={() => setIsOpen(false)}>Login / Register</Link>
             )}
-
             {user && user.role === UserRole.STUDENTE && (
                <>
-                 <Link 
-                    to="/search" 
-                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 transition"
-                    onClick={() => setIsOpen(false)}
-                 >
-                    <Search className="h-5 w-5 mr-3 text-indigo-400" /> Search Associations
-                 </Link>
-                 <Link 
-                    to="/wallet" 
-                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 transition"
-                    onClick={() => setIsOpen(false)}
-                 >
-                    <Ticket className="h-5 w-5 mr-3 text-yellow-500" /> My Wallet
-                 </Link>
-                 <Link 
-                    to="/favorites" 
-                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 transition"
-                    onClick={() => setIsOpen(false)}
-                 >
-                    <Heart className="h-5 w-5 mr-3 text-red-500" /> Favorite Events
-                 </Link>
+                 <Link to="/search" className="flex items-center px-4 py-3 rounded-xl text-base font-medium hover:bg-white/5 transition" onClick={() => setIsOpen(false)}><Search className="h-5 w-5 mr-3 text-indigo-400" /> Search Associations</Link>
+                 <Link to="/wallet" className="flex items-center px-4 py-3 rounded-xl text-base font-medium hover:bg-white/5 transition" onClick={() => setIsOpen(false)}><Ticket className="h-5 w-5 mr-3 text-yellow-500" /> My Wallet</Link>
+                 <Link to="/favorites" className="flex items-center px-4 py-3 rounded-xl text-base font-medium hover:bg-white/5 transition" onClick={() => setIsOpen(false)}><Heart className="h-5 w-5 mr-3 text-red-500" /> Favorite Events</Link>
                </>
             )}
-
-            {/* Association Specific Links */}
             {user && user.role === UserRole.ASSOCIAZIONE && (
                <>
-                 <Link 
-                    to="/dashboard" 
-                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 transition"
-                    onClick={() => setIsOpen(false)}
-                 >
-                    <LayoutDashboard className="h-5 w-5 mr-3 text-indigo-400" /> Dashboard
-                 </Link>
-                 <Link 
-                    to="/dashboard?tab=create" 
-                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 transition"
-                    onClick={() => setIsOpen(false)}
-                 >
-                    <PlusCircle className="h-5 w-5 mr-3 text-green-500" /> Add Event
-                 </Link>
-                 <Link 
-                    to="/scanner" 
-                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-700 bg-gray-900 mt-1 transition shadow-inner"
-                    onClick={() => setIsOpen(false)}
-                 >
-                    <ScanLine className="h-5 w-5 mr-3 text-cyan-400" /> Scan Voucher
-                 </Link>
+                 <Link to="/dashboard" className="flex items-center px-4 py-3 rounded-xl text-base font-medium hover:bg-white/5 transition" onClick={() => setIsOpen(false)}><LayoutDashboard className="h-5 w-5 mr-3 text-indigo-400" /> Dashboard</Link>
+                 <Link to="/dashboard?tab=create" className="flex items-center px-4 py-3 rounded-xl text-base font-medium hover:bg-white/5 transition" onClick={() => setIsOpen(false)}><PlusCircle className="h-5 w-5 mr-3 text-green-500" /> Add Event</Link>
+                 <Link to="/scanner" className="flex items-center px-4 py-3 rounded-xl text-base font-medium bg-white/5 hover:bg-white/10 transition" onClick={() => setIsOpen(false)}><ScanLine className="h-5 w-5 mr-3 text-cyan-400" /> Scan Voucher</Link>
                </>
              )}
-
-             {/* Admin Link */}
              {user && user.role === UserRole.ADMIN && (
-                 <Link 
-                    to="/admin" 
-                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-gray-900 bg-slate-950 mt-1 transition shadow-inner border border-red-900/20"
-                    onClick={() => setIsOpen(false)}
-                 >
-                    <Shield className="h-5 w-5 mr-3 text-red-500" /> Admin Dashboard
-                 </Link>
+                 <Link to="/admin" className="flex items-center px-4 py-3 rounded-xl text-base font-medium bg-red-950/20 border border-red-900/30 hover:bg-red-900/30 transition" onClick={() => setIsOpen(false)}><Shield className="h-5 w-5 mr-3 text-red-500" /> Admin Dashboard</Link>
              )}
-
-             {/* User Profile Section */}
              {user && (
-               <div className="border-t border-gray-700 mt-2 pt-2 pb-1">
-                 <div className="flex items-center px-3 mb-2 pt-2">
-                    <div className="flex-shrink-0">
-                       <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600 shadow-sm">
-                         <UserIcon className="h-6 w-6 text-indigo-400" />
-                       </div>
+               <div className="border-t border-white/5 mt-2 pt-2 pb-1">
+                 <div className="flex items-center px-4 mb-2 pt-2">
+                    <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 shadow-sm overflow-hidden">
+                       {user.profileImage ? <img src={user.profileImage} className="w-full h-full object-cover" /> : <UserIcon className="h-6 w-6 text-indigo-400" />}
                     </div>
                     <div className="ml-3 overflow-hidden">
                       <div className="text-base font-bold leading-none text-white truncate">{user.name}</div>
-                      <div className="text-xs font-medium leading-none text-gray-400 mt-1 capitalize">{user.role}</div>
+                      <div className="text-xs font-medium leading-none text-slate-400 mt-1 capitalize">{user.role}</div>
                     </div>
                  </div>
-                 
-                 <Link 
-                    to="/profile" 
-                    className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition text-gray-300 hover:text-white"
-                    onClick={() => setIsOpen(false)}
-                 >
-                    My Profile
-                 </Link>
-                 
-                 <Link 
-                    to="/notifications" 
-                    className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition text-gray-300 hover:text-white flex items-center justify-between"
-                    onClick={() => setIsOpen(false)}
-                 >
-                    <span>Notifications</span>
-                    {unreadCount > 0 && <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">{unreadCount}</span>}
-                 </Link>
+                 <Link to="/profile" className="block px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition text-slate-300" onClick={() => setIsOpen(false)}>My Profile</Link>
+                 <button onClick={handleLogout} className="w-full text-left block px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">Logout</button>
+                 <button onClick={handleDeleteAccount} className="w-full text-left flex items-center px-4 py-2 rounded-xl text-sm font-medium text-red-400 hover:bg-red-950/20 transition mt-1"><Trash2 className="h-4 w-4 mr-2" /> Delete Account</button>
                </div>
-             )}
-
-             {/* Help & Legal Section */}
-             <div className="border-t border-gray-700 mt-2 pt-2">
-                <Link 
-                    to="/support" 
-                    className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition text-gray-400 hover:text-white"
-                    onClick={() => setIsOpen(false)}
-                 >
-                    <HelpCircle className="h-4 w-4 mr-3" /> Support
-                 </Link>
-                 <Link 
-                    to="/terms" 
-                    className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition text-gray-400 hover:text-white"
-                    onClick={() => setIsOpen(false)}
-                 >
-                    <FileText className="h-4 w-4 mr-3" /> Termini & Condizioni
-                 </Link>
-                 <Link 
-                    to="/privacy" 
-                    className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition text-gray-400 hover:text-white"
-                    onClick={() => setIsOpen(false)}
-                 >
-                    <Shield className="h-4 w-4 mr-3" /> Privacy Policy
-                 </Link>
-             </div>
-
-             {user && (
-                <div className="border-t border-gray-700 mt-2 pt-2 pb-2">
-                    <button
-                        onClick={handleLogout}
-                        className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-gray-700 transition mb-1"
-                    >
-                        Logout
-                    </button>
-                    
-                    <button
-                        onClick={handleDeleteAccount}
-                        className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium text-red-400 hover:text-red-300 hover:bg-red-900/20 transition"
-                    >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Account
-                    </button>
-                </div>
              )}
           </div>
         </div>
