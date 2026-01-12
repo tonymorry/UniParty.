@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Event, UserRole } from '../types';
@@ -90,8 +91,6 @@ const EventDetails: React.FC = () => {
         return newNames;
     });
 
-    // Also sync matricolas array length
-    // FIX: Using correct local variable 'newMats' instead of 'newNames'
     setTicketMatricolas(prev => {
         const newMats = [...prev];
         if (quantity > prev.length) {
@@ -102,7 +101,6 @@ const EventDetails: React.FC = () => {
         return newMats;
     });
 
-    // Sync Corso Studi array length
     setTicketCorsoStudi(prev => {
         const newCors = [...prev];
         if (quantity > prev.length) {
@@ -234,7 +232,6 @@ const EventDetails: React.FC = () => {
       setIsDeleting(true);
       try {
           await api.events.delete(event._id);
-          // Force navigate back to home and replace history to prevent going back
           navigate('/', { replace: true });
       } catch (e: any) {
           console.error("Delete error:", e);
@@ -256,8 +253,7 @@ const EventDetails: React.FC = () => {
               ...editForm,
               price: finalPrice,
               date: isoDate,
-              // If we are forcing both, make sure backend receives both true if one is true
-              requiresCorsoStudi: editForm.requiresMatricola // Since they are coupled in the UI
+              requiresCorsoStudi: editForm.requiresMatricola 
           };
 
           const updatedEvent = await api.events.update(event!._id, updatedData);
@@ -296,29 +292,14 @@ const EventDetails: React.FC = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">Loading...</div>;
   if (!event) return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">Event not found or expired</div>;
 
-  // --- PRICE CALCULATION (SAFE MATH) ---
-  // 1. Pulisci il prezzo base dal DB (es. 10.00)
   const safeBasePrice = Number(Number(event.price).toFixed(2));
-
-  // 2. Converti in Centesimi INTERI (es. 1000)
   const priceInCents = Math.round(safeBasePrice * 100);
-
   const isFree = priceInCents === 0;
-
-  // 3. Aggiungi la Fee (0 o 40 centesimi fissi)
   const feeInCents = isFree ? 0 : 40; 
-
-  // 4. Totale in Centesimi
   const totalPerTicketCents = priceInCents + feeInCents;
-
-  // 5. Totale Ordine
   const totalOrderCents = totalPerTicketCents * quantity;
-
-  // 6. Converti indietro in Euro per la visualizzazione
   const totalPricePerTicket = totalPerTicketCents / 100;
   const totalAmount = totalOrderCents / 100;
-  
-  // This is the price shown in large text (ticket price without fee)
   const finalPrice = safeBasePrice; 
 
   const remainingTickets = event.maxCapacity - event.ticketsSold;
@@ -379,7 +360,6 @@ const EventDetails: React.FC = () => {
                           />
                       </div>
 
-                      {/* Advanced Settings in Edit */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                            <div className="flex items-center space-x-3 bg-gray-900/50 p-3 rounded-lg border border-gray-700">
                                <input 
@@ -387,7 +367,6 @@ const EventDetails: React.FC = () => {
                                    id="editReqAcademicData"
                                    checked={editForm.requiresMatricola || false}
                                    onChange={e => {
-                                       // Toggle BOTH
                                        setEditForm({
                                            ...editForm, 
                                            requiresMatricola: e.target.checked,
@@ -565,7 +544,7 @@ const EventDetails: React.FC = () => {
           </div>
       )}
 
-      {/* DRAFT BANNER (Owner Only) */}
+      {/* DRAFT BANNER */}
       {isOwner && event.status === 'draft' && (
           <div className="bg-yellow-900/20 text-yellow-500 text-center py-3 font-bold sticky top-16 z-30 flex justify-center items-center shadow-md border-b border-yellow-900/30">
               <FileText className="w-5 h-5 mr-2" />
@@ -699,10 +678,9 @@ const EventDetails: React.FC = () => {
                 </div>
             </div>
 
-            {/* Right Column: Ticket Selection */}
+            {/* Right Column: Ticket Selection (FIX: Removed sticky) */}
             <div className="lg:col-span-1">
-                <div className="bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-700 sticky top-24">
-                     {/* Price Header */}
+                <div className="bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-700">
                      <div className="flex justify-between items-center mb-6">
                          <div>
                              <p className="text-sm text-gray-400 font-medium tracking-wide uppercase">Prezzo per persona</p>
@@ -717,14 +695,12 @@ const EventDetails: React.FC = () => {
                          )}
                      </div>
 
-                     {/* Sales Controls */}
                      {isSoldOut ? (
                          <div className="bg-gray-900/50 rounded-lg p-4 text-center font-bold text-gray-500 mb-4 border border-gray-700">
                              SOLD OUT
                          </div>
                      ) : (
                          <div className="space-y-4">
-                             {/* Quantity */}
                              <div className="flex items-center justify-between bg-gray-900 p-2 rounded-lg border border-gray-700">
                                  <span className="text-sm font-medium text-gray-300 ml-2">Quantità</span>
                                  <div className="flex items-center">
@@ -746,7 +722,6 @@ const EventDetails: React.FC = () => {
                                  </div>
                              </div>
 
-                             {/* Dynamic Inputs */}
                              <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
                                  {Array.from({ length: quantity }).map((_, i) => (
                                      <div key={i} className="space-y-2 p-3 bg-gray-900/30 rounded-lg border border-gray-700">
@@ -786,7 +761,6 @@ const EventDetails: React.FC = () => {
                                  ))}
                              </div>
 
-                             {/* PR List Selector */}
                              {event.prLists && event.prLists.length > 0 && (
                                  <div>
                                      <label className="block text-sm font-medium text-gray-300 mb-1">Lista PR</label>
@@ -806,7 +780,6 @@ const EventDetails: React.FC = () => {
                          </div>
                      )}
 
-                     {/* Summary */}
                      <div className="border-t border-gray-700 my-4 pt-4 space-y-2">
                          <div className="flex justify-between text-sm text-gray-400">
                              <span>Biglietti x {quantity}</span>
@@ -824,7 +797,6 @@ const EventDetails: React.FC = () => {
                          </div>
                      </div>
 
-                     {/* Terms Checkbox */}
                      {!isSoldOut && (
                          <div className="mb-4 flex items-start">
                              <input 
@@ -841,7 +813,6 @@ const EventDetails: React.FC = () => {
                          </div>
                      )}
 
-                     {/* Action Button */}
                      <button
                          onClick={handlePurchase}
                          disabled={isSoldOut || purchasing || (!isFree && !user)}
@@ -869,7 +840,6 @@ const EventDetails: React.FC = () => {
                      )}
                 </div>
 
-                {/* Additional Info / When & Where Small */}
                 <div className="mt-6 bg-indigo-900/20 rounded-xl p-4 border border-indigo-900/30">
                     <h4 className="font-bold text-indigo-300 mb-2 flex items-center text-sm uppercase tracking-wide"><Info className="w-4 h-4 mr-2 text-indigo-400"/> Info Utili</h4>
                     <p className="text-xs text-gray-400 mb-3 leading-relaxed">

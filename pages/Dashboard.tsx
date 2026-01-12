@@ -6,7 +6,7 @@ import { UserRole, EventCategory, Event, User, UNIVERSITY_LOCATIONS } from '../t
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { 
     AlertTriangle, CheckCircle, Plus, DollarSign, Image as ImageIcon, Users, List, X, Tag, Clock, 
-    ShieldCheck, Lock, Info, Upload, FileText, TrendingUp, Briefcase, Ticket, LayoutDashboard, Calendar, Settings, GraduationCap, UserPlus, Key, Trash2, MapPin
+    ShieldCheck, Lock, Info, Upload, FileText, TrendingUp, Briefcase, Ticket, LayoutDashboard, Calendar, Settings, GraduationCap, UserPlus, Key, Trash2, MapPin, Sparkles, BookOpen
 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
@@ -560,6 +560,34 @@ const Dashboard: React.FC = () => {
                                                <img src={image} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
                                            </div>
                                        )}
+                                   </div>
+                               </div>
+
+                               {/* Impostazioni Avanzate */}
+                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-900/30 rounded-xl border border-gray-700">
+                                   <div className="flex items-center space-x-3">
+                                       <input 
+                                           type="checkbox" 
+                                           id="reqAcademicData"
+                                           checked={requiresAcademicData}
+                                           onChange={e => setRequiresAcademicData(e.target.checked)}
+                                           className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 bg-gray-700 border-gray-600 rounded"
+                                       />
+                                       <label htmlFor="reqAcademicData" className="text-sm text-gray-300 font-medium cursor-pointer flex items-center">
+                                           <GraduationCap className="w-4 h-4 mr-2 text-indigo-400" />
+                                           Richiedi Dati Accademici (Matricola e Corso)
+                                       </label>
+                                   </div>
+                                   <div>
+                                       <label className="block text-sm font-medium text-gray-300 mb-1">Tipo di Scansione</label>
+                                       <select 
+                                           value={scanType}
+                                           onChange={e => setScanType(e.target.value as any)}
+                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
+                                       >
+                                           <option value="entry_only">Solo Entrata (Classic)</option>
+                                           <option value="entry_exit">Entrata + Uscita (Monitoraggio Tempo)</option>
+                                       </select>
                                    </div>
                                </div>
 
