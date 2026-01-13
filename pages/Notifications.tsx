@@ -2,23 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCircle, ArrowRight, BellRing, ShieldCheck, Info } from 'lucide-react';
-
-// Helper to convert VAPID key
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
- 
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
- 
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
+import { Bell, CheckCircle, ArrowRight, BellRing, Info } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import OneSignal from 'onesignal-cordova-plugin';
 
 interface Notification {
   _id: string;
@@ -35,11 +21,7 @@ const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
-  
-  // Tracciamento stato permessi per UI reattiva
-  const [permissionState, setPermissionState] = useState<NotificationPermission>(
-    ('Notification' in window) ? Notification.permission : 'denied'
-  );
+  const [hasPermission, setHasPermission] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -47,6 +29,12 @@ const Notifications: React.FC = () => {
       return;
     }
     fetchNotifications();
+
+    if (Capacitor.isNativePlatform()) {
+        OneSignal.getDeviceState((state) => {
+            setHasPermission(state?.hasNotificationPermission || false);
+        });
+    }
   }, [user]);
 
   const fetchNotifications = async () => {
@@ -60,37 +48,26 @@ const Notifications: React.FC = () => {
     }
   };
 
-  const handleManualActivation = async () => {
-    if (!('Notification' in window)) {
-        alert("Il tuo browser non supporta le notifiche push.");
-        return;
-    }
+  const handleActivateAppNotifications = async () => {
+    if (!Capacitor.isNativePlatform()) return;
 
     setIsActivating(true);
     try {
-      const result = await Notification.requestPermission();
-      setPermissionState(result);
-
-      if (result === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
-        const { key } = await api.notifications.getVapidKey();
-        const registration = await navigator.serviceWorker.ready;
-        
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(key)
-        });
-
-        await api.notifications.subscribe(subscription);
-        
-        // Ricarica per aggiornare l'intera app con lo stato sottoscritto
-        window.location.reload();
-      } else if (result === 'denied') {
-          alert("Hai negato i permessi. Per attivarle in futuro dovrai agire dalle impostazioni del browser.");
-      }
+      // Prompt nativo OneSignal
+      OneSignal.promptForPushNotificationsWithUserResponse((accepted) => {
+        if (accepted) {
+          setHasPermission(true);
+          // Ottieni ID e salva nel backend
+          OneSignal.getDeviceState((state) => {
+            if (state && state.userId) {
+              api.notifications.registerDevice(state.userId).catch(console.error);
+            }
+          });
+        }
+        setIsActivating(false);
+      });
     } catch (e) {
-      console.error("Errore durante l'attivazione manuale delle notifiche:", e);
-      alert("Impossibile completare la sottoscrizione. Riprova più tardi.");
-    } finally {
+      console.error("Errore attivazione OneSignal:", e);
       setIsActivating(false);
     }
   };
@@ -103,11 +80,8 @@ const Notifications: React.FC = () => {
   };
 
   const markAllAsRead = async () => {
-      // Optimistic update
       const updated = notifications.map(n => ({...n, isRead: true}));
       setNotifications(updated);
-      
-      // Async requests
       for(const n of notifications) {
           if(!n.isRead) api.notifications.markAsRead(n._id);
       }
@@ -131,8 +105,8 @@ const Notifications: React.FC = () => {
             )}
         </div>
 
-        {/* Fallback Activation Box - Visible only if permission is 'default' */}
-        {permissionState === 'default' && (
+        {/* BOX ATTIVAZIONE: SOLO SE SU APP E SENZA PERMESSI */}
+        {Capacitor.isNativePlatform() && !hasPermission && (
             <div className="mb-8 p-6 bg-indigo-900/20 border border-indigo-500/30 rounded-2xl shadow-xl animate-in fade-in slide-in-from-top-4 duration-500">
                 <div className="flex flex-col md:flex-row items-center gap-5">
                     <div className="p-4 bg-indigo-600/20 rounded-full border border-indigo-500/20">
@@ -141,16 +115,28 @@ const Notifications: React.FC = () => {
                     <div className="flex-1 text-center md:text-left">
                         <h3 className="text-xl font-bold text-white mb-1">Resta sempre aggiornato!</h3>
                         <p className="text-sm text-gray-400 leading-relaxed">
-                            Attiva le notifiche push per sapere subito quando le tue associazioni preferite pubblicano nuovi eventi o promozioni early-bird.
+                            Attiva le notifiche push per sapere subito quando le tue associazioni preferite pubblicano nuovi eventi.
                         </p>
                     </div>
                     <button 
-                        onClick={handleManualActivation}
+                        onClick={handleActivateAppNotifications}
                         disabled={isActivating}
                         className="w-full md:w-auto px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl transition shadow-lg shadow-indigo-600/20 disabled:opacity-50 whitespace-nowrap"
                     >
-                        {isActivating ? "Attivazione..." : "Attiva Ora"}
+                        {isActivating ? "Attivazione..." : "Attiva Notifiche"}
                     </button>
+                </div>
+            </div>
+        )}
+
+        {/* BOX INFO WEB: SOLO SE SU WEB */}
+        {!Capacitor.isNativePlatform() && (
+            <div className="mb-8 p-4 bg-gray-800/50 border border-gray-700 rounded-xl">
+                <div className="flex items-center gap-3">
+                    <Info className="w-5 h-5 text-indigo-400" />
+                    <p className="text-xs text-gray-400">
+                        Scarica l'App di <strong>UniParty</strong> per ricevere notifiche push in tempo reale sul tuo smartphone.
+                    </p>
                 </div>
             </div>
         )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LocationProvider } from './context/LocationContext';
@@ -25,157 +25,53 @@ import Notifications from './pages/Notifications';
 import ResetPassword from './pages/ResetPassword';
 import Footer from './components/Footer';
 import CookieBanner from './components/CookieBanner';
-import { BellRing, X } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import OneSignal from 'onesignal-cordova-plugin';
 
-// Helper to convert VAPID key
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
- 
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
- 
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
-
-// Custom Modal for Notification Permissions (Soft Prompt)
-const NotificationPrompt: React.FC = () => {
-    const [isVisible, setIsVisible] = useState(false);
-    const { user } = useAuth();
-
-    useEffect(() => {
-        // Mostra il prompt solo se le notifiche sono in stato 'default' (mai chiesto)
-        // e se il browser supporta le notifiche
-        if ('Notification' in window && Notification.permission === 'default') {
-            const timer = setTimeout(() => {
-                setIsVisible(true);
-            }, 3000); // Appare dopo 3 secondi dall'avvio
-            return () => clearTimeout(timer);
-        }
-    }, []);
-
-    const handleActivate = async () => {
-        try {
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
-                const { key } = await api.notifications.getVapidKey();
-                const registration = await navigator.serviceWorker.ready;
-                
-                const subscription = await registration.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(key)
-                });
-
-                await api.notifications.subscribe(subscription);
-            }
-        } catch (e) {
-            console.error("Errore durante l'attivazione notifiche:", e);
-        } finally {
-            setIsVisible(false);
-        }
-    };
-
-    if (!isVisible) return null;
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-gray-900 border border-white/10 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-300">
-                <div className="p-6 text-center">
-                    <div className="w-16 h-16 bg-indigo-600/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-500/20">
-                        <BellRing className="w-8 h-8 text-indigo-400 animate-pulse" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-2 font-sans">Non perderti le serate!</h3>
-                    <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                        Attiva le notifiche per sapere subito quando escono nuovi eventi e non perdere mai i biglietti early-bird.
-                    </p>
-                    
-                    <div className="space-y-3">
-                        <button 
-                            onClick={handleActivate}
-                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-600/20"
-                        >
-                            Attiva Notifiche
-                        </button>
-                        <button 
-                            onClick={() => setIsVisible(false)}
-                            className="w-full bg-transparent text-gray-500 hover:text-gray-300 text-sm font-medium py-2 transition"
-                        >
-                            Più tardi
-                        </button>
-                    </div>
-                </div>
-                <button 
-                    onClick={() => setIsVisible(false)}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-white transition"
-                >
-                    <X className="w-5 h-5" />
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// Internal component to handle automatic notification subscription
-const NotificationManager: React.FC = () => {
+// Manager per la gestione del playerId OneSignal sulle app native
+const NativeNotificationManager: React.FC = () => {
     const { user } = useAuth();
     
     useEffect(() => {
-        const initNotifications = async () => {
-            if (user && 'serviceWorker' in navigator && 'PushManager' in window) {
+        const initOneSignal = async () => {
+            // Inizializza OneSignal SOLO se siamo su piattaforma nativa (App iOS/Android)
+            if (Capacitor.isNativePlatform()) {
                 try {
-                    // Se il permesso è già garantito, sottoscrivi silenziosamente al login
-                    if (Notification.permission === 'granted') {
-                        const { key } = await api.notifications.getVapidKey();
-                        const registration = await navigator.serviceWorker.ready;
+                    // Sostituisci con il tuo vero OneSignal App ID tramite variabili d'ambiente in fase di build
+                    const ONESIGNAL_APP_ID = "00000000-0000-0000-0000-000000000000"; 
+                    
+                    OneSignal.setAppId(ONESIGNAL_APP_ID);
+                    
+                    if (user) {
+                        // Lega l'ID utente del DB a OneSignal per invio mirato dal backend
+                        OneSignal.setExternalUserId(user._id);
                         
-                        const subscription = await registration.pushManager.subscribe({
-                            userVisibleOnly: true,
-                            applicationServerKey: urlBase64ToUint8Array(key)
+                        // Ottieni il playerId (subscriptionId) e registralo nel backend
+                        OneSignal.getDeviceState((state) => {
+                            if (state && state.userId) {
+                                api.notifications.registerDevice(state.userId).catch(console.error);
+                            }
                         });
-
-                        await api.notifications.subscribe(subscription);
                     }
                 } catch (e) {
-                    console.error("Auto-notification setup failed", e);
+                    console.error("OneSignal Init Failed", e);
                 }
             }
         };
 
-        initNotifications();
+        initOneSignal();
     }, [user]);
 
     return null;
 };
 
 function App() {
-
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(
-          (registration) => {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          },
-          (err) => {
-            console.log('ServiceWorker registration failed: ', err);
-          }
-        );
-      });
-    }
-  }, []);
-
   return (
     <AuthProvider>
       <LocationProvider>
-        <NotificationManager />
+        <NativeNotificationManager />
         <Router>
           <div className="min-h-screen bg-gray-900 font-sans text-white flex flex-col">
-            <NotificationPrompt />
             <Navbar />
             <main className="flex-grow pb-20 md:pb-0">
               <Routes>

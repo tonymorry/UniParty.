@@ -1,4 +1,3 @@
-
 import { Event, EventCategory, LoginResponse, Ticket, User, UserRole, Report } from '../types';
 
 // ==========================================
@@ -8,10 +7,14 @@ import { Event, EventCategory, LoginResponse, Ticket, User, UserRole, Report } f
 // CHANGE THIS TO FALSE TO USE THE REAL BACKEND
 const USE_MOCK = false; 
 
-// Automatically determine API URL based on the current browser domain
-// If we are on localhost, look for port 5000. Otherwise, use relative path '/api'
+// Automatically determine API URL based on platform
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_URL = isLocalhost ? 'http://localhost:5000/api' : '/api';
+const isNative = (window as any).Capacitor?.isNativePlatform?.();
+
+// Quando siamo su app nativa, dobbiamo usare l'URL assoluto del server di produzione
+const API_URL = isNative 
+  ? 'https://uniparty-app.onrender.com/api' 
+  : (isLocalhost ? 'http://localhost:5000/api' : '/api');
 
 // ==========================================
 // MOCK DATA & IMPLEMENTATION (Fallback)
@@ -76,7 +79,8 @@ const mockApi = {
       subscribe: async () => {},
       getAll: async () => [],
       markAsRead: async () => {},
-      getVapidKey: async () => ({ key: 'mock' })
+      getVapidKey: async () => ({ key: 'mock' }),
+      registerDevice: async () => {}
   }
 };
 
@@ -150,22 +154,6 @@ const realApi = {
         return res.json();
     },
     toggleFollow: async (associationId: string) => {
-        const res = await fetch(`${API_URL}/users/follow/toggle`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ associationId })
-        });
-        if(!res.ok) throw new Error('Failed to toggle follow');
-        return res.json();
-    },
-    getFavoriteEventsForUser: async () => {
-        const res = await fetch(`${API_URL}/users/favorites/list`, {
-            headers: getHeaders()
-        });
-        if(!res.ok) throw new Error('Failed to fetch favorites');
-        return res.json();
-    },
-    toggleFollowAssociation: async (associationId: string) => {
         const res = await fetch(`${API_URL}/users/follow/toggle`, {
             method: 'POST',
             headers: getHeaders(),
@@ -248,7 +236,7 @@ const realApi = {
         const res = await fetch(`${API_URL}/events?organization=${orgId}&public=true`);
         return res.json();
     },
-    create: async (eventData: any, user: any) => {
+    create: async (eventData: any) => {
         const res = await fetch(`${API_URL}/events`, {
             method: 'POST',
             headers: getHeaders(),
@@ -342,9 +330,6 @@ const realApi = {
         }
         throw new Error("Failed to create session");
     },
-    mockWebhookSuccess: async () => {
-        // No-op in real mode
-    },
     verifyPayment: async (sessionId: string) => {
         const res = await fetch(`${API_URL}/stripe/verify`, {
             method: 'POST',
@@ -387,13 +372,13 @@ const realApi = {
       }
   },
   notifications: {
-      subscribe: async (subscription: PushSubscription) => {
-          const res = await fetch(`${API_URL}/notifications/subscribe`, {
+      registerDevice: async (playerId: string) => {
+          const res = await fetch(`${API_URL}/notifications/register-device`, {
               method: 'POST',
               headers: getHeaders(),
-              body: JSON.stringify(subscription)
+              body: JSON.stringify({ playerId })
           });
-          if(!res.ok) throw new Error("Subscription failed");
+          if(!res.ok) throw new Error("Registration failed");
       },
       getAll: async () => {
           const res = await fetch(`${API_URL}/notifications`, { headers: getHeaders() });
@@ -401,10 +386,6 @@ const realApi = {
       },
       markAsRead: async (id: string) => {
           const res = await fetch(`${API_URL}/notifications/${id}/read`, { method: 'PUT', headers: getHeaders() });
-          return res.json();
-      },
-      getVapidKey: async () => {
-          const res = await fetch(`${API_URL}/notifications/vapid-key`);
           return res.json();
       }
   }

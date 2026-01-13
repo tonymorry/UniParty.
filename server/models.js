@@ -1,8 +1,6 @@
-
 const mongoose = require('mongoose');
 
 // In una produzione reale, queste dovrebbero essere sincronizzate tramite un file condiviso
-// Qui le definiamo localmente per assicurare che il backend le conosca.
 const ALL_CITIES = [
   "L'Aquila", "Chieti", "Pescara", "Teramo", "Potenza", "Matera", "Catanzaro", "Cosenza (Rende)", "Reggio Calabria",
   "Napoli", "Salerno", "Benevento", "Caserta", "Avellino", "Bologna", "Modena", "Reggio Emilia", "Parma", "Ferrara",
@@ -41,14 +39,8 @@ const userSchema = new mongoose.Schema({
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }], 
   followedAssociations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], 
   
-  // Web Push Subscription
-  pushSubscription: {
-    endpoint: String,
-    keys: {
-      p256dh: String,
-      auth: String
-    }
-  },
+  // OneSignal Device ID (App Only)
+  oneSignalPlayerId: { type: String, default: '' },
 
   // Password Reset Fields
   resetPasswordToken: String,
@@ -72,7 +64,7 @@ const notificationSchema = new mongoose.Schema({
   message: { type: String, required: true },
   url: { type: String, default: '/' },
   isRead: { type: Boolean, default: false },
-  relatedEvent: { type: mongoose.Schema.Types.ObjectId, ref: 'Event' } // Linked Event for visibility logic
+  relatedEvent: { type: mongoose.Schema.Types.ObjectId, ref: 'Event' }
 }, { timestamps: true });
 
 // --- EVENT SCHEMA ---
@@ -93,22 +85,12 @@ const eventSchema = new mongoose.Schema({
   maxCapacity: { type: Number, required: true },
   ticketsSold: { type: Number, default: 0 },
   category: { type: String, default: 'Other' },
-  
-  // Organization reference
   organization: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  
-  // PR Lists
   prLists: [String],
-  
-  // Favorites Counter
   favoritesCount: { type: Number, default: 0 },
-
-  // Status for soft delete/archiving
   status: { type: String, enum: ['active', 'draft', 'archived', 'deleted'], default: 'active' },
-
-  // --- ACADEMIC / SEMINAR FEATURES ---
   requiresMatricola: { type: Boolean, default: false },
-  requiresCorsoStudi: { type: Boolean, default: false }, // New Field
+  requiresCorsoStudi: { type: Boolean, default: false },
   scanType: { type: String, enum: ['entry_only', 'entry_exit'], default: 'entry_only' }
 }, { timestamps: true });
 
@@ -116,25 +98,18 @@ const eventSchema = new mongoose.Schema({
 const ticketSchema = new mongoose.Schema({
   event: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  
   ticketHolderName: { type: String, required: true },
   qrCodeId: { type: String, required: true, unique: true },
   purchaseDate: { type: Date, default: Date.now },
   prList: { type: String, default: 'Nessuna lista' },
-  
-  // Academic Fields
   matricola: { type: String },
-  corsoStudi: { type: String }, // New Field
+  corsoStudi: { type: String },
   entryTime: { type: Date },
   exitTime: { type: Date },
-
   used: { type: Boolean, default: false }, 
   checkInDate: Date, 
-  
-  // Stripe Data
   paymentIntentId: String,
   sessionId: String,
-
   status: { type: String, enum: ['active', 'valid', 'entered', 'completed', 'archived', 'deleted'], default: 'valid' }
 }, { timestamps: true });
 
@@ -144,17 +119,16 @@ const orderSchema = new mongoose.Schema({
   eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
   ticketNames: [String], 
   ticketMatricolas: [String],
-  ticketCorsoStudi: [String], // New Field
+  ticketCorsoStudi: [String],
   prList: { type: String, default: 'Nessuna lista' },
   quantity: { type: Number, required: true },
   totalAmountCents: { type: Number, required: true },
   status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
   stripeSessionId: { type: String },
-  
   createdAt: { type: Date, default: Date.now, expires: 86400 } 
 });
 
-// --- REPORT SCHEMA (UGC) ---
+// --- REPORT SCHEMA ---
 const reportSchema = new mongoose.Schema({
   eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
   reporterId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
