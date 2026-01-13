@@ -2,7 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCircle, ArrowRight } from 'lucide-react';
+import { Bell, CheckCircle, ArrowRight, BellRing, ShieldCheck } from 'lucide-react';
+
+// Helper to convert VAPID key
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+ 
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+ 
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
 
 interface Notification {
   _id: string;
@@ -18,6 +34,10 @@ const Notifications: React.FC = () => {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isActivating, setIsActivating] = useState(false);
+
+  // Check if we should show the manual activation prompt
+  const showActivationPrompt = 'Notification' in window && Notification.permission === 'default';
 
   useEffect(() => {
     if (!user) {
@@ -35,6 +55,31 @@ const Notifications: React.FC = () => {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleManualActivation = async () => {
+    setIsActivating(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
+        const { key } = await api.notifications.getVapidKey();
+        const registration = await navigator.serviceWorker.ready;
+        
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(key)
+        });
+
+        await api.notifications.subscribe(subscription);
+        // Reload to update UI and Notification.permission state
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error("Errore durante l'attivazione manuale delle notifiche:", e);
+      alert("Impossibile attivare le notifiche. Verifica le impostazioni del browser.");
+    } finally {
+      setIsActivating(false);
     }
   };
 
@@ -73,6 +118,30 @@ const Notifications: React.FC = () => {
                 </button>
             )}
         </div>
+
+        {/* Manual Activation Fallback UI */}
+        {showActivationPrompt && (
+            <div className="mb-8 p-6 bg-indigo-900/20 border border-indigo-500/30 rounded-2xl shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                    <div className="p-3 bg-indigo-600/20 rounded-full border border-indigo-500/20">
+                        <BellRing className="w-6 h-6 text-indigo-400" />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-lg font-bold text-white">Resta sempre aggiornato</h3>
+                        <p className="text-sm text-gray-400 leading-relaxed">
+                            Attiva le notifiche push per sapere subito quando le tue associazioni preferite pubblicano nuovi eventi.
+                        </p>
+                    </div>
+                    <button 
+                        onClick={handleManualActivation}
+                        disabled={isActivating}
+                        className="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+                    >
+                        {isActivating ? "Attivazione..." : "Attiva ora"}
+                    </button>
+                </div>
+            </div>
+        )}
 
         {loading ? (
              <div className="space-y-4">
