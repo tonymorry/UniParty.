@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -25,51 +26,79 @@ import Notifications from './pages/Notifications';
 import ResetPassword from './pages/ResetPassword';
 import Footer from './components/Footer';
 import CookieBanner from './components/CookieBanner';
-import { Capacitor } from '@capacitor/core';
-import OneSignal from 'onesignal-cordova-plugin';
 
-// Manager per la gestione del playerId OneSignal sulle app native
-const NativeNotificationManager: React.FC = () => {
+// Helper to convert VAPID key
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+ 
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+ 
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Internal component to handle automatic notification subscription
+const NotificationManager: React.FC = () => {
     const { user } = useAuth();
     
     useEffect(() => {
-        const initOneSignal = async () => {
-            // Inizializza OneSignal SOLO se siamo su piattaforma nativa (App iOS/Android)
-            if (Capacitor.isNativePlatform()) {
+        const initNotifications = async () => {
+            if (user && 'serviceWorker' in navigator && 'PushManager' in window) {
                 try {
-                    // Sostituisci con il tuo vero OneSignal App ID tramite variabili d'ambiente in fase di build
-                    const ONESIGNAL_APP_ID = "00000000-0000-0000-0000-000000000000"; 
-                    
-                    OneSignal.setAppId(ONESIGNAL_APP_ID);
-                    
-                    if (user) {
-                        // Lega l'ID utente del DB a OneSignal per invio mirato dal backend
-                        OneSignal.setExternalUserId(user._id);
-                        
-                        // Ottieni il playerId (subscriptionId) e registralo nel backend
-                        OneSignal.getDeviceState((state) => {
-                            if (state && state.userId) {
-                                api.notifications.registerDevice(state.userId).catch(console.error);
-                            }
-                        });
+                    // Check if permission is already granted or ask for it
+                    if (Notification.permission !== 'granted') {
+                         const permission = await Notification.requestPermission();
+                         if (permission !== 'granted') return;
                     }
+                    
+                    const { key } = await api.notifications.getVapidKey();
+                    const registration = await navigator.serviceWorker.ready;
+                    
+                    const subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(key)
+                    });
+
+                    await api.notifications.subscribe(subscription);
                 } catch (e) {
-                    console.error("OneSignal Init Failed", e);
+                    console.error("Auto-notification setup failed", e);
                 }
             }
         };
 
-        initOneSignal();
+        initNotifications();
     }, [user]);
 
     return null;
 };
 
 function App() {
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(
+          (registration) => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          },
+          (err) => {
+            console.log('ServiceWorker registration failed: ', err);
+          }
+        );
+      });
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <LocationProvider>
-        <NativeNotificationManager />
+        <NotificationManager />
         <Router>
           <div className="min-h-screen bg-gray-900 font-sans text-white flex flex-col">
             <Navbar />

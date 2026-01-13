@@ -10,8 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor/core": "^6.0.0",
-    "onesignal-cordova-plugin": "^5.2.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -27,6 +25,7 @@
     "react-router-dom": "^6.22.3",
     "stripe": "^14.25.0",
     "uuid": "^9.0.1",
+    "web-push": "^3.6.7",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
     "@vitejs/plugin-react": "^4.2.1",
