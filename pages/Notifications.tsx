@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCircle, ArrowRight, BellRing, ShieldCheck } from 'lucide-react';
+import { Bell, CheckCircle, ArrowRight, BellRing, ShieldCheck, Info } from 'lucide-react';
 
 // Helper to convert VAPID key
 function urlBase64ToUint8Array(base64String: string) {
@@ -35,9 +35,11 @@ const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
-
-  // Check if we should show the manual activation prompt
-  const showActivationPrompt = 'Notification' in window && Notification.permission === 'default';
+  
+  // Tracciamento stato permessi per UI reattiva
+  const [permissionState, setPermissionState] = useState<NotificationPermission>(
+    ('Notification' in window) ? Notification.permission : 'denied'
+  );
 
   useEffect(() => {
     if (!user) {
@@ -59,10 +61,17 @@ const Notifications: React.FC = () => {
   };
 
   const handleManualActivation = async () => {
+    if (!('Notification' in window)) {
+        alert("Il tuo browser non supporta le notifiche push.");
+        return;
+    }
+
     setIsActivating(true);
     try {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
+      const result = await Notification.requestPermission();
+      setPermissionState(result);
+
+      if (result === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
         const { key } = await api.notifications.getVapidKey();
         const registration = await navigator.serviceWorker.ready;
         
@@ -72,12 +81,15 @@ const Notifications: React.FC = () => {
         });
 
         await api.notifications.subscribe(subscription);
-        // Reload to update UI and Notification.permission state
+        
+        // Ricarica per aggiornare l'intera app con lo stato sottoscritto
         window.location.reload();
+      } else if (result === 'denied') {
+          alert("Hai negato i permessi. Per attivarle in futuro dovrai agire dalle impostazioni del browser.");
       }
     } catch (e) {
       console.error("Errore durante l'attivazione manuale delle notifiche:", e);
-      alert("Impossibile attivare le notifiche. Verifica le impostazioni del browser.");
+      alert("Impossibile completare la sottoscrizione. Riprova più tardi.");
     } finally {
       setIsActivating(false);
     }
@@ -119,25 +131,25 @@ const Notifications: React.FC = () => {
             )}
         </div>
 
-        {/* Manual Activation Fallback UI */}
-        {showActivationPrompt && (
-            <div className="mb-8 p-6 bg-indigo-900/20 border border-indigo-500/30 rounded-2xl shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
-                <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                    <div className="p-3 bg-indigo-600/20 rounded-full border border-indigo-500/20">
-                        <BellRing className="w-6 h-6 text-indigo-400" />
+        {/* Fallback Activation Box - Visible only if permission is 'default' */}
+        {permissionState === 'default' && (
+            <div className="mb-8 p-6 bg-indigo-900/20 border border-indigo-500/30 rounded-2xl shadow-xl animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="flex flex-col md:flex-row items-center gap-5">
+                    <div className="p-4 bg-indigo-600/20 rounded-full border border-indigo-500/20">
+                        <BellRing className="w-8 h-8 text-indigo-400" />
                     </div>
-                    <div className="flex-1">
-                        <h3 className="text-lg font-bold text-white">Resta sempre aggiornato</h3>
+                    <div className="flex-1 text-center md:text-left">
+                        <h3 className="text-xl font-bold text-white mb-1">Resta sempre aggiornato!</h3>
                         <p className="text-sm text-gray-400 leading-relaxed">
-                            Attiva le notifiche push per sapere subito quando le tue associazioni preferite pubblicano nuovi eventi.
+                            Attiva le notifiche push per sapere subito quando le tue associazioni preferite pubblicano nuovi eventi o promozioni early-bird.
                         </p>
                     </div>
                     <button 
                         onClick={handleManualActivation}
                         disabled={isActivating}
-                        className="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+                        className="w-full md:w-auto px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl transition shadow-lg shadow-indigo-600/20 disabled:opacity-50 whitespace-nowrap"
                     >
-                        {isActivating ? "Attivazione..." : "Attiva ora"}
+                        {isActivating ? "Attivazione..." : "Attiva Ora"}
                     </button>
                 </div>
             </div>
