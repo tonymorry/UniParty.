@@ -241,9 +241,9 @@ const Profile: React.FC = () => {
                 </div>
             </div>
             <div className="pt-16 pb-8 px-8">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">{user.name} {user.surname}</h1>
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+                    <div className="max-w-full">
+                        <h1 className="text-2xl font-bold text-white break-words">{user.name} {user.surname}</h1>
                         <p className="text-indigo-400 font-medium">{user.email}</p>
                         {user.role === UserRole.ASSOCIAZIONE && (
                             <p className="text-gray-400 font-medium text-sm mt-1 flex items-center">
@@ -252,7 +252,7 @@ const Profile: React.FC = () => {
                             </p>
                         )}
                     </div>
-                    <span className="bg-gray-900 text-indigo-400 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest border border-indigo-900/50">
+                    <span className="bg-gray-900 text-indigo-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight border border-indigo-900/50 flex-shrink-0 self-start sm:self-center">
                         {user.role}
                     </span>
                 </div>

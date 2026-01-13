@@ -1,17 +1,16 @@
-
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { Shield, Lock, Eye, Database, Server, ShieldCheck } from 'lucide-react';
 
 const Privacy: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto bg-gray-800 rounded-2xl shadow-xl p-8 md:p-12 border border-white/5">
+    <div className="min-h-screen bg-gray-900 py-6 md:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-10 md:p-12 border border-white/5">
         <div className="flex items-center mb-8 border-b border-white/10 pb-6">
-            <Shield className="w-10 h-10 text-indigo-400 mr-4" />
-            <h1 className="text-3xl font-bold text-white">Privacy Policy</h1>
+            <Shield className="w-10 h-10 text-indigo-400 mr-4 flex-shrink-0" />
+            <h1 className="text-2xl md:text-3xl font-bold text-white">Privacy Policy</h1>
         </div>
         
-        <div className="prose prose-invert max-w-none text-gray-300 space-y-6 text-sm md:text-base leading-relaxed">
+        <div className="prose prose-invert max-w-none text-gray-300 space-y-6 text-sm sm:text-base leading-relaxed">
             <p className="font-semibold text-white">
                 Informativa ai sensi dell'art. 13 del Regolamento UE 2016/679 (GDPR)
                 <br />
