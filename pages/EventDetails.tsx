@@ -96,6 +96,7 @@ const EventDetails: React.FC = () => {
         if (quantity > prev.length) {
             for (let i = prev.length; i < quantity; i++) newMats.push('');
         } else {
+            // Fix: Use newMats instead of newNames which is not in scope
             return newMats.slice(0, quantity);
         }
         return newMats;
@@ -156,6 +157,7 @@ const EventDetails: React.FC = () => {
         return;
     }
 
+    // MANDATORY PR SELECTION IF LISTS EXIST
     if (event && event.prLists && event.prLists.length > 0 && selectedPrList === "") {
         alert("Seleziona una Lista PR (o 'Nessuna lista').");
         return;
@@ -678,7 +680,7 @@ const EventDetails: React.FC = () => {
                 </div>
             </div>
 
-            {/* Right Column: Ticket Selection (FIX: Removed sticky) */}
+            {/* Right Column: Ticket Selection */}
             <div className="lg:col-span-1">
                 <div className="bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-700">
                      <div className="flex justify-between items-center mb-6">
@@ -762,19 +764,23 @@ const EventDetails: React.FC = () => {
                              </div>
 
                              {event.prLists && event.prLists.length > 0 && (
-                                 <div>
-                                     <label className="block text-sm font-medium text-gray-300 mb-1">Lista PR</label>
+                                 <div className="bg-indigo-900/10 p-4 rounded-xl border border-indigo-900/30">
+                                     <label className="block text-sm font-bold text-indigo-300 mb-2 flex items-center">
+                                         <List className="w-4 h-4 mr-2" />
+                                         Lista PR
+                                     </label>
                                      <select
                                          value={selectedPrList}
                                          onChange={e => setSelectedPrList(e.target.value)}
-                                         className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                         className="w-full px-3 py-3 bg-gray-900 border border-indigo-900/40 rounded-lg text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none shadow-inner"
                                      >
-                                         <option value="">Seleziona una lista...</option>
+                                         <option value="">Seleziona una lista (Obbligatorio)...</option>
                                          <option value="Nessuna lista">Nessuna lista</option>
                                          {event.prLists.map(list => (
                                              <option key={list} value={list}>{list}</option>
                                          ))}
                                      </select>
+                                     <p className="text-[10px] text-gray-500 mt-2 italic font-medium">Seleziona la lista per supportare il tuo PR di fiducia.</p>
                                  </div>
                              )}
                          </div>

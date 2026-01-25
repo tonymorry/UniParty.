@@ -563,6 +563,41 @@ const Dashboard: React.FC = () => {
                                    </div>
                                </div>
 
+                               {/* PR LISTS SECTION (Re-added) */}
+                               <div className="p-4 bg-gray-900/30 rounded-xl border border-gray-700">
+                                   <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
+                                       <List className="w-4 h-4 mr-2 text-indigo-400" />
+                                       Gestione Liste PR
+                                   </label>
+                                   <div className="flex gap-2 mb-3">
+                                       <input 
+                                           type="text" 
+                                           value={currentPrInput}
+                                           onChange={e => setCurrentPrInput(e.target.value)}
+                                           onKeyDown={e => { if(e.key === 'Enter') { e.preventDefault(); handleAddPrList(); }}}
+                                           placeholder="Es. Lista Red, Lista Blue..."
+                                           className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-500"
+                                       />
+                                       <button 
+                                           type="button" 
+                                           onClick={handleAddPrList}
+                                           className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition"
+                                       >
+                                           Aggiungi
+                                       </button>
+                                   </div>
+                                   <div className="flex flex-wrap gap-2">
+                                       {prLists.map(list => (
+                                           <span key={list} className="bg-gray-800 text-indigo-300 px-3 py-1 rounded-full text-xs font-bold border border-indigo-900/50 flex items-center">
+                                               {list}
+                                               <button type="button" onClick={() => handleRemovePrList(list)} className="ml-2 hover:text-red-400">
+                                                   <X className="w-3 h-3" />
+                                               </button>
+                                           </span>
+                                       ))}
+                                   </div>
+                               </div>
+
                                {/* Impostazioni Avanzate */}
                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-900/30 rounded-xl border border-gray-700">
                                    <div className="flex items-center space-x-3">
