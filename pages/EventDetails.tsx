@@ -4,7 +4,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Event, UserRole } from '../types';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck, Flag, AlertTriangle, ArrowLeft, DollarSign, Lock } from 'lucide-react';
+// Added Ticket as TicketIcon to the imports from lucide-react to fix the 'Cannot find name TicketIcon' error.
+import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck, Flag, AlertTriangle, ArrowLeft, DollarSign, Lock, Users, TrendingUp, Heart, Ticket as TicketIcon } from 'lucide-react';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -96,7 +97,6 @@ const EventDetails: React.FC = () => {
         if (quantity > prev.length) {
             for (let i = prev.length; i < quantity; i++) newMats.push('');
         } else {
-            // Fix: Use newMats instead of newNames which is not in scope
             return newMats.slice(0, quantity);
         }
         return newMats;
@@ -649,6 +649,103 @@ const EventDetails: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        
+        {/* ==========================================
+            OWNER STATISTICS SECTION
+           ========================================== */}
+        {isOwner && (
+            <div className="mb-12 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="bg-indigo-900/20 border border-indigo-500/30 rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                        <div>
+                            <h2 className="text-2xl font-black text-white flex items-center">
+                                <BarChart className="w-7 h-7 mr-3 text-indigo-400" />
+                                Gestione Evento & Statistiche
+                            </h2>
+                            <p className="text-indigo-300/70 text-sm mt-1">Dati in tempo reale sulle vendite e l'interesse.</p>
+                        </div>
+                        <Link 
+                            to={`/events/${event._id}/attendees`}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center transition shadow-lg shadow-indigo-600/20 group"
+                        >
+                            <Users className="w-5 h-5 mr-2 group-hover:scale-110 transition" />
+                            Vedi Lista Partecipanti
+                        </Link>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {/* KPI 1: Tickets Sold */}
+                        <div className="bg-gray-900/50 p-5 rounded-2xl border border-white/5 shadow-inner">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Biglietti Venduti</span>
+                                <TicketIcon className="w-4 h-4 text-green-400" />
+                            </div>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-3xl font-black text-white">{event.ticketsSold}</span>
+                                <span className="text-gray-500 text-sm font-bold">/ {event.maxCapacity}</span>
+                            </div>
+                            <div className="mt-4 h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)]" 
+                                    style={{ width: `${Math.min(100, (event.ticketsSold/event.maxCapacity)*100)}%` }}
+                                ></div>
+                            </div>
+                        </div>
+
+                        {/* KPI 2: Revenue */}
+                        <div className="bg-gray-900/50 p-5 rounded-2xl border border-white/5 shadow-inner">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ricavo Stimato</span>
+                                <TrendingUp className="w-4 h-4 text-indigo-400" />
+                            </div>
+                            <div className="text-3xl font-black text-white">€{(event.ticketsSold * event.price).toFixed(2)}</div>
+                            <div className="text-[10px] text-gray-500 mt-2 font-bold italic">* Escluse fee di piattaforma</div>
+                        </div>
+
+                        {/* KPI 3: Favorites */}
+                        <div className="bg-gray-900/50 p-5 rounded-2xl border border-white/5 shadow-inner">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Interesse (Salvati)</span>
+                                <Heart className="w-4 h-4 text-pink-500" />
+                            </div>
+                            <div className="text-3xl font-black text-white">{prStats?.favorites || 0}</div>
+                            <div className="text-[10px] text-gray-500 mt-2 font-bold">Studenti che seguono l'evento</div>
+                        </div>
+
+                        {/* KPI 4: Remaining */}
+                        <div className="bg-gray-900/50 p-5 rounded-2xl border border-white/5 shadow-inner">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Posti Rimanenti</span>
+                                <Users className="w-4 h-4 text-orange-400" />
+                            </div>
+                            <div className="text-3xl font-black text-white">{event.maxCapacity - event.ticketsSold}</div>
+                            <div className="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-tighter">Esaurimento al {((event.ticketsSold/event.maxCapacity)*100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+
+                    {/* PR Breakdown */}
+                    {event.prLists && event.prLists.length > 0 && (
+                        <div className="mt-8 pt-8 border-t border-indigo-500/20">
+                            <h3 className="text-lg font-bold text-white mb-4 flex items-center">
+                                <List className="w-5 h-5 mr-2 text-indigo-400" />
+                                Vendite per Lista PR
+                            </h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                                {Object.entries(prStats || {})
+                                    .filter(([key]) => key !== 'favorites')
+                                    .map(([name, count]) => (
+                                        <div key={name} className="bg-gray-950/40 p-4 rounded-xl border border-white/5 text-center">
+                                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest truncate mb-1">{name}</p>
+                                            <p className="text-xl font-black text-indigo-400">{count}</p>
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
             
             {/* Left Column: Description */}
