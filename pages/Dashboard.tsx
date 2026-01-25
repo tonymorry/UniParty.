@@ -476,6 +476,20 @@ const Dashboard: React.FC = () => {
                                    </div>
                                </div>
 
+                               <div>
+                                   <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center">
+                                       <FileText className="w-4 h-4 mr-1 text-indigo-400"/> Descrizione Evento
+                                   </label>
+                                   <textarea 
+                                       value={description} 
+                                       onChange={e => setDescription(e.target.value)} 
+                                       rows={4}
+                                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
+                                       required
+                                       placeholder="Descrivi i dettagli dell'evento, programma, ospiti, etc."
+                                   />
+                               </div>
+
                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                    <div>
                                        <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center"><Clock className="w-4 h-4 mr-1 text-indigo-400"/> Data</label>
