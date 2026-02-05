@@ -4,6 +4,7 @@ export enum UserRole {
   ASSOCIAZIONE = 'associazione',
   ADMIN = 'admin',
   STAFF = 'staff',
+  PR = 'pr'
 }
 
 export enum EventCategory {
@@ -57,7 +58,7 @@ export interface User {
   isVerified?: boolean;
   isDeleted?: boolean; // For Admin view
   createdAt?: string;
-  parentOrganization?: string; // Only for staff
+  parentOrganization?: string; // Only for staff and PR
 }
 
 export interface Event {
@@ -79,28 +80,34 @@ export interface Event {
   category: EventCategory; 
   favoritesCount?: number;
   status?: 'active' | 'draft' | 'archived' | 'deleted';
-  // New Academic Fields
   requiresMatricola?: boolean;
-  requiresCorsoStudi?: boolean; // New field
+  requiresCorsoStudi?: boolean; 
   scanType?: 'entry_only' | 'entry_exit';
 }
 
 export interface Ticket {
   _id: string;
-  event: Event; // Populated in the UI for wallet
+  event: Event; 
   owner: string | User;
   ticketHolderName: string;
   qrCodeId: string;
   purchaseDate: string;
-  prList?: string; // The list chosen during purchase
-  used: boolean; // Has the ticket been scanned? (Legacy/Simple check)
-  checkInDate?: string; // When was it scanned
-  // New Fields
+  prList?: string; 
+  used: boolean; 
+  checkInDate?: string; 
   matricola?: string;
-  corsoStudi?: string; // New field
+  corsoStudi?: string; 
   entryTime?: string;
   exitTime?: string;
-  status: 'valid' | 'entered' | 'completed' | 'archived' | 'deleted' | 'active'; // 'active' kept for legacy compatibility
+  status: 'valid' | 'entered' | 'completed' | 'archived' | 'deleted' | 'active'; 
+}
+
+export interface PRRequest {
+  _id: string;
+  userId: User | string;
+  associationId: User | string;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
 }
 
 export interface Report {
