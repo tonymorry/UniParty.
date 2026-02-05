@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
   },
   password: { type: String, required: true }, 
   name: { type: String, required: true },
-  role: { type: String, enum: ['studente', 'associazione', 'admin', 'staff', 'pr'], required: true },
+  role: { type: String, enum: ['studente', 'associazione', 'admin', 'staff'], required: true },
   profileImage: { type: String, default: '' },
   
   // Verification Status
@@ -61,15 +61,8 @@ const userSchema = new mongoose.Schema({
   stripeOnboardingComplete: { type: Boolean, default: false },
   followersCount: { type: Number, default: 0 },
 
-  // Staff/PR specific
+  // Staff specific
   parentOrganization: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-}, { timestamps: true });
-
-// --- PR REQUEST SCHEMA ---
-const prRequestSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  associationId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
 }, { timestamps: true });
 
 // --- NOTIFICATION SCHEMA ---
@@ -172,7 +165,6 @@ const reportSchema = new mongoose.Schema({
 
 module.exports = {
   User: mongoose.model('User', userSchema),
-  PRRequest: mongoose.model('PRRequest', prRequestSchema),
   Event: mongoose.model('Event', eventSchema),
   Ticket: mongoose.model('Ticket', ticketSchema),
   Order: mongoose.model('Order', orderSchema),
