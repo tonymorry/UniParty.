@@ -1,84 +1,8 @@
 
-import { Event, EventCategory, LoginResponse, Ticket, User, UserRole, Report } from '../types';
+import { Event, EventCategory, LoginResponse, Ticket, User, UserRole, Report, PRRequest } from '../types';
 
-// ==========================================
-// CONFIGURATION
-// ==========================================
-
-// CHANGE THIS TO FALSE TO USE THE REAL BACKEND
-const USE_MOCK = false; 
-
-// Automatically determine API URL based on the current browser domain
-// If we are on localhost, look for port 5000. Otherwise, use relative path '/api'
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const API_URL = isLocalhost ? 'http://localhost:5000/api' : '/api';
-
-// ==========================================
-// MOCK DATA & IMPLEMENTATION (Fallback)
-// ==========================================
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-const mockApi = {
-  auth: {
-    login: async () => ({ token: 'mock', user: {} as any }),
-    register: async () => ({ token: 'mock', user: {} as any }),
-    updateUser: async () => ({} as any),
-    deleteAccount: async () => {},
-    toggleFavorite: async () => [],
-    getFavoriteEvents: async () => [],
-    me: async () => ({}) as any,
-    toggleFollow: async () => [],
-    searchAssociations: async () => [],
-    getPublicProfile: async () => ({} as any),
-    forgotPassword: async () => ({ message: "Mock: Email sent" }),
-    resetPassword: async () => ({ message: "Mock: Password reset" }),
-    createStaffAccount: async () => ({}) as any,
-    getStaffAccounts: async () => [],
-    deleteStaffAccount: async () => ({ success: true }),
-  },
-  events: {
-    getAll: async () => [],
-    getById: async () => undefined,
-    getByOrgId: async () => [],
-    getPublicEventsByOrg: async () => [],
-    create: async () => ({} as any),
-    update: async () => ({} as any),
-    delete: async () => {},
-    getEventStats: async () => ({}),
-    getAttendees: async () => [],
-    validateTicket: async () => ({} as any)
-  },
-  reports: {
-    create: async () => ({} as any),
-    getAll: async () => [],
-  },
-  wallet: {
-    getMyTickets: async () => []
-  },
-  stripe: {
-    createConnectAccount: async () => "",
-    finalizeOnboarding: async () => {}
-  },
-  payments: {
-    createCheckoutSession: async () => "",
-    mockWebhookSuccess: async () => {},
-    verifyPayment: async (sessionId: string) => { console.log("Mock verify", sessionId); }
-  },
-  admin: {
-      getAllUsers: async () => [],
-      getAllEvents: async () => [],
-      getUserTickets: async () => [],
-      verifyUser: async () => {},
-      restoreUser: async () => {},
-      deleteEventWithReason: async () => ({}),
-  },
-  notifications: {
-      subscribe: async () => {},
-      getAll: async () => [],
-      markAsRead: async () => {},
-      getVapidKey: async () => ({ key: 'mock' })
-  }
-};
 
 const getHeaders = () => {
     const token = localStorage.getItem('uniparty_token');
@@ -88,7 +12,7 @@ const getHeaders = () => {
     };
 };
 
-const realApi = {
+export const api = {
   auth: {
     login: async (email: string, password: string) => {
         const res = await fetch(`${API_URL}/auth/login`, {
@@ -158,22 +82,6 @@ const realApi = {
         if(!res.ok) throw new Error('Failed to toggle follow');
         return res.json();
     },
-    getFavoriteEventsForUser: async () => {
-        const res = await fetch(`${API_URL}/users/favorites/list`, {
-            headers: getHeaders()
-        });
-        if(!res.ok) throw new Error('Failed to fetch favorites');
-        return res.json();
-    },
-    toggleFollowAssociation: async (associationId: string) => {
-        const res = await fetch(`${API_URL}/users/follow/toggle`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ associationId })
-        });
-        if(!res.ok) throw new Error('Failed to toggle follow');
-        return res.json();
-    },
     searchAssociations: async (query: string) => {
         const res = await fetch(`${API_URL}/users/search?q=${encodeURIComponent(query)}`, {
             headers: getHeaders()
@@ -228,6 +136,41 @@ const realApi = {
         });
         if(!res.ok) throw new Error('Failed to delete staff account');
         return res.json();
+    },
+    // NEW PR API
+    applyForPR: async (associationId: string) => {
+        const res = await fetch(`${API_URL}/pr/apply`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ associationId })
+        });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.error || 'Application failed');
+        return data;
+    },
+    getPRRequests: async () => {
+        const res = await fetch(`${API_URL}/pr/requests`, { headers: getHeaders() });
+        if(!res.ok) throw new Error('Failed to fetch requests');
+        return res.json();
+    },
+    updatePRRequest: async (requestId: string, status: 'accepted' | 'rejected') => {
+        const res = await fetch(`${API_URL}/pr/requests/${requestId}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ status })
+        });
+        if(!res.ok) throw new Error('Failed to update request');
+        return res.json();
+    },
+    getAccreditedPRs: async () => {
+        const res = await fetch(`${API_URL}/pr/list`, { headers: getHeaders() });
+        if(!res.ok) throw new Error('Failed to fetch PR list');
+        return res.json();
+    },
+    getPRStats: async () => {
+        const res = await fetch(`${API_URL}/pr/stats`, { headers: getHeaders() });
+        if(!res.ok) throw new Error('Failed to fetch stats');
+        return res.json();
     }
   },
   events: {
@@ -248,7 +191,7 @@ const realApi = {
         const res = await fetch(`${API_URL}/events?organization=${orgId}&public=true`);
         return res.json();
     },
-    create: async (eventData: any, user: any) => {
+    create: async (eventData: any) => {
         const res = await fetch(`${API_URL}/events`, {
             method: 'POST',
             headers: getHeaders(),
@@ -342,9 +285,6 @@ const realApi = {
         }
         throw new Error("Failed to create session");
     },
-    mockWebhookSuccess: async () => {
-        // No-op in real mode
-    },
     verifyPayment: async (sessionId: string) => {
         const res = await fetch(`${API_URL}/stripe/verify`, {
             method: 'POST',
@@ -409,5 +349,3 @@ const realApi = {
       }
   }
 };
-
-export const api = USE_MOCK ? (mockApi as any) : realApi;
