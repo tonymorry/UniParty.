@@ -35,6 +35,11 @@ const mockApi = {
     createStaffAccount: async () => ({}) as any,
     getStaffAccounts: async () => [],
     deleteStaffAccount: async () => ({ success: true }),
+    applyForPR: async () => ({}) as any,
+    getPRRequests: async () => [],
+    updatePRRequestStatus: async () => ({}) as any,
+    getAccreditedPRs: async () => [],
+    getPRStats: async () => [],
   },
   events: {
     getAll: async () => [],
@@ -227,6 +232,41 @@ const realApi = {
             headers: getHeaders()
         });
         if(!res.ok) throw new Error('Failed to delete staff account');
+        return res.json();
+    },
+    applyForPR: async (associationId: string) => {
+        const res = await fetch(`${API_URL}/pr/apply`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ associationId })
+        });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.error || 'Failed to apply for PR');
+        return data;
+    },
+    getPRRequests: async () => {
+        const res = await fetch(`${API_URL}/pr/requests`, { headers: getHeaders() });
+        if(!res.ok) throw new Error('Failed to fetch PR requests');
+        return res.json();
+    },
+    updatePRRequestStatus: async (requestId: string, status: 'accepted' | 'rejected') => {
+        const res = await fetch(`${API_URL}/pr/requests/${requestId}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ status })
+        });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.error || 'Failed to update PR request');
+        return data;
+    },
+    getAccreditedPRs: async () => {
+        const res = await fetch(`${API_URL}/pr/accredited`, { headers: getHeaders() });
+        if(!res.ok) throw new Error('Failed to fetch accredited PRs');
+        return res.json();
+    },
+    getPRStats: async () => {
+        const res = await fetch(`${API_URL}/pr/stats`, { headers: getHeaders() });
+        if(!res.ok) throw new Error('Failed to fetch PR stats');
         return res.json();
     }
   },

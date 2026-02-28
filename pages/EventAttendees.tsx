@@ -34,7 +34,7 @@ const EventAttendees: React.FC = () => {
         if (id) {
             api.events.getAttendees(id) // Assume this helper exists in api.ts wrapper or call directly
                 .then(setAttendees)
-                .catch(err => {
+                .catch((err: any) => {
                     console.error("Failed to load attendees", err);
                     alert("Errore caricamento lista.");
                 })

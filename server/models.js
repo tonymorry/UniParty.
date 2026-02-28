@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
   },
   password: { type: String, required: true }, 
   name: { type: String, required: true },
-  role: { type: String, enum: ['studente', 'associazione', 'admin', 'staff'], required: true },
+  role: { type: String, enum: ['studente', 'associazione', 'admin', 'staff', 'pr'], required: true },
   profileImage: { type: String, default: '' },
   
   // Verification Status
@@ -163,11 +163,19 @@ const reportSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+// --- PR REQUEST SCHEMA ---
+const prRequestSchema = new mongoose.Schema({
+  studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  associationId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' }
+}, { timestamps: true });
+
 module.exports = {
   User: mongoose.model('User', userSchema),
   Event: mongoose.model('Event', eventSchema),
   Ticket: mongoose.model('Ticket', ticketSchema),
   Order: mongoose.model('Order', orderSchema),
   Notification: mongoose.model('Notification', notificationSchema),
-  Report: mongoose.model('Report', reportSchema)
+  Report: mongoose.model('Report', reportSchema),
+  PRRequest: mongoose.model('PRRequest', prRequestSchema)
 };

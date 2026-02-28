@@ -174,6 +174,29 @@ const BottomNav: React.FC = () => {
         </>
       )}
 
+      {/* ==========================================
+          PR
+         ========================================== */}
+      {user && user.role === UserRole.PR && (
+        <>
+          <Link to="/" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/') ? 'text-indigo-400' : 'text-gray-500'}`}>
+            <Home className="w-5 h-5" />
+            <span className="text-[9px] font-medium mt-1">Home</span>
+          </Link>
+
+          <Link to="/pr-dashboard" className="relative -top-5">
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-[#020617] transition-transform active:scale-95 ${isActive('/pr-dashboard') ? 'bg-indigo-700' : 'bg-indigo-600'}`}>
+              <LayoutDashboard className="w-7 h-7 text-white" />
+            </div>
+          </Link>
+
+          <Link to="/profile" className={`flex flex-col items-center justify-center w-12 h-full ${isActive('/profile') ? 'text-indigo-400' : 'text-gray-500'}`}>
+            <User className="w-5 h-5" />
+            <span className="text-[9px] font-medium mt-1">Profile</span>
+          </Link>
+        </>
+      )}
+
     </div>
   );
 };

@@ -53,7 +53,7 @@ const EventDetails: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      api.events.getById(id).then(data => {
+      api.events.getById(id).then((data: any) => {
           setEvent(data || null);
           if(data) {
               setEditForm({

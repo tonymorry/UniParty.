@@ -11,6 +11,7 @@ import Auth from './pages/Auth';
 import EventDetails from './pages/EventDetails';
 import Wallet from './pages/Wallet';
 import Dashboard from './pages/Dashboard';
+import PRDashboard from './pages/PRDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import PaymentSuccess from './pages/PaymentSuccess';
 import Profile from './pages/Profile';
@@ -115,6 +116,7 @@ function App() {
                 <Route path="/association/:id" element={<AssociationProfile />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/pr-dashboard" element={<PRDashboard />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/scanner" element={<Scanner />} />
                 <Route path="/profile" element={<Profile />} />

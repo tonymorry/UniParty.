@@ -4,7 +4,7 @@ import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, Event, User } from '../types';
 import EventCard from '../components/EventCard';
-import { Users, Globe, UserPlus, UserCheck, Briefcase, Calendar, ArrowLeft } from 'lucide-react';
+import { Users, Globe, UserPlus, UserCheck, Briefcase, Calendar, ArrowLeft, ShieldCheck } from 'lucide-react';
 
 const AssociationProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +15,7 @@ const AssociationProfile: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
+  const [isApplyingPR, setIsApplyingPR] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -62,6 +63,24 @@ const AssociationProfile: React.FC = () => {
         console.error("Follow error", e);
     } finally {
         setFollowLoading(false);
+    }
+  };
+
+  const handleApplyPR = async () => {
+    if (!user) {
+        navigate('/auth');
+        return;
+    }
+    if (!association) return;
+
+    setIsApplyingPR(true);
+    try {
+        await api.auth.applyForPR(association._id);
+        alert("Richiesta inviata con successo! L'associazione revisionerà la tua candidatura.");
+    } catch (e: any) {
+        alert("Errore: " + e.message);
+    } finally {
+        setIsApplyingPR(false);
     }
   };
 
@@ -138,12 +157,12 @@ const AssociationProfile: React.FC = () => {
                         </div>
 
                         {/* Follow Button (Only for Students or Guests) */}
-                        {(!user || user.role === UserRole.STUDENTE) && (
-                             <div className="pt-2">
+                        {(!user || user.role === UserRole.STUDENTE || user.role === UserRole.PR) && (
+                             <div className="pt-2 flex flex-wrap gap-3 justify-center md:justify-start">
                                  <button
                                     onClick={handleToggleFollow}
                                     disabled={followLoading}
-                                    className={`px-8 py-2.5 rounded-full font-bold shadow-lg transition transform active:scale-95 flex items-center mx-auto md:mx-0 ${
+                                    className={`px-8 py-2.5 rounded-full font-bold shadow-lg transition transform active:scale-95 flex items-center ${
                                         isFollowing() 
                                         ? 'bg-gray-700 text-gray-300 border border-gray-600 hover:bg-gray-650' 
                                         : 'bg-indigo-600 text-white hover:bg-indigo-700'
@@ -163,6 +182,31 @@ const AssociationProfile: React.FC = () => {
                                         </>
                                     )}
                                 </button>
+
+                                {/* Become PR Button */}
+                                {user?.role === UserRole.STUDENTE && (
+                                    <button
+                                        onClick={handleApplyPR}
+                                        disabled={isApplyingPR}
+                                        className="px-8 py-2.5 rounded-full font-bold bg-amber-600 text-white hover:bg-amber-700 shadow-lg transition transform active:scale-95 flex items-center"
+                                    >
+                                        {isApplyingPR ? (
+                                            <span className="opacity-70">Invio...</span>
+                                        ) : (
+                                            <>
+                                                <ShieldCheck className="w-5 h-5 mr-2" />
+                                                Diventa PR
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+
+                                {user?.role === UserRole.PR && user.parentOrganization === association._id && (
+                                    <div className="px-8 py-2.5 rounded-full font-bold bg-green-900/40 text-green-400 border border-green-500/30 flex items-center">
+                                        <ShieldCheck className="w-5 h-5 mr-2" />
+                                        PR Accreditato
+                                    </div>
+                                )}
                              </div>
                         )}
                     </div>

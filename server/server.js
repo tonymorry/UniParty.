@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const StripeController = require('./stripe');
-const { User, Event, Ticket, Order, Notification, Report } = require('./models');
+const { User, Event, Ticket, Order, Notification, Report, PRRequest } = require('./models');
 const { authMiddleware, adminMiddleware } = require('./middleware');
 const mailer = require('./mailer'); // Import Mailer
 const webPushConfig = require('./webPush'); // Import Web Push Config
@@ -685,6 +685,131 @@ app.put('/api/admin/users/:id/restore', authMiddleware, adminMiddleware, async (
     }
 });
 
+
+// --- PR SYSTEM ---
+
+app.post('/api/pr/apply', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'studente') return res.status(403).json({ error: "Solo gli studenti possono diventare PR" });
+    
+    try {
+        const { associationId } = req.body;
+        if (!associationId) return res.status(400).json({ error: "ID Associazione richiesto" });
+
+        const existing = await PRRequest.findOne({ 
+            studentId: req.user.userId, 
+            associationId, 
+            status: 'pending' 
+        });
+        if (existing) return res.status(400).json({ error: "Hai già una richiesta in sospeso per questa associazione" });
+
+        const request = await PRRequest.create({
+            studentId: req.user.userId,
+            associationId,
+            status: 'pending'
+        });
+
+        // Notify Association
+        await Notification.create({
+            recipient: associationId,
+            title: "Nuova richiesta PR",
+            message: `Uno studente ha richiesto di diventare PR per la tua associazione.`,
+            url: "/dashboard?tab=pr"
+        });
+
+        res.json(request);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/pr/requests', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'associazione') return res.status(403).json({ error: "Accesso negato" });
+    try {
+        const requests = await PRRequest.find({ associationId: req.user.userId, status: 'pending' })
+            .populate('studentId', 'name surname email profileImage');
+        res.json(requests);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.put('/api/pr/requests/:id', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'associazione') return res.status(403).json({ error: "Accesso negato" });
+    try {
+        const { status } = req.body; // 'accepted' or 'rejected'
+        const request = await PRRequest.findById(req.params.id);
+        if (!request || request.associationId.toString() !== req.user.userId) {
+            return res.status(404).json({ error: "Richiesta non trovata" });
+        }
+
+        request.status = status;
+        await request.save();
+
+        if (status === 'accepted') {
+            const student = await User.findById(request.studentId);
+            student.role = 'pr';
+            student.parentOrganization = req.user.userId;
+            await student.save();
+
+            await Notification.create({
+                recipient: student._id,
+                title: "Richiesta PR Accettata!",
+                message: `Sei ora un PR accreditato per l'associazione. Puoi accedere alla tua Dashboard PR.`,
+                url: "/pr-dashboard"
+            });
+        } else {
+            await Notification.create({
+                recipient: request.studentId,
+                title: "Richiesta PR Rifiutata",
+                message: `La tua richiesta per diventare PR è stata declinata.`,
+                url: "/"
+            });
+        }
+
+        res.json(request);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/pr/accredited', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'associazione') return res.status(403).json({ error: "Accesso negato" });
+    try {
+        const prs = await User.find({ role: 'pr', parentOrganization: req.user.userId })
+            .select('name surname email profileImage');
+        res.json(prs);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/pr/stats', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'pr') return res.status(403).json({ error: "Accesso negato" });
+    try {
+        const pr = await User.findById(req.user.userId);
+        if (!pr.parentOrganization) return res.status(400).json({ error: "PR non associato a nessuna organizzazione" });
+
+        const events = await Event.find({ organization: pr.parentOrganization }).sort({ date: -1 });
+        
+        const stats = await Promise.all(events.map(async (event) => {
+            const ticketsCount = await Ticket.countDocuments({ 
+                event: event._id, 
+                prList: pr.name + (pr.surname ? ' ' + pr.surname : '') 
+            });
+            return {
+                eventId: event._id,
+                eventTitle: event.title,
+                eventDate: event.date,
+                ticketsSold: ticketsCount,
+                revenue: ticketsCount * event.price
+            };
+        }));
+
+        res.json(stats);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // --- EVENTS ---
 

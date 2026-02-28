@@ -1,0 +1,100 @@
+[
+  {
+    "id": 0,
+    "author": "user",
+    "payload": {
+      "type": "text",
+      "text": "Agisci come un Avvocato Senior esperto in Diritto Digitale, E-commerce e Marketplace (Piattaforme Intermediarie) in Italia. Il tuo compito è redigere il documento \"Termini e Condizioni Generali di Utilizzo\" (T&C) per la piattaforma web e mobile chiamata UniParty.\n\nContesto Tecnico e Business (da integrare rigorosamente nel contratto):\n\nNatura della Piattaforma: UniParty è un Marketplace B2B2C. Mette in contatto \"Associazioni Universitarie\" (Organizzatori) con \"Studenti\" (Utenti finali).\n\nRuolo di UniParty: UniParty agisce esclusivamente come fornitore tecnologico. NON organizza gli eventi, non controlla la sicurezza in loco e non emette i titoli fiscali (biglietti SIAE), che sono responsabilità esclusiva dell'Organizzatore.\n\nFlusso Pagamenti (Stripe Connect):\n\nL'utente paga tramite Stripe.\n\nIl prezzo del biglietto va direttamente all'account Stripe dell'Associazione (Direct Charge).\n\nUniParty trattiene automaticamente solo una \"Fee di Servizio\" fissa (es. €0,40) per la gestione tecnologica.\n\nClausola Fondamentale: Poiché i soldi vanno all'organizzatore, UniParty NON può effettuare rimborsi diretti del prezzo del biglietto. I rimborsi sono responsabilità dell'Organizzatore. La Fee di Servizio di UniParty non è mai rimborsabile (in quanto il servizio tecnologico è stato erogato).\n\nFunzionalità \"Seminari/Accademica\": La piattaforma traccia gli orari di ingresso/uscita tramite QR Code per fini accademici (CFU). È necessario un disclaimer che esoneri UniParty da responsabilità se l'Università non riconosce i crediti o se lo studente non scansiona correttamente il codice.\n\nForo Competente: Palermo, Italia.\n\nRequisiti del Documento (Output):\n\nStile: Formale, giuridicamente vincolante, preciso, in Italiano perfetto.\n\nStruttura: Diviso in Articoli numerati (es. Art. 1, Art. 2...).\n\nRiferimenti Normativi: Codice del Consumo (D.Lgs. 206/2005), Direttiva E-commerce (D.Lgs. 70/2003), Codice Civile Italiano.\n\nFormato: Restituisci il testo già formattato in codice TSX (React), utilizzando una struttura simile a quella fornita qui sotto, con icone lucide-react e classi Tailwind CSS per una lettura chiara. Non usare Markdown, dammi direttamente il componente React completo.\n\nStruttura del Componente React richiesta:\n\nTypeScript\n\nimport React from 'react';\nimport { Scale, ShieldAlert, FileText, CreditCard, AlertCircle } from 'lucide-react';\n\nconst Terms: React.FC = () => {\n  return (\n    // ... Layout con Tailwind, sfondo grigio chiaro, contenitore bianco centrato ...\n    // ... Testo legale diviso in sezioni chiare ...\n  );\n};\nexport default Terms;\nPunti Critici da coprire negli Articoli:\n\nDefinizioni: Piattaforma, Utente, Organizzatore, Voucher (distinto dal Titolo Fiscale SIAE).\n\nOggetto del servizio: Mera intermediazione tecnica.\n\nRegistrazione: Veridicità dei dati (specialmente Matricola universitaria).\n\nAcquisto e Pagamenti: Spiegazione del mandato all'incasso, ruolo di Stripe, non rimborsabilità della Fee di servizio.\n\nDiritto di Recesso: Esclusione del diritto di recesso per servizi del tempo libero a data determinata (art. 59 Codice del Consumo), salvo annullamento evento.\n\nResponsabilità: Esonero totale di UniParty per quanto accade durante l'evento (infortuni, annullamenti, qualità del servizio).\n\nLimitazioni Tecniche: Il servizio è fornito \"as is\", nessuna garanzia di uptime al 100%.\n\nRisoluzione e Ban: Diritto di UniParty di sospendere account fraudolenti.\n\nLegge Applicabile e Foro: Legge Italiana, Foro di Palermo.\n\nGenera ora il componente Terms.tsx completo.",
+      "cMarkNode": {}
+    },
+    "createdTimestamp": 1764707431943
+  },
+  {
+    "id": 1,
+    "author": "model",
+    "payload": {
+      "type": "thinking",
+      "text": "**Crafting the T&C**\n\nMy initial analysis confirms the need for comprehensive Terms and Conditions. I've begun to outline the key sections required, considering the specific context of an Italian digital marketplace. Current focus is on data privacy and consumer protection clauses. My next step will be to explore legal precedents in Italy.\n\n\n**Structuring the Codebase**\n\nI'm now fully immersed in the technical aspects. The React and Tailwind CSS structure is taking shape, and the component design aligns perfectly with the functionalities. I've considered how to model key business and legal aspects into the code. The payment flow using Stripe Connect is set; the application fee structure is non-negotiable. I'm focusing on features such as entry tracking and how to handle data responsibly.\n\n\n**Improving the UI/UX**\n\nThe layout now has a cleaner, more readable structure, as intended. The visual design, with its white background, subtle shadow, and `max-w-4xl` container, enhances readability. I've integrated a prominent header with a title and icon, and implemented a clear table of contents to aid navigation. Critical sections like Refunds and Liability now feature distinctive alert box styling for emphasis.\n\n**Revising Legal Content**\n\nI've just finished the first draft of the legal content. The preamble now has a placeholder for the company name, using \"UniParty S.r.l.\". Art. 1 defines crucial terms like \"Voucher\" and \"Fiscal Title.\" Art. 2 clarifies our role as a *mere technological intermediary*. The \"Payments\" section includes a detailed explanation of the Stripe Connect mechanism. The fee structure for booking services is now explicitly non-refundable, as the service is executed immediately.\n\n\n**Elaborating Legal Details**\n\nI've just added Art. 5, which clarifies the exclusion of the right of withdrawal, and a more thorough Art. 6 specifying direct responsibilities between users and organizers. I've also added \"Academic Tracking,\" with a disclaimer for potential technical issues or refusal by the University. Art. 8 details liability limitations, while Art. 9 clarifies intellectual property ownership. The structure also includes links to a dedicated Privacy Policy, and Art. 11 establishes Palermo as the legal jurisdiction, as needed. The final point ensures that there is a standard approval section for *vexatious clauses* as it is standard in Italian contracts.\n\n\n**Refining the Article's Syntax**\n\nI'm now focusing on translating the legal document's structure into code. I'm prioritizing compatibility and will avoid custom prose styles, opting for standard Tailwind classes to ensure maximum readability and consistent appearance. My alert boxes are now being drafted for the marketplace nature of the text, and I've started the structure to automatically loop the articles. I'm adding styling such as bold headers and implementing a distinguished background for the dedicated \"Academic\" section, as requested.\n\n\n**Clarifying Voucher Details**\n\nI'm verifying that the distinction between the \"booking voucher\" and the final \"ticket\" is now crystal clear. Art. 5.1 explicitly states the app QR code serves as the reservation voucher, and the Organizer subsequently issues the fiscal ticket. I'm also ensuring the academic tracking disclaimer is sufficiently robust, with Art. 7 shifting the burden to the student for scanning and the University for acceptance. Finally, I've created the `pages/Terms.tsx` component and am ready to update its content.\n\n\n",
+      "cMarkNode": {}
+    },
+    "createdTimestamp": 1764707431943,
+    "doneTimestamp": 1764707519610
+  },
+  {
+    "id": 2,
+    "author": "model",
+    "payload": {
+      "type": "text",
+      "text": "Ecco la specifica delle modifiche e l'implementazione del componente legale richiesto.\n\n### Specifica delle Modifiche\n\n1.  **Aggiornamento File `pages/Terms.tsx`**:\n    *   Sostituzione completa del contenuto esistente (che era una bozza generica) con un contratto legale formale e specifico per un Marketplace B2B2C.\n    *   **Struttura**: Implementazione di un layout professionale con intestazione chiara, box di sintesi (Disclaimer iniziale) e articolato diviso in 12 punti.\n    *   **Contenuti Legali Chiave**:\n        *   **Natura di Intermediario**: Definizione chiara che UniParty non è l'organizzatore.\n        *   **Flusso Pagamenti (Stripe Connect)**: Spiegazione del \"Direct Charge\" (pagamento diretto all'organizzatore) e della natura **non rimborsabile** della Commissione di Servizio di UniParty.\n        *   **Esclusione Recesso**: Applicazione dell'Art. 59 del Codice del Consumo (esclusione recesso per servizi del tempo libero).\n        *   **Seminari/CFU**: Clausola specifica di esonero responsabilità per il tracciamento presenze e riconoscimento crediti accademici.\n        *   **Responsabilità**: Limitazione di responsabilità per la sicurezza in loco e l'emissione dei titoli fiscali (SIAE).\n        *   **Foro Competente**: Palermo.\n    *   **UI/UX**: Utilizzo di icone Lucide (`Scale`, `ShieldAlert`, `CreditCard`, `GraduationCap`, etc.) per rendere il documento leggibile. Utilizzo di box colorati per evidenziare clausole critiche (es. Rimborsi e Seminari).\n\n### Implementazione Codice\n\n",
+      "cMarkNode": {}
+    },
+    "createdTimestamp": 1764707519610,
+    "doneTimestamp": 1764707519615
+  },
+  {
+    "id": 3,
+    "author": "model",
+    "payload": {
+      "type": "generationTable",
+      "entries": [
+        {
+          "path": "pages/Terms.tsx",
+          "generationType": 1,
+          "isDone": true,
+          "description": "Riscritto Terms.tsx come documento legale formale per Marketplace con clausole specifiche per Stripe Connect, CFU e Foro di Palermo."
+        }
+      ]
+    },
+    "createdTimestamp": 1764707522285,
+    "doneTimestamp": 1764707554313
+  },
+  {
+    "id": 4,
+    "author": "user",
+    "payload": {
+      "type": "text",
+      "text": "Agisci come un Senior React Developer. Il tuo compito è modificare esclusivamente il file pages/EventAttendees.tsx per aggiungere una funzionalità di esportazione dati, senza alterare il layout esistente o altre logiche.\n\nObiettivo: Permettere all'utente (Associazione) di scaricare la lista dei partecipanti visualizzata in formato .csv (compatibile con Excel).\n\nSpecifiche Tecniche:\n\nNuova Funzione: Aggiungi una funzione downloadCSV all'interno del componente EventAttendees.\n\nDeve usare i dati presenti nello stato attendees.\n\nDeve generare un CSV con le colonne: \"Nome\", \"Matricola\", \"Lista PR\", \"Stato\", \"Orario Ingresso\", \"Orario Uscita\".\n\nDeve gestire correttamente le virgolette nei nomi e formattare le date in modo leggibile.\n\nDeve usare Blob e un link temporaneo <a> per avviare il download lato client (senza nuove dipendenze npm).\n\nPosizionamento Bottone:\n\nInserisci il bottone \"Scarica Lista\" nella barra grigia di filtri esistente (quella con bg-gray-50).\n\nPosizionalo accanto al contatore \"Totale:\", sulla destra.\n\nUsa l'icona Download dalla libreria lucide-react.\n\nStile del bottone: Usa classi Tailwind che si integrino con il design (es. testo indaco o verde, font medium, piccolo margine).\n\nVincoli Rigidi:\n\nNON modificare la struttura della tabella HTML.\n\nNON modificare la logica di useEffect o il caricamento dati.\n\nNON installare nuove librerie.\n\nOutput Richiesto: Forniscimi solo il codice completo o le parti modificate del file pages/EventAttendees.tsx",
+      "cMarkNode": {}
+    },
+    "createdTimestamp": 1764779684340
+  },
+  {
+    "id": 5,
+    "author": "model",
+    "payload": {
+      "type": "thinking",
+      "text": "**Examining the Specs**\n\nI'm currently focused on the requirements. I've broken down the request, noting I'm a Senior React Dev tasked with adding CSV export functionality to `EventAttendees.tsx` on the client-side. The scope is clear: client-side CSV generation, which will impact how I approach the implementation details.\n\n\n**Developing the CSV Feature**\n\nI'm now fully immersed in the technical details. I've chosen to use `Blob` for CSV generation. The specific columns for export have been outlined, along with the necessary Excel-compatible formatting. I also now have the UI placement: nestled in the existing gray filter bar, right beside the \"Totale:\" counter, and following the existing styling with Tailwind CSS, including Indigo/Green text and the `Download` icon from `lucide-react`. I must stick to the constraints of no new dependencies, preserving the existing table structure and data fetching.\n\n\n**Incorporating Download Functionality**\n\nI'm now integrating the `downloadCSV` function. I've imported the required `Download` icon from `lucide-react`. The `downloadCSV` implementation will use a `Blob` for the CSV, and I'm drafting it based on the specified input (attendee data) and column headers. I'm focusing on data mapping, specifically time and text fields. I'll properly format the times and ensure that any commas within names or PR lists are correctly handled for Excel compatibility.\n\n\n**Crafting the Download**\n\nI've finalized the `downloadCSV` function with thorough comma and quote handling for Excel compatibility. It's now creating the CSV content dynamically, correctly formatting time fields. I've also incorporated the download trigger, ensuring the file is named properly. Next, I'll integrate the function and UI elements. I'll need to wrap \"Totale:\" and the new button in a flex container to keep them on the right.\n\n\n**Completing UI Integration**\n\nI've just finished integrating the UI elements. I wrapped \"Totale:\" and the download button within a flex container. I imported the `Download` icon, and I'm ensuring everything aligns properly. I've disabled the button if the attendee list is empty. Now, I'll review all imports and double-check the logic.\n\n\n**Refining Implementation Details**\n\nI've confirmed the button placement, styles (Tailwind), and table integrity. I'm now mapping the required changes within `pages/EventAttendees.tsx` to integrate the CSV generation fully. I've also incorporated the UTF-8 BOM character to ensure proper character handling in Excel, strengthening the overall robustness. I've updated the CSV creation with the BOM addition, finalizing the CSV generation logic.\n\n\n",
+      "cMarkNode": {}
+    },
+    "createdTimestamp": 1764779684340,
+    "doneTimestamp": 1764779754327
+  },
+  {
+    "id": 6,
+    "author": "model",
+    "payload": {
+      "type": "text",
+      "text": "Ecco le modifiche richieste per il file `pages/EventAttendees.tsx`.\n\nHo implementato la funzione `downloadCSV` che genera il file lato client gestendo correttamente i caratteri speciali e le date. Ho aggiunto il pulsante \"Scarica Lista\" nella barra dei filtri esistente, accanto al contatore totale, mantenendo lo stile coerente con la dashboard.\n\n",
+      "cMarkNode": {}
+    },
+    "createdTimestamp": 1764779754327,
+    "doneTimestamp": 1764779754394
+  },
+  {
+    "id": 7,
+    "author": "model",
+    "payload": {
+      "type": "generationTable",
+      "entries": [
+        {
+          "path": "pages/EventAttendees.tsx",
+          "generationType": 1,
+          "isDone": true,
+          "description": "Aggiunta funzionalità downloadCSV e bottone di esportazione nella toolbar."
+        }
+      ]
+    },
+    "createdTimestamp": 1764779754476,
+    "doneTimestamp": 1764779777718
+  }
+]
