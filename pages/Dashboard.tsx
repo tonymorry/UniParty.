@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { 
-    UserRole, EventCategory, Event, User, UNIVERSITY_LOCATIONS, PRRequest 
+    UserRole, EventCategory, Event, User, UNIVERSITY_LOCATIONS 
 } from '../types';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { 
@@ -16,8 +16,8 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // Tab State: 'overview', 'create', 'staff', or 'pr'
-  const [activeTab, setActiveTab] = useState<'overview' | 'create' | 'staff' | 'pr'>('overview');
+  // Tab State: 'overview', 'create', or 'staff'
+  const [activeTab, setActiveTab] = useState<'overview' | 'create' | 'staff'>('overview');
 
   const [isConnecting, setIsConnecting] = useState(false);
   
@@ -56,12 +56,6 @@ const Dashboard: React.FC = () => {
   const [staffList, setStaffList] = useState<User[]>([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
 
-  // PR Management State
-  const [prRequests, setPrRequests] = useState<PRRequest[]>([]);
-  const [accreditedPRs, setAccreditedPRs] = useState<User[]>([]);
-  const [loadingPR, setLoadingPR] = useState(false);
-  const [selectedPRs, setSelectedPRs] = useState<string[]>([]);
-
   // Reset city if region changes
   useEffect(() => {
     setCity('');
@@ -74,8 +68,6 @@ const Dashboard: React.FC = () => {
         setActiveTab('create');
     } else if (tabParam === 'staff') {
         setActiveTab('staff');
-    } else if (tabParam === 'pr') {
-        setActiveTab('pr');
     } else {
         setActiveTab('overview');
     }
@@ -99,45 +91,6 @@ const Dashboard: React.FC = () => {
     }
   }, [activeTab, user]);
 
-  // Fetch PR Data
-  useEffect(() => {
-    if (activeTab === 'pr' && user && user.role === UserRole.ASSOCIAZIONE) {
-        fetchPRData();
-    }
-  }, [activeTab, user]);
-
-  useEffect(() => {
-    if (activeTab === 'create' && user && user.role === UserRole.ASSOCIAZIONE) {
-        api.auth.getAccreditedPRs().then(setAccreditedPRs).catch(console.error);
-    }
-  }, [activeTab, user]);
-
-  const fetchPRData = async () => {
-    setLoadingPR(true);
-    try {
-        const [requests, accredited] = await Promise.all([
-            api.auth.getPRRequests(),
-            api.auth.getAccreditedPRs()
-        ]);
-        setPrRequests(requests);
-        setAccreditedPRs(accredited);
-    } catch (e) {
-        console.error("Fetch PR data error", e);
-    } finally {
-        setLoadingPR(false);
-    }
-  };
-
-  const handlePRRequest = async (id: string, status: 'accepted' | 'rejected') => {
-    try {
-        await api.auth.updatePRRequestStatus(id, status);
-        alert(`Richiesta ${status === 'accepted' ? 'accettata' : 'rifiutata'}`);
-        fetchPRData();
-    } catch (e: any) {
-        alert("Errore: " + e.message);
-    }
-  };
-
   const fetchStaff = async () => {
     setLoadingStaff(true);
     try {
@@ -159,7 +112,7 @@ const Dashboard: React.FC = () => {
   const totalTicketsSold = assocEvents.reduce((acc, curr) => acc + curr.ticketsSold, 0);
   const totalRevenue = assocEvents.reduce((acc, curr) => acc + (curr.ticketsSold * curr.price), 0);
 
-  const handleTabChange = (tab: 'overview' | 'create' | 'staff' | 'pr') => {
+  const handleTabChange = (tab: 'overview' | 'create' | 'staff') => {
       setActiveTab(tab);
       setSearchParams(tab !== 'overview' ? { tab } : {});
   };
@@ -250,7 +203,7 @@ const Dashboard: React.FC = () => {
             maxCapacity: parseInt(maxCapacity),
             price: numericPrice,
             category,
-            prLists: selectedPRs,
+            prLists,
             status: targetStatus,
             requiresMatricola: requiresAcademicData, 
             requiresCorsoStudi: requiresAcademicData, 
@@ -333,13 +286,6 @@ const Dashboard: React.FC = () => {
                    >
                        <Users className="w-4 h-4 mr-2" />
                        Staff
-                   </button>
-                   <button
-                       onClick={() => handleTabChange('pr')}
-                       className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'pr' ? 'bg-indigo-900 text-indigo-100' : 'text-gray-400 hover:bg-gray-700'}`}
-                   >
-                       <UserPlus className="w-4 h-4 mr-2" />
-                       Gestione PR
                    </button>
                </div>
            </div>
@@ -633,44 +579,39 @@ const Dashboard: React.FC = () => {
                                    </div>
                                </div>
 
-                               {/* PR LISTS SECTION (Updated to Multi-select) */}
+                               {/* PR LISTS SECTION */}
                                <div className="p-4 bg-gray-900/30 rounded-xl border border-gray-700">
                                    <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
                                        <List className="w-4 h-4 mr-2 text-indigo-400" />
-                                       Seleziona PR Accreditati per l'Evento
+                                       Liste PR (Nomi separati da virgola)
                                    </label>
-                                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                       {accreditedPRs.length > 0 ? accreditedPRs.map(pr => {
-                                           const prName = `${pr.name}${pr.surname ? ' ' + pr.surname : ''}`;
-                                           const isSelected = selectedPRs.includes(prName);
-                                           return (
-                                               <button
-                                                   key={pr._id}
-                                                   type="button"
-                                                   onClick={() => {
-                                                       if (isSelected) {
-                                                           setSelectedPRs(selectedPRs.filter(p => p !== prName));
-                                                       } else {
-                                                           setSelectedPRs([...selectedPRs, prName]);
-                                                       }
-                                                   }}
-                                                   className={`flex items-center p-3 rounded-lg border transition text-left ${
-                                                       isSelected 
-                                                       ? 'bg-indigo-900/40 border-indigo-500 text-indigo-100' 
-                                                       : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
-                                                   }`}
-                                               >
-                                                   <div className={`w-4 h-4 rounded border mr-3 flex items-center justify-center ${isSelected ? 'bg-indigo-500 border-indigo-500' : 'border-gray-600'}`}>
-                                                       {isSelected && <CheckCircle className="w-3 h-3 text-white" />}
-                                                   </div>
-                                                   <span className="text-sm font-medium truncate">{prName}</span>
+                                   <div className="flex gap-2 mb-3">
+                                       <input 
+                                           type="text" 
+                                           value={currentPrInput}
+                                           onChange={e => setCurrentPrInput(e.target.value)}
+                                           onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), handleAddPrList())}
+                                           className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
+                                           placeholder="Aggiungi nome lista..."
+                                       />
+                                       <button 
+                                           type="button"
+                                           onClick={handleAddPrList}
+                                           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition font-bold"
+                                       >
+                                           Aggiungi
+                                       </button>
+                                   </div>
+                                   <div className="flex flex-wrap gap-2">
+                                       {prLists.map(list => (
+                                           <span key={list} className="bg-indigo-900/40 text-indigo-100 px-3 py-1 rounded-full text-sm flex items-center border border-indigo-900/50">
+                                               {list}
+                                               <button type="button" onClick={() => handleRemovePrList(list)} className="ml-2 hover:text-white">
+                                                   <X className="w-3 h-3" />
                                                </button>
-                                           );
-                                       }) : (
-                                           <div className="col-span-full text-center py-4 text-gray-500 text-sm">
-                                               Nessun PR accreditato trovato. <button type="button" onClick={() => handleTabChange('pr')} className="text-indigo-400 hover:underline">Gestisci PR</button>
-                                           </div>
-                                       )}
+                                           </span>
+                                       ))}
+                                       {prLists.length === 0 && <p className="text-gray-500 text-sm italic">Nessuna lista aggiunta.</p>}
                                    </div>
                                </div>
 
@@ -767,122 +708,10 @@ const Dashboard: React.FC = () => {
                            </form>
                        </div>
                    )}
-               </div>
+                </div>
            )}
 
-            {/* GESTIONE PR */}
-            {activeTab === 'pr' && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
-                    {/* Richieste Pendenti */}
-                    <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden">
-                        <div className="bg-indigo-900/30 p-6 text-white border-b border-gray-700">
-                            <h2 className="text-xl font-bold flex items-center text-indigo-400">
-                                <UserPlus className="w-6 h-6 mr-2" />
-                                Richieste PR Pendenti
-                            </h2>
-                            <p className="text-gray-400 text-sm mt-1">
-                                Studenti che hanno richiesto di diventare PR per la tua associazione.
-                            </p>
-                        </div>
-                        
-                        <div className="p-6">
-                            {loadingPR ? (
-                                <div className="text-center py-8 text-gray-400">Caricamento richieste...</div>
-                            ) : prRequests.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {prRequests.map(req => {
-                                        const student = req.studentId as User;
-                                        return (
-                                            <div key={req._id} className="bg-gray-900/50 p-4 rounded-xl border border-gray-700 flex items-center justify-between">
-                                                <div className="flex items-center">
-                                                    <div className="w-12 h-12 rounded-full bg-gray-700 mr-4 overflow-hidden border border-gray-600">
-                                                        {student.profileImage ? (
-                                                            <img src={student.profileImage} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-indigo-400">
-                                                                <Users className="w-6 h-6" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-white">{student.name} {student.surname}</p>
-                                                        <p className="text-xs text-gray-500">{student.email}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <button 
-                                                        onClick={() => handlePRRequest(req._id, 'rejected')}
-                                                        className="p-2 text-red-400 hover:bg-red-900/30 rounded-lg transition"
-                                                        title="Rifiuta"
-                                                    >
-                                                        <X className="w-5 h-5" />
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handlePRRequest(req._id, 'accepted')}
-                                                        className="p-2 text-green-400 hover:bg-green-900/30 rounded-lg transition"
-                                                        title="Accetta"
-                                                    >
-                                                        <CheckCircle className="w-5 h-5" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="text-center py-8 bg-gray-900 rounded-xl border border-dashed border-gray-700 text-gray-500 text-sm">
-                                    Nessuna richiesta pendente.
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* PR Accreditati */}
-                    <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden">
-                        <div className="bg-indigo-900/30 p-6 text-white border-b border-gray-700">
-                            <h2 className="text-xl font-bold flex items-center text-indigo-400">
-                                <ShieldCheck className="w-6 h-6 mr-2" />
-                                PR Accreditati
-                            </h2>
-                            <p className="text-gray-400 text-sm mt-1">
-                                Lista dei PR che possono vendere biglietti per i tuoi eventi.
-                            </p>
-                        </div>
-                        
-                        <div className="p-6">
-                            {loadingPR ? (
-                                <div className="text-center py-8 text-gray-400">Caricamento PR...</div>
-                            ) : accreditedPRs.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {accreditedPRs.map(pr => (
-                                        <div key={pr._id} className="bg-gray-900/50 p-4 rounded-xl border border-gray-700 flex items-center">
-                                            <div className="w-10 h-10 rounded-full bg-gray-700 mr-3 overflow-hidden border border-gray-600">
-                                                {pr.profileImage ? (
-                                                    <img src={pr.profileImage} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-indigo-400">
-                                                        <Users className="w-5 h-5" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-bold text-white truncate">{pr.name} {pr.surname}</p>
-                                                <p className="text-xs text-gray-500 truncate">{pr.email}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-8 bg-gray-900 rounded-xl border border-dashed border-gray-700 text-gray-500 text-sm">
-                                    Nessun PR accreditato.
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-           {/* GESTIONE STAFF */}
+            {/* GESTIONE STAFF */}
            {activeTab === 'staff' && (
                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
                    <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden">

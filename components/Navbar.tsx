@@ -284,16 +284,6 @@ const Navbar: React.FC = () => {
                </>
              )}
 
-             {user && user.role === UserRole.PR && (
-                <Link 
-                    to="/pr-dashboard" 
-                    className="flex items-center px-3 py-3 rounded-md text-base font-medium hover:bg-white/5 transition"
-                    onClick={() => setIsOpen(false)}
-                >
-                    <LayoutDashboard className="h-5 w-5 mr-3 text-indigo-400" /> PR Dashboard
-                </Link>
-             )}
-
              {/* Admin Link */}
              {user && user.role === UserRole.ADMIN && (
                  <Link 

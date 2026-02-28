@@ -4,7 +4,6 @@ export enum UserRole {
   ASSOCIAZIONE = 'associazione',
   ADMIN = 'admin',
   STAFF = 'staff',
-  PR = 'pr',
 }
 
 export enum EventCategory {
@@ -121,14 +120,6 @@ export interface LoginResponse {
 export interface CartItem {
   eventId: string;
   quantity: number;
-}
-
-export interface PRRequest {
-  _id: string;
-  studentId: User | string;
-  associationId: User | string;
-  status: 'pending' | 'accepted' | 'rejected';
-  createdAt: string;
 }
 
 declare global {
