@@ -585,19 +585,19 @@ const Dashboard: React.FC = () => {
                                        <List className="w-4 h-4 mr-2 text-indigo-400" />
                                        Liste PR (Nomi separati da virgola)
                                    </label>
-                                   <div className="flex gap-2 mb-3">
+                                   <div className="flex flex-col sm:flex-row gap-3 mb-3">
                                        <input 
                                            type="text" 
                                            value={currentPrInput}
                                            onChange={e => setCurrentPrInput(e.target.value)}
                                            onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), handleAddPrList())}
-                                           className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
+                                           className="flex-1 w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
                                            placeholder="Aggiungi nome lista..."
                                        />
                                        <button 
                                            type="button"
                                            onClick={handleAddPrList}
-                                           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition font-bold"
+                                           className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition font-bold"
                                        >
                                            Aggiungi
                                        </button>
