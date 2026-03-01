@@ -265,8 +265,16 @@ const Home: React.FC = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
             {filteredEvents.length > 0 ? (
-              filteredEvents.map(event => (
-                <EventCard key={event._id} event={event} />
+              filteredEvents.map((event, index) => (
+                <React.Fragment key={event._id}>
+                  <EventCard event={event} />
+                  {(index + 1) % 6 === 0 && (
+                    <div className="col-span-full w-full bg-gray-800 border border-gray-700 rounded-xl p-4 my-4 flex flex-col items-center justify-center text-gray-500 shadow-inner min-h-[100px]">
+                      <span className="text-[10px] uppercase tracking-widest mb-1">Pubblicità</span>
+                      <div className="font-bold text-gray-400">Spazio Pubblicitario</div>
+                    </div>
+                  )}
+                </React.Fragment>
               ))
             ) : (
               <div className="col-span-full py-20 md:py-32 text-center glass-card rounded-2xl md:rounded-3xl border-dashed">

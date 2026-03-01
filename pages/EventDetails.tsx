@@ -5,7 +5,7 @@ import { Event, UserRole } from '../types';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 // Added Ticket as TicketIcon to the imports from lucide-react to fix the 'Cannot find name TicketIcon' error.
-import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck, Flag, AlertTriangle, ArrowLeft, DollarSign, Lock, Users, TrendingUp, Heart, Ticket as TicketIcon } from 'lucide-react';
+import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck, Flag, AlertTriangle, ArrowLeft, DollarSign, Lock, Users, TrendingUp, Heart, Sparkles, Ticket as TicketIcon } from 'lucide-react';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +45,10 @@ const EventDetails: React.FC = () => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+
+  // Ad Overlay States
+  const [showAdOverlay, setShowAdOverlay] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
 
   const isOwner = user && event && (
       (typeof event.organization === 'string' && event.organization === user._id) ||
@@ -181,7 +185,12 @@ const EventDetails: React.FC = () => {
             event.requiresCorsoStudi ? ticketCorsoStudi : undefined
         );
         if (redirectUrl) {
-            window.location.hash = redirectUrl;
+            if (isFree) {
+                setPendingRedirect(redirectUrl);
+                setShowAdOverlay(true);
+            } else {
+                window.location.hash = redirectUrl;
+            }
         }
       } catch (error) {
         console.error("Checkout failed", error);
@@ -960,6 +969,48 @@ const EventDetails: React.FC = () => {
             </div>
         </div>
       </div>
+
+      {/* AD OVERLAY MODAL */}
+      {showAdOverlay && (
+          <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-4">
+              <div className="absolute top-6 right-6 z-[110]">
+                  <button 
+                    onClick={() => {
+                        setShowAdOverlay(false);
+                        if (pendingRedirect) window.location.hash = pendingRedirect;
+                    }}
+                    className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-full font-bold transition border border-white/20 shadow-xl"
+                  >
+                      Chiudi e vai al biglietto
+                  </button>
+              </div>
+              
+              <div className="bg-gray-800 w-full max-w-4xl h-[70vh] rounded-3xl flex flex-col items-center justify-center text-white border border-white/10 shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-4 left-6 text-[10px] uppercase tracking-[0.3em] text-gray-500 font-black">Sponsorizzato</div>
+                  
+                  <div className="text-center space-y-6 p-8">
+                      <div className="w-24 h-24 bg-indigo-600/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-500/30">
+                          <Sparkles className="w-12 h-12 text-indigo-400" />
+                      </div>
+                      <h2 className="text-4xl md:text-6xl font-black tracking-tighter">UNIPARTY PREMIUM</h2>
+                      <p className="text-xl text-gray-400 max-w-md mx-auto font-medium">
+                          Sblocca vantaggi esclusivi, salta la fila e ottieni sconti sui prossimi eventi.
+                      </p>
+                      <div className="pt-8">
+                          <div className="inline-block px-8 py-4 bg-indigo-600 rounded-2xl font-black text-lg shadow-lg shadow-indigo-600/40">
+                              SCOPRI DI PIÙ
+                          </div>
+                      </div>
+                  </div>
+                  
+                  {/* Decorative elements */}
+                  <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl"></div>
+                  <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl"></div>
+              </div>
+              
+              <p className="mt-8 text-gray-500 text-sm font-bold animate-pulse">L'evento sta per iniziare...</p>
+          </div>
+      )}
     </div>
   );
 };
