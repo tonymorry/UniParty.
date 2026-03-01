@@ -91,7 +91,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
         </div>
         
         <div className="p-3 md:p-6 flex-1 flex flex-col">
-          <div className="text-[8px] md:text-[10px] font-black text-indigo-400 mb-1 md:mb-2 uppercase tracking-[0.2em] truncate">
+          <div className="text-[10px] md:text-[10px] font-black text-indigo-400 mb-1 md:mb-2 uppercase tracking-[0.2em] truncate">
             {typeof event.organization === 'string' ? 'Association' : (event.organization?.name || 'Association')}
           </div>
           <h3 className="text-sm md:text-xl font-extrabold text-white mb-1.5 md:mb-3 group-hover:text-indigo-400 transition-colors leading-tight line-clamp-2">
@@ -123,7 +123,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
               </span>
             </div>
             {isAlmostSoldOut && !isSoldOut && (
-               <div className="flex items-center text-orange-400 text-[8px] md:text-[10px] font-black mt-1 uppercase tracking-widest animate-pulse">
+               <div className="flex items-center text-orange-400 text-[10px] md:text-[10px] font-black mt-1 uppercase tracking-widest animate-pulse">
                  <Flame className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1.5" />
                  Selling fast!
                </div>

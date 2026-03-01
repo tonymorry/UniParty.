@@ -115,7 +115,7 @@ const Profile: React.FC = () => {
                           <X className="w-6 h-6" />
                       </button>
                   </div>
-                  <form onSubmit={handleUpdateProfile} className="p-6 space-y-4">
+                  <form onSubmit={handleUpdateProfile} className="p-4 sm:p-6 space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-300 mb-1">Profile Image</label>
                             <div className="flex gap-4 items-center">
@@ -219,7 +219,7 @@ const Profile: React.FC = () => {
 
         <div className="bg-gray-800 rounded-2xl shadow-sm overflow-hidden mb-8 border border-gray-700">
             <div className="bg-indigo-950 h-32 relative border-b border-white/5">
-                <div className="absolute -bottom-12 left-8">
+                <div className="absolute -bottom-12 left-4 sm:left-8">
                     <div className="w-24 h-24 bg-gray-800 rounded-full p-1 shadow-lg overflow-hidden border border-gray-700">
                         {user.profileImage ? (
                             <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover rounded-full" />
@@ -244,7 +244,7 @@ const Profile: React.FC = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
                     <div className="max-w-full">
                         <h1 className="text-2xl font-bold text-white break-words">{user.name} {user.surname}</h1>
-                        <p className="text-indigo-400 font-medium">{user.email}</p>
+                        <p className="text-indigo-400 font-medium truncate">{user.email}</p>
                         {user.role === UserRole.ASSOCIAZIONE && (
                             <p className="text-gray-400 font-medium text-sm mt-1 flex items-center">
                                 <Users className="w-4 h-4 mr-1 text-indigo-400" />
@@ -281,7 +281,7 @@ const Profile: React.FC = () => {
                         
                         <div className="space-y-4">
                              {/* Email */}
-                            <div className="flex items-center text-gray-300 text-base font-medium">
+                            <div className="flex items-center text-gray-300 text-base font-medium break-all">
                                 <Mail className="w-5 h-5 mr-3 text-indigo-400" />
                                 {user.email}
                             </div>
@@ -290,7 +290,7 @@ const Profile: React.FC = () => {
                             {user.role === UserRole.ASSOCIAZIONE && user.socialLinks && (
                                 <div className="flex items-start text-gray-300 text-base font-medium">
                                     <Globe className="w-5 h-5 mr-3 text-indigo-400 flex-shrink-0 mt-1" />
-                                    <div className="whitespace-pre-line bg-gray-900/30 p-3 rounded-lg border border-gray-700 w-full">
+                                    <div className="whitespace-pre-line bg-gray-900/30 p-3 rounded-lg border border-gray-700 w-full break-all">
                                         {user.socialLinks}
                                     </div>
                                 </div>

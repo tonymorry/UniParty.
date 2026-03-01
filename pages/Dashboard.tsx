@@ -265,7 +265,7 @@ const Dashboard: React.FC = () => {
                </div>
                
                {/* Tab Switcher */}
-               <div className="bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-700 flex">
+               <div className="bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-700 flex flex-wrap justify-center md:justify-start gap-1 md:gap-0">
                    <button
                        onClick={() => handleTabChange('overview')}
                        className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center ${activeTab === 'overview' ? 'bg-indigo-900 text-indigo-100' : 'text-gray-400 hover:bg-gray-700'}`}
@@ -389,7 +389,7 @@ const Dashboard: React.FC = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
+                                        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto flex-wrap">
                                             <div className="text-right">
                                                 <div className="font-mono font-medium text-white text-sm">
                                                     {event.ticketsSold}/{event.maxCapacity}
@@ -398,7 +398,7 @@ const Dashboard: React.FC = () => {
                                                     +€{(event.ticketsSold * event.price).toFixed(2)}
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-2 mt-3 md:mt-0">
                                                 <Link 
                                                     to={`/events/${event._id}/attendees`}
                                                     className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-xs font-bold transition flex items-center border border-gray-600"

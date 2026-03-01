@@ -316,13 +316,13 @@ const EventDetails: React.FC = () => {
       {isEditing && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
               <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-700">
-                  <div className="p-6 border-b border-gray-700 flex justify-between items-center sticky top-0 bg-gray-800 z-10">
+                  <div className="p-4 sm:p-6 border-b border-gray-700 flex justify-between items-center sticky top-0 bg-gray-800 z-10">
                       <h2 className="text-xl font-bold text-white">Edit Event</h2>
                       <button onClick={() => setIsEditing(false)} className="p-2 hover:bg-gray-700 rounded-full transition">
                           <X className="w-6 h-6 text-gray-400" />
                       </button>
                   </div>
-                  <form onSubmit={handleUpdate} className="p-6 space-y-4">
+                  <form onSubmit={handleUpdate} className="p-4 sm:p-6 space-y-4">
                       <div>
                           <label className="block text-sm font-medium text-gray-300 mb-1">Title</label>
                           <input 
@@ -503,7 +503,7 @@ const EventDetails: React.FC = () => {
       {isReportModalOpen && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
               <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-700">
-                  <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-900/50">
+                  <div className="p-4 sm:p-6 border-b border-gray-700 flex justify-between items-center bg-gray-900/50">
                       <h2 className="text-xl font-bold text-white flex items-center">
                           <Flag className="w-5 h-5 mr-2 text-red-500" />
                           Segnala Evento
@@ -512,7 +512,7 @@ const EventDetails: React.FC = () => {
                           <X className="w-6 h-6 text-gray-400" />
                       </button>
                   </div>
-                  <form onSubmit={handleReport} className="p-6 space-y-4">
+                  <form onSubmit={handleReport} className="p-4 sm:p-6 space-y-4">
                       <p className="text-sm text-gray-400 mb-4">
                           Aiutaci a mantenere la community sicura. Perché stai segnalando questo evento?
                       </p>
@@ -561,9 +561,9 @@ const EventDetails: React.FC = () => {
             onError={handleImageError}
             className="w-full h-full object-cover" 
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent"></div>
         
-        <div className="absolute top-24 right-4 sm:right-8 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 z-20">
+        <div className="absolute top-4 sm:top-24 right-4 sm:right-8 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 z-20">
             {isOwner ? (
                 <>
                     {event.status === 'draft' && (
@@ -613,7 +613,7 @@ const EventDetails: React.FC = () => {
 
         <button 
             onClick={() => navigate('/')} 
-            className="absolute top-24 left-4 sm:left-8 bg-gray-900/40 backdrop-blur hover:bg-gray-900/60 text-white p-2 rounded-full transition z-20 border border-white/10"
+            className="absolute top-4 sm:top-24 left-4 sm:left-8 bg-gray-900/40 backdrop-blur hover:bg-gray-900/60 text-white p-2 rounded-full transition z-20 border border-white/10"
         >
              <ArrowLeft className="h-6 w-6" />
         </button>
