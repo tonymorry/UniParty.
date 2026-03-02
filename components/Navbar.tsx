@@ -8,7 +8,7 @@ import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCi
 
 const UniPartyLogo = () => (
   <img 
-    src="/Gemini_Generated_Image_bn3cj1bn3cj1bn3c.jpg" 
+    src="/Gemini_Generated_Image_bn3cj1bn3cj1bn3c.png" 
     alt="Nuova icona" 
     className="h-9 w-9 object-contain" 
   />
