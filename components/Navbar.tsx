@@ -7,24 +7,11 @@ import { api } from '../services/api';
 import { Ticket, PlusCircle, User as UserIcon, ScanLine, Menu, X, Shield, HelpCircle, Heart, Trash2, FileText, LayoutDashboard, Search, Bell, LogOut, MapPin, ChevronDown } from 'lucide-react';
 
 const UniPartyLogo = () => (
-  <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-9 w-9">
-    <defs>
-      <linearGradient id="logo_gradient" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#6366f1" />
-        <stop offset="100%" stopColor="#a855f7" />
-      </linearGradient>
-    </defs>
-    <g transform="translate(50, 50) rotate(-15) translate(-50, -50)">
-      <path 
-        d="M25 20 H75 A10 10 0 0 1 85 30 V42 A8 8 0 0 0 85 58 V70 A10 10 0 0 1 75 80 H25 A10 10 0 0 1 15 70 V58 A8 8 0 0 0 15 42 V30 A10 10 0 0 1 25 20 Z" 
-        fill="url(#logo_gradient)" 
-      />
-      <path 
-        d="M50 35 L54 45 H65 L56 52 L60 63 L50 56 L40 63 L44 52 L35 45 H46 L50 35 Z" 
-        fill="white" 
-      />
-    </g>
-  </svg>
+  <img 
+    src="/Gemini_Generated_Image_bn3cj1bn3cj1bn3c.jpg" 
+    alt="Nuova icona" 
+    className="h-9 w-9 object-contain" 
+  />
 );
 
 const Navbar: React.FC = () => {
