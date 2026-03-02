@@ -5,7 +5,7 @@ import { Event, UserRole } from '../types';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 // Added Ticket as TicketIcon to the imports from lucide-react to fix the 'Cannot find name TicketIcon' error.
-import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck, Flag, AlertTriangle, ArrowLeft, DollarSign, Lock, Users, TrendingUp, Heart, Sparkles, Ticket as TicketIcon } from 'lucide-react';
+import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck, Flag, AlertTriangle, ArrowLeft, DollarSign, Lock, Users, TrendingUp, Heart, Sparkles, Smartphone, Ticket as TicketIcon } from 'lucide-react';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -986,26 +986,29 @@ const EventDetails: React.FC = () => {
               </div>
               
               <div className="bg-gray-800 w-full max-w-4xl h-[70vh] rounded-3xl flex flex-col items-center justify-center text-white border border-white/10 shadow-2xl relative overflow-hidden">
-                  <div className="absolute top-4 left-6 text-[10px] uppercase tracking-[0.3em] text-gray-500 font-black">Sponsorizzato</div>
+                  <div className="absolute top-4 left-6 text-[10px] uppercase tracking-[0.3em] text-indigo-400 font-black">IN ARRIVO</div>
                   
-                  <div className="text-center space-y-6 p-8">
-                      <div className="w-24 h-24 bg-indigo-600/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-500/30">
-                          <Sparkles className="w-12 h-12 text-indigo-400" />
+                  <div className="text-center space-y-6 p-8 relative z-10">
+                      <div className="w-24 h-24 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-white/10 rotate-12 shadow-2xl">
+                          <Smartphone className="w-12 h-12 text-white" />
                       </div>
-                      <h2 className="text-4xl md:text-6xl font-black tracking-tighter">UNIPARTY PREMIUM</h2>
-                      <p className="text-xl text-gray-400 max-w-md mx-auto font-medium">
-                          Sblocca vantaggi esclusivi, salta la fila e ottieni sconti sui prossimi eventi.
+                      <h2 className="text-4xl md:text-6xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">
+                          L'APP DI UNIPARTY STA ARRIVANDO 🚀
+                      </h2>
+                      <p className="text-lg md:text-xl text-gray-400 max-w-md mx-auto font-medium leading-relaxed">
+                          Presto disponibile su iOS e Android. Feste esclusive, sconti imperdibili e la tua vita universitaria a portata di tap. Preparati.
                       </p>
                       <div className="pt-8">
-                          <div className="inline-block px-8 py-4 bg-indigo-600 rounded-2xl font-black text-lg shadow-lg shadow-indigo-600/40">
-                              SCOPRI DI PIÙ
+                          <div className="inline-block px-10 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl font-black text-lg shadow-lg shadow-indigo-600/40 tracking-widest uppercase">
+                              STAY TUNED
                           </div>
                       </div>
                   </div>
                   
                   {/* Decorative elements */}
-                  <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl"></div>
-                  <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl"></div>
+                  <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px]"></div>
+                  <div className="absolute -top-20 -right-20 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px]"></div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5"></div>
               </div>
               
               <p className="mt-8 text-gray-500 text-sm font-bold animate-pulse">L'evento sta per iniziare...</p>
