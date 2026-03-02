@@ -5,14 +5,14 @@ const { Resend } = require('resend');
 // Initialize Resend with API Key from environment variables
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://uniparty-app.onrender.com';
+const FRONTEND_URL = 'https://uniparty.app';
 
 const sendWelcomeEmail = async (to, name) => {
   try {
     console.log(`📤 Attempting to send WELCOME email via Resend to: ${to}`);
     
     const { data, error } = await resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: 'UniParty <no-reply@uniparty.app>',
       to: to,
       subject: "Benvenuto in UniParty! 🚀",
       html: `
@@ -60,7 +60,7 @@ const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
     ).join('');
     
     const { data, error } = await resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: 'UniParty <no-reply@uniparty.app>',
       to: to,
       subject: `I tuoi Voucher per ${eventTitle} 🎟️`,
       html: `
@@ -118,7 +118,7 @@ const sendPasswordResetEmail = async (to, token) => {
       const resetUrl = `${FRONTEND_URL}/#/reset-password/${token}`;
   
       const { data, error } = await resend.emails.send({
-        from: 'onboarding@resend.dev',
+        from: 'UniParty <no-reply@uniparty.app>',
         to: to,
         subject: "Recupero Password UniParty 🔒",
         html: `
