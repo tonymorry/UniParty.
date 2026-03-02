@@ -189,7 +189,7 @@ const EventDetails: React.FC = () => {
                 setPendingRedirect(redirectUrl);
                 setShowAdOverlay(true);
             } else {
-                window.location.hash = redirectUrl;
+                window.location.href = redirectUrl;
             }
         }
       } catch (error) {
@@ -977,7 +977,7 @@ const EventDetails: React.FC = () => {
                   <button 
                     onClick={() => {
                         setShowAdOverlay(false);
-                        if (pendingRedirect) window.location.hash = pendingRedirect;
+                        if (pendingRedirect) window.location.href = pendingRedirect;
                     }}
                     className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-full font-bold transition border border-white/20 shadow-xl"
                   >

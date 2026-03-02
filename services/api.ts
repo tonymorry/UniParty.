@@ -337,8 +337,7 @@ const realApi = {
         });
         const data = await res.json();
         if(data.url) {
-            window.location.href = data.url;
-            return ""; 
+            return data.url; 
         }
         throw new Error("Failed to create session");
     },
