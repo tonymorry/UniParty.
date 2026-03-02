@@ -194,13 +194,6 @@ const StripeController = {
 
               await dbSession.commitTransaction();
               
-              // D. Send Email
-              // Need to fetch user email first
-              const user = await User.findById(userId);
-              if (user) {
-                  mailer.sendTicketsEmail(user.email, ticketNames, event.title).catch(err => console.error("Email Error:", err));
-              }
-
               // E. Return Success URL immediately
               return res.json({ url: `${FRONTEND_URL}/#/payment-success?free_order_id=${orderDoc._id}` });
 
@@ -328,15 +321,6 @@ const StripeController = {
         const { eventDoc } = await processSuccessfulOrder(order, session, dbSession);
         await dbSession.commitTransaction();
         
-        try {
-             const user = await User.findById(order.userId);
-             if (user) {
-                 await mailer.sendTicketsEmail(user.email, order.ticketNames, eventDoc.title);
-             }
-        } catch(emailErr) {
-             console.error("Email error:", emailErr);
-        }
-
         res.json({ success: true });
 
     } catch (error) {
@@ -388,15 +372,6 @@ const StripeController = {
           const { eventDoc } = await processSuccessfulOrder(order, session, dbSession);
           await dbSession.commitTransaction();
           
-          try {
-             const user = await User.findById(order.userId);
-             if (user) {
-                 await mailer.sendTicketsEmail(user.email, order.ticketNames, eventDoc.title);
-             }
-          } catch(emailErr) {
-              console.error("Email error:", emailErr);
-          }
-
       } catch (dbError) {
           console.error("Webhook Transaction Error:", dbError);
           await dbSession.abortTransaction();
