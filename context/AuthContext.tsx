@@ -35,6 +35,8 @@ export const AuthProvider = ({ children }: PropsWithChildren<{}>) => {
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
+      // Background refresh to update permissions/status
+      refreshUser();
     }
   }, []);
 
@@ -66,7 +68,8 @@ export const AuthProvider = ({ children }: PropsWithChildren<{}>) => {
   };
 
   const refreshUser = async () => {
-     if(token) {
+     const activeToken = token || localStorage.getItem('uniparty_token');
+     if(activeToken) {
          try {
              const updatedUser = await api.auth.me();
              setUser(updatedUser);

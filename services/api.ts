@@ -84,7 +84,8 @@ const getHeaders = () => {
     const token = localStorage.getItem('uniparty_token');
     return {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
     };
 };
 
@@ -182,7 +183,9 @@ const realApi = {
         return res.json();
     },
     getPublicProfile: async (userId: string) => {
-        const res = await fetch(`${API_URL}/users/${userId}/public`);
+        const res = await fetch(`${API_URL}/users/${userId}/public`, {
+            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+        });
         if(!res.ok) throw new Error('Failed to fetch public profile');
         return res.json();
     },
@@ -232,20 +235,28 @@ const realApi = {
   },
   events: {
     getAll: async () => {
-        const res = await fetch(`${API_URL}/events`);
+        const res = await fetch(`${API_URL}/events`, {
+            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+        });
         return res.json();
     },
     getById: async (id: string) => {
-        const res = await fetch(`${API_URL}/events/${id}`);
+        const res = await fetch(`${API_URL}/events/${id}`, {
+            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+        });
         if (!res.ok) return undefined;
         return res.json();
     },
     getByOrgId: async (orgId: string) => {
-        const res = await fetch(`${API_URL}/events?organization=${orgId}`);
+        const res = await fetch(`${API_URL}/events?organization=${orgId}`, {
+            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+        });
         return res.json();
     },
     getPublicEventsByOrg: async (orgId: string) => {
-        const res = await fetch(`${API_URL}/events?organization=${orgId}&public=true`);
+        const res = await fetch(`${API_URL}/events?organization=${orgId}&public=true`, {
+            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+        });
         return res.json();
     },
     create: async (eventData: any, user: any) => {
