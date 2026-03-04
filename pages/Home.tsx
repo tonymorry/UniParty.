@@ -85,6 +85,18 @@ const Home: React.FC = () => {
 
   const hasActiveFilters = selectedTime !== 'all' || selectedPrice !== 'all' || selectedCategory !== 'all';
 
+  // Group events by category for the Netflix-style view
+  const groupedEvents = filteredEvents.reduce((acc, event) => {
+    const cat = event.category;
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(event);
+    return acc;
+  }, {} as Record<string, Event[]>);
+
+  const isHomePure = selectedCategory === 'all' && !searchTerm && !hasActiveFilters;
+
+  const activeCategories = Object.values(EventCategory).filter(cat => (groupedEvents[cat] || []).length > 0);
+
   return (
     <div className="min-h-screen bg-[#020617] text-white pb-24 md:pb-0">
       {/* Hero Section */}
@@ -261,6 +273,44 @@ const Home: React.FC = () => {
              {[1, 2, 3, 4].map(i => (
                <div key={i} className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl h-[250px] md:h-[450px] animate-pulse"></div>
              ))}
+          </div>
+        ) : isHomePure ? (
+          <div className="space-y-12">
+            {activeCategories.map((category, index) => {
+              const catEvents = groupedEvents[category];
+              
+              return (
+                <React.Fragment key={category}>
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight">
+                        {category}
+                        <span className="ml-2 text-xs md:text-sm font-bold text-gray-600">({catEvents.length})</span>
+                      </h3>
+                      {catEvents.length > 6 && (
+                        <button 
+                          onClick={() => setSelectedCategory(category)}
+                          className="text-xs md:text-sm font-bold text-indigo-400 hover:text-indigo-300 flex items-center transition-colors"
+                        >
+                          Guarda tutti <span className="ml-1">➔</span>
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
+                      {catEvents.slice(0, 6).map(event => (
+                        <EventCard key={event._id} event={event} />
+                      ))}
+                    </div>
+                  </div>
+                  {(index + 1) % 2 === 0 && (
+                    <div className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 mt-12 flex flex-col items-center justify-center text-gray-500 shadow-inner min-h-[100px]">
+                      <span className="text-[10px] uppercase tracking-widest mb-1">Pubblicità</span>
+                      <div className="font-bold text-gray-400">Spazio Pubblicitario</div>
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
