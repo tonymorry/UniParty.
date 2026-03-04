@@ -1,15 +1,15 @@
 {
   "short_name": "UniParty",
-  "name": "UniParty - Eventi Universitari",
+  "name": "UniParty",
   "description": "L'app ufficiale per gli eventi universitari.",
   "icons": [
     {
-      "src": "logo192.png",
+      "src": "/favicon.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "logo512.png",
+      "src": "/favicon.png",
       "type": "image/png",
       "sizes": "512x512"
     }
