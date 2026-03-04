@@ -225,10 +225,14 @@ const Scanner: React.FC = () => {
                           </>
                       )}
 
-                      {scanResult.scanAction === 'exit' && scanResult.entryTime && (
+                      {scanResult.scanAction === 'exit' && (
                            <div className="mt-2 text-sm bg-blue-900/20 p-2 rounded text-blue-300 border border-blue-900/30">
                                <Clock className="w-3 h-3 inline mr-1" />
-                               Entrato alle: {new Date(scanResult.entryTime).toLocaleTimeString()}
+                               Entrato oggi alle: {
+                                   scanResult.scanHistory?.find(s => s.date === new Date().toISOString().split('T')[0])?.entryTime 
+                                   ? new Date(scanResult.scanHistory.find(s => s.date === new Date().toISOString().split('T')[0])!.entryTime!).toLocaleTimeString()
+                                   : 'N/A'
+                               }
                            </div>
                       )}
 

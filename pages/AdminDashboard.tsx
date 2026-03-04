@@ -364,7 +364,11 @@ const AdminDashboard: React.FC = () => {
                                                {typeof e.organization === 'object' ? e.organization.name : 'Unknown'}
                                            </td>
                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                                               {new Date(e.date).toLocaleDateString()}
+                                               {e.dates && e.dates.length > 0 ? (
+                                                   e.dates.length > 1 
+                                                     ? `${new Date(e.dates[0]).toLocaleDateString()} - ${new Date(e.dates[e.dates.length-1]).toLocaleDateString()}`
+                                                     : new Date(e.dates[0]).toLocaleDateString()
+                                               ) : 'N/A'}
                                            </td>
                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
@@ -476,7 +480,14 @@ const AdminDashboard: React.FC = () => {
                                   <div key={ticket._id} className="border border-gray-700 rounded-lg p-4 flex justify-between items-start bg-gray-900/40 hover:bg-gray-750 transition shadow-sm">
                                       <div>
                                           <p className="font-bold text-white">{ticket.event.title}</p>
-                                          <p className="text-sm text-gray-500">{new Date(ticket.event.date).toLocaleDateString()}</p>
+                                          <p className="text-sm text-gray-500">
+                                              {ticket.event.dates && ticket.event.dates.length > 1 
+                                                ? `${new Date(ticket.event.dates[0]).toLocaleDateString()} - ${new Date(ticket.event.dates[ticket.event.dates.length-1]).toLocaleDateString()}`
+                                                : ticket.event.dates && ticket.event.dates.length === 1 
+                                                  ? new Date(ticket.event.dates[0]).toLocaleDateString()
+                                                  : 'N/A'
+                                              }
+                                          </p>
                                           <p className="text-[10px] text-indigo-400 mt-1 font-mono uppercase tracking-wider">{ticket.qrCodeId}</p>
                                           
                                           {ticket.matricola && (
@@ -588,7 +599,14 @@ const AdminDashboard: React.FC = () => {
                   <div className="p-6 overflow-y-auto flex-1 bg-gray-800">
                       <div className="mb-6">
                            <h2 className="text-2xl font-bold text-white">{selectedEvent.title}</h2>
-                           <p className="text-gray-500 font-medium">{new Date(selectedEvent.date).toLocaleDateString()} • {selectedEvent.location}</p>
+                           <p className="text-gray-500 font-medium">
+                               {selectedEvent.dates && selectedEvent.dates.length > 1 
+                                 ? `${new Date(selectedEvent.dates[0]).toLocaleDateString()} - ${new Date(selectedEvent.dates[selectedEvent.dates.length-1]).toLocaleDateString()}`
+                                 : selectedEvent.dates && selectedEvent.dates.length === 1 
+                                   ? new Date(selectedEvent.dates[0]).toLocaleDateString()
+                                   : 'N/A'
+                               } • {selectedEvent.location}
+                           </p>
                       </div>
 
                       {statsLoading ? (

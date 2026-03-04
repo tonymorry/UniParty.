@@ -64,7 +64,7 @@ const EventDetails: React.FC = () => {
                   title: data.title,
                   description: data.description,
                   longDescription: data.longDescription,
-                  date: data.date.split('T')[0], 
+                  dates: data.dates ? data.dates.map((d: string) => d.split('T')[0]) : [], 
                   time: data.time,
                   location: data.location,
                   image: data.image,
@@ -255,7 +255,7 @@ const EventDetails: React.FC = () => {
       e.preventDefault();
       setSaving(true);
       try {
-          const isoDate = new Date(editForm.date!).toISOString();
+          const isoDates = editForm.dates!.map(d => new Date(d).toISOString());
           
           const cleanPrice = parseFloat(editPriceString.replace(',', '.'));
           const finalPrice = isNaN(cleanPrice) ? 0 : Number(cleanPrice.toFixed(2));
@@ -263,7 +263,7 @@ const EventDetails: React.FC = () => {
           const updatedData = {
               ...editForm,
               price: finalPrice,
-              date: isoDate,
+              dates: isoDates,
               requiresCorsoStudi: editForm.requiresMatricola 
           };
 
@@ -341,15 +341,39 @@ const EventDetails: React.FC = () => {
                               required
                           />
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4">
                           <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-1">Date</label>
-                              <input 
-                                  type="date" value={editForm.date} 
-                                  onChange={e => setEditForm({...editForm, date: e.target.value})}
-                                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
-                                  required
-                              />
+                              <label className="block text-sm font-medium text-gray-300 mb-1">Dates</label>
+                              <div className="flex gap-2 mb-2">
+                                  <input 
+                                      type="date" 
+                                      className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
+                                      id="newDateInput"
+                                  />
+                                  <button 
+                                      type="button" 
+                                      onClick={() => {
+                                          const input = document.getElementById('newDateInput') as HTMLInputElement;
+                                          if (input.value && !editForm.dates?.includes(input.value)) {
+                                              setEditForm({...editForm, dates: [...(editForm.dates || []), input.value]});
+                                              input.value = '';
+                                          }
+                                      }}
+                                      className="px-4 py-2 bg-gray-700 text-gray-200 font-semibold rounded-lg hover:bg-gray-600 transition border border-gray-600"
+                                  >
+                                      Add Date
+                                  </button>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                  {editForm.dates?.map((d, idx) => (
+                                      <span key={idx} className="bg-gray-900/50 text-gray-300 px-3 py-1 rounded-full text-sm flex items-center border border-gray-700">
+                                          {new Date(d).toLocaleDateString()}
+                                          <button type="button" onClick={() => setEditForm({...editForm, dates: editForm.dates?.filter(date => date !== d)})} className="ml-2 hover:text-red-400">
+                                              <X className="w-3 h-3" />
+                                          </button>
+                                      </span>
+                                  ))}
+                              </div>
                           </div>
                           <div>
                               <label className="block text-sm font-medium text-gray-300 mb-1">Time</label>
@@ -636,7 +660,12 @@ const EventDetails: React.FC = () => {
                 <div className="flex flex-wrap items-center text-gray-300 text-sm md:text-base gap-4 md:gap-8">
                     <div className="flex items-center">
                         <Calendar className="w-5 h-5 mr-2 text-indigo-400" />
-                        {new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        {event.dates && event.dates.length > 1 
+                          ? `Dal ${new Date(event.dates[0]).toLocaleDateString()} al ${new Date(event.dates[event.dates.length-1]).toLocaleDateString()}`
+                          : event.dates && event.dates.length === 1 
+                            ? new Date(event.dates[0]).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                            : 'Data non disponibile'
+                        }
                     </div>
                     <div className="flex items-center">
                         <Clock className="w-5 h-5 mr-2 text-indigo-400" />

@@ -75,13 +75,13 @@ const notificationSchema = new mongoose.Schema({
   relatedEvent: { type: mongoose.Schema.Types.ObjectId, ref: 'Event' } // Linked Event for visibility logic
 }, { timestamps: true });
 
-// --- EVENT SCHEMA ---
+  // --- EVENT SCHEMA ---
 const eventSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: String,
   longDescription: String,
   image: String,
-  date: { type: Date, required: true },
+  dates: [{ type: Date, required: true }],
   time: String,
   location: String,
   city: { 
@@ -127,6 +127,12 @@ const ticketSchema = new mongoose.Schema({
   corsoStudi: { type: String }, // New Field
   entryTime: { type: Date },
   exitTime: { type: Date },
+
+  scanHistory: [{
+    date: { type: String }, // YYYY-MM-DD
+    entryTime: { type: Date },
+    exitTime: { type: Date }
+  }],
 
   used: { type: Boolean, default: false }, 
   checkInDate: Date, 

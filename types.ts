@@ -66,7 +66,7 @@ export interface Event {
   description: string;
   longDescription: string;
   image: string;
-  date: string; // ISO Date string
+  dates: string[]; // ISO Date strings
   time: string;
   location: string;
   city: string; 
@@ -100,6 +100,11 @@ export interface Ticket {
   corsoStudi?: string; // New field
   entryTime?: string;
   exitTime?: string;
+  scanHistory?: {
+    date: string;
+    entryTime?: string;
+    exitTime?: string;
+  }[];
   status: 'valid' | 'entered' | 'completed' | 'archived' | 'deleted' | 'active'; // 'active' kept for legacy compatibility
 }
 

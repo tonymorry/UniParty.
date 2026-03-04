@@ -29,7 +29,7 @@ const Dashboard: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('0');
-  const [date, setDate] = useState('');
+  const [dates, setDates] = useState<string[]>(['']);
   const [time, setTime] = useState('22:00');
   const [location, setLocation] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('');
@@ -195,7 +195,7 @@ const Dashboard: React.FC = () => {
             title,
             description,
             longDescription: description,
-            date,
+            dates,
             time,
             location,
             city,
@@ -385,7 +385,15 @@ const Dashboard: React.FC = () => {
                                                 </div>
                                                 <div className="flex items-center text-xs text-gray-400 mt-1">
                                                     <Calendar className="w-3 h-3 mr-1" />
-                                                    {new Date(event.date).toLocaleDateString()} • {event.city}
+                                                    {event.dates && event.dates.length > 0 ? (
+                                                        event.dates.length > 1 ? (
+                                                            `Dal ${new Date(event.dates[0]).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })} al ${new Date(event.dates[event.dates.length - 1]).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}`
+                                                        ) : (
+                                                            new Date(event.dates[0]).toLocaleDateString()
+                                                        )
+                                                    ) : (
+                                                        'Data non disponibile'
+                                                    )} • {event.city}
                                                 </div>
                                             </div>
                                         </div>
@@ -493,16 +501,45 @@ const Dashboard: React.FC = () => {
                                </div>
 
                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                   <div>
-                                       <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center"><Clock className="w-4 h-4 mr-1 text-indigo-400"/> Data</label>
-                                       <input 
-                                           type="date" 
-                                           value={date} 
-                                           onChange={e => setDate(e.target.value)} 
-                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
-                                           required
-                                       />
-                                   </div>
+                               <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center">
+                                        <Clock className="w-4 h-4 mr-1 text-indigo-400"/> Date dell'Evento
+                                    </label>
+                                    <div className="space-y-2">
+                                        {dates.map((d, index) => (
+                                            <div key={index} className="flex gap-2">
+                                                <input 
+                                                    type="date" 
+                                                    value={d} 
+                                                    onChange={e => {
+                                                        const newDates = [...dates];
+                                                        newDates[index] = e.target.value;
+                                                        setDates(newDates);
+                                                    }} 
+                                                    className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
+                                                    required
+                                                />
+                                                {dates.length > 1 && (
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => setDates(dates.filter((_, i) => i !== index))}
+                                                        className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition"
+                                                    >
+                                                        <X className="w-5 h-5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        <button 
+                                            type="button"
+                                            onClick={() => setDates([...dates, ''])}
+                                            className="text-indigo-400 text-sm font-medium flex items-center hover:text-indigo-300 transition"
+                                        >
+                                            <Plus className="w-4 h-4 mr-1" />
+                                            Aggiungi un'altra data
+                                        </button>
+                                    </div>
+                                </div>
                                    <div>
                                        <label className="block text-sm font-medium text-gray-300 mb-1">Ora</label>
                                        <input 

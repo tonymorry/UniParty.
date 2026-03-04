@@ -50,7 +50,7 @@ const cleanupExpiredEvents = async () => {
         fiveDaysAgo.setHours(0, 0, 0, 0); // Normalize time
 
         const events = await Event.find({
-            date: { $lt: fiveDaysAgo },
+            dates: { $not: { $gte: fiveDaysAgo } },
             $or: [
                 { status: 'active' },
                 { status: { $exists: false } }
@@ -61,6 +61,10 @@ const cleanupExpiredEvents = async () => {
         let archivedCount = 0;
 
         for (const event of events) {
+            // Check if ALL dates are in the past
+            const allDatesPast = event.dates.every(d => new Date(d) < fiveDaysAgo);
+            if (!allDatesPast) continue;
+
             if (event.price === 0) {
                 // Hard Delete Free Events
                 await Ticket.deleteMany({ event: event._id });
@@ -411,7 +415,7 @@ app.get('/api/users/favorites/list', authMiddleware, async (req, res) => {
             const isActive = event.status === 'active' || !event.status;
             
             // 2. Verifica la data rispetto al cutoff
-            const isVisible = new Date(event.date) >= visibilityCutoff;
+            const isVisible = event.dates && event.dates.some(d => new Date(d) >= visibilityCutoff);
             
             return isActive && isVisible;
         });
@@ -519,13 +523,13 @@ app.get('/api/notifications', authMiddleware, async (req, res) => {
     if (now.getHours() < 10) visibilityCutoff.setDate(visibilityCutoff.getDate() - 1);
 
     const notifications = await Notification.find({ recipient: req.user.userId })
-      .populate('relatedEvent', 'date') // Popola per controllare la data
+      .populate('relatedEvent', 'dates') // Popola per controllare la data
       .sort({ createdAt: -1 });
 
     // Filtra: tieni solo se non ha evento collegato OPPURE se l'evento è ancora visibile
     const validNotifications = notifications.filter(n => {
        if (!n.relatedEvent) return true; // Notifica di sistema generica
-       return new Date(n.relatedEvent.date) >= visibilityCutoff;
+       return n.relatedEvent.dates && n.relatedEvent.dates.some(d => new Date(d) >= visibilityCutoff);
     });
 
     res.json(validNotifications.slice(0, 20));
@@ -640,7 +644,7 @@ app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) =>
 
 app.get('/api/admin/events', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const events = await Event.find({}).populate('organization', 'name email').sort({ date: -1 });
+        const events = await Event.find({}).populate('organization', 'name email').sort({ 'dates.0': -1 });
         res.json(events);
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -650,7 +654,7 @@ app.get('/api/admin/events', authMiddleware, adminMiddleware, async (req, res) =
 app.get('/api/admin/users/:id/tickets', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const tickets = await Ticket.find({ owner: req.params.id })
-            .populate({ path: 'event', select: 'title date' })
+            .populate({ path: 'event', select: 'title dates' })
             .sort({ purchaseDate: -1 });
         res.json(tickets);
     } catch (e) {
@@ -711,7 +715,7 @@ app.get('/api/events', async (req, res) => {
                  if (now.getHours() < 10) {
                      visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); 
                  }
-                 query.date = { $gte: visibilityCutoff };
+                 query.dates = { $gte: visibilityCutoff };
                  
             } else {
                  query.$or = [
@@ -735,10 +739,10 @@ app.get('/api/events', async (req, res) => {
                 visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); 
             } 
 
-            query.date = { $gte: visibilityCutoff };
+            query.dates = { $gte: visibilityCutoff };
         }
 
-        const events = await Event.find(query).populate('organization', 'name _id profileImage');
+        const events = await Event.find(query).populate('organization', 'name _id profileImage').sort({ 'dates.0': 1 });
         res.json(events);
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -770,7 +774,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         }
 
         let { 
-            title, description, longDescription, image, date, time, 
+            title, description, longDescription, image, dates, time, 
             location, city, price, maxCapacity, category, prLists, status,
             requiresMatricola, requiresCorsoStudi, scanType
         } = req.body;
@@ -778,18 +782,21 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         if (price < 0) return res.status(400).json({ error: "Price cannot be negative" });
         if (maxCapacity <= 0) return res.status(400).json({ error: "Max capacity must be > 0" });
         if (!city) return res.status(400).json({ error: "City is required" });
+        if (!dates || !Array.isArray(dates) || dates.length === 0) return res.status(400).json({ error: "Dates are required" });
         
-        const inputDate = new Date(date);
         const today = new Date();
         today.setHours(0,0,0,0);
-        if (inputDate < today) return res.status(400).json({ error: "Event date cannot be in the past" });
+        
+        for (const d of dates) {
+            if (new Date(d) < today) return res.status(400).json({ error: "Event dates cannot be in the past" });
+        }
 
         const newEvent = await Event.create({
             title, 
             description, 
             longDescription, 
             image, 
-            date, 
+            dates, 
             time, 
             location, 
             city,
@@ -858,13 +865,13 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
         }
 
         let { 
-            title, description, longDescription, image, date, time, 
+            title, description, longDescription, image, dates, time, 
             location, city, maxCapacity, category, prLists, price, status,
             requiresMatricola, requiresCorsoStudi, scanType
         } = req.body;
 
         const updated = await Event.findByIdAndUpdate(req.params.id, {
-            title, description, longDescription, image, date, time, 
+            title, description, longDescription, image, dates, time, 
             location, city, maxCapacity, category, prLists,
             ...(price !== undefined && { price }),
             ...(status !== undefined && { status }),
@@ -984,8 +991,8 @@ app.get('/api/tickets', authMiddleware, async (req, res) => {
             if (evStatus === 'deleted' || evStatus === 'archived') return false; 
             if (evStatus === 'draft') return false;
 
-            const eventDate = new Date(ticket.event.date);
-            return eventDate >= visibilityCutoff;
+            const eventDate = ticket.event.dates && ticket.event.dates.some(d => new Date(d) >= visibilityCutoff);
+            return eventDate;
         });
 
         res.json(visibleTickets);
@@ -1016,34 +1023,57 @@ app.post('/api/tickets/validate', authMiddleware, async (req, res) => {
         const event = ticket.event;
         const scanType = event.scanType || 'entry_only';
 
+        // Multi-day logic
+        const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        
+        // Check if today is an event day
+        const isTodayEventDay = event.dates.some(d => new Date(d).toISOString().split('T')[0] === todayStr);
+        if (!isTodayEventDay) {
+            return res.status(400).json({ error: "L'evento non è previsto per la data odierna" });
+        }
+
         let message = "Voucher Valid";
         let action = "check-in";
 
+        // Find today's scan record
+        let todayScan = ticket.scanHistory.find(s => s.date === todayStr);
+
         if (scanType === 'entry_only') {
-             if (ticket.used || ticket.status === 'completed') {
-                 return res.status(400).json({ error: "ALREADY_USED" });
+             if (todayScan) {
+                 return res.status(400).json({ error: "Biglietto già scansionato oggi" });
              }
+             
+             ticket.scanHistory.push({
+                 date: todayStr,
+                 entryTime: new Date()
+             });
+             
              ticket.used = true;
              ticket.status = 'completed';
              ticket.checkInDate = new Date();
              ticket.entryTime = new Date(); 
              message = "Ingresso Registrato";
         } else {
-            if (ticket.status === 'valid' || ticket.status === 'active' || !ticket.status) {
+            if (!todayScan) {
+                ticket.scanHistory.push({
+                    date: todayStr,
+                    entryTime: new Date()
+                });
                 ticket.status = 'entered';
                 ticket.entryTime = new Date();
                 message = "Ingresso Registrato";
                 action = "entry";
             } 
-            else if (ticket.status === 'entered') {
+            else if (todayScan && !todayScan.exitTime) {
+                todayScan.exitTime = new Date();
                 ticket.status = 'completed';
                 ticket.exitTime = new Date();
                 ticket.used = true; 
                 message = "Uscita Registrata";
                 action = "exit";
             }
-            else if (ticket.status === 'completed') {
-                return res.status(400).json({ error: "ALREADY_USED" }); 
+            else if (todayScan && todayScan.exitTime) {
+                return res.status(400).json({ error: "Uscita già registrata per oggi" }); 
             }
         }
 

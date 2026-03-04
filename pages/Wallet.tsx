@@ -85,7 +85,15 @@ const Wallet: React.FC = () => {
                                     <h3 className="text-xl font-bold text-white mb-2">{ticket.event?.title || 'Evento senza titolo'}</h3>
                                     <div className="flex items-center text-gray-400 text-sm mb-2">
                                         <Calendar className="w-4 h-4 mr-2 text-indigo-500"/>
-                                        {formatDate(ticket.event?.date)} {ticket.event?.time ? `alle ${ticket.event.time}` : ''}
+                                        {ticket.event?.dates && ticket.event.dates.length > 0 ? (
+                                            ticket.event.dates.length > 1 ? (
+                                                `Dal ${new Date(ticket.event.dates[0]).toLocaleDateString()} al ${new Date(ticket.event.dates[ticket.event.dates.length - 1]).toLocaleDateString()}`
+                                            ) : (
+                                                new Date(ticket.event.dates[0]).toLocaleDateString()
+                                            )
+                                        ) : (
+                                            'Data non disponibile'
+                                        )} {ticket.event?.time ? `alle ${ticket.event.time}` : ''}
                                     </div>
                                     <div className="flex items-center text-gray-400 text-sm mb-4">
                                         <MapPin className="w-4 h-4 mr-2 text-indigo-500"/>

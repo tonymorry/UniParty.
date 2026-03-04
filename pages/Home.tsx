@@ -48,7 +48,7 @@ const Home: React.FC = () => {
     if (selectedPrice === 'free' && e.price > 0) return false;
     if (selectedPrice === 'paid' && e.price === 0) return false;
     if (selectedTime !== 'all') {
-        const eventDate = new Date(e.date);
+        const eventDate = new Date(e.dates && e.dates.length > 0 ? e.dates[0] : (e as any).date);
         const today = new Date();
         today.setHours(0,0,0,0);
         const tomorrow = new Date(today);

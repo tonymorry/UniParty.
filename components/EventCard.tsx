@@ -12,11 +12,15 @@ interface EventCardProps {
 const EventCard: React.FC<EventCardProps> = ({ event }) => {
   const { user, toggleFavorite } = useAuth();
   
-  const eventDate = new Date(event.date).toLocaleDateString('it-IT', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  });
+  const eventDate = event.dates && event.dates.length > 0 ? (
+    event.dates.length > 1 
+      ? `Dal ${new Date(event.dates[0]).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} al ${new Date(event.dates[event.dates.length - 1]).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}`
+      : new Date(event.dates[0]).toLocaleDateString('it-IT', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        })
+  ) : 'Data non disponibile';
 
   // FIX: Strict Integer Math for Price Display
   const priceInCents = Math.round(Number(event.price) * 100);
