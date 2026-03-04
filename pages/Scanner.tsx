@@ -128,6 +128,10 @@ const Scanner: React.FC = () => {
               setError("Voucher Non Valido. Codice non trovato.");
           } else if (err.message === "ALREADY_USED") {
               setError("Voucher GIÀ USATO (Uscita già registrata).");
+          } else if (err.message === "GIA_ENTRATO_OGGI") {
+              setError("Voucher GIÀ USATO OGGI (Ingresso già registrato).");
+          } else if (err.message === "OPERAZIONI_COMPLETATE_OGGI") {
+              setError("OPERAZIONI COMPLETATE PER OGGI (Ingresso e Uscita già registrati).");
           } else if (err.message === "WRONG_EVENT_ORGANIZER") {
               setError("Questo voucher appartiene a un'altra associazione.");
           } else if (err.message === "TICKET_INVALID_DELETED") {

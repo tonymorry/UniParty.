@@ -66,7 +66,9 @@ export interface Event {
   description: string;
   longDescription: string;
   image: string;
-  date: string; // ISO Date string
+  dates: string[]; // ISO Date strings
+  date: string; // ISO Date string (first date)
+  isMultiDay: boolean;
   time: string;
   location: string;
   city: string; 

@@ -84,6 +84,11 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
                <div className="bg-indigo-600/90 backdrop-blur-md px-2.5 py-1 md:px-4 md:py-1.5 rounded-full text-white font-black text-[9px] md:text-sm shadow-[0_0_15px_rgba(79,70,229,0.5)] flex items-center border border-white/20">
                     {isFree ? 'FREE' : `€${finalPrice.toFixed(2)}`}
                </div>
+               {event.isMultiDay && (
+                   <div className="bg-emerald-600/90 backdrop-blur-md px-2.5 py-1 md:px-4 md:py-1.5 rounded-full text-white font-black text-[9px] md:text-sm shadow-[0_0_15px_rgba(16,185,129,0.5)] flex items-center border border-white/20">
+                       MULTI-DAY
+                   </div>
+               )}
           </div>
           
           {/* Subtle gradient overlay */}
