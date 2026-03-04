@@ -81,9 +81,7 @@ const eventSchema = new mongoose.Schema({
   description: String,
   longDescription: String,
   image: String,
-  dates: [{ type: Date, required: true }],
-  date: { type: Date }, // Kept for backward compatibility, populated from dates[0]
-  isMultiDay: { type: Boolean, default: false },
+  date: { type: Date, required: true },
   time: String,
   location: String,
   city: { 
@@ -129,12 +127,6 @@ const ticketSchema = new mongoose.Schema({
   corsoStudi: { type: String }, // New Field
   entryTime: { type: Date },
   exitTime: { type: Date },
-  
-  dailyScans: [{ 
-    date: String, // format: YYYY-MM-DD
-    type: { type: String, enum: ['entry', 'exit'] }, 
-    time: { type: Date, default: Date.now } 
-  }],
 
   used: { type: Boolean, default: false }, 
   checkInDate: Date, 

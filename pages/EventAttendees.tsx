@@ -15,7 +15,6 @@ interface Attendee {
     entryTime?: string;
     exitTime?: string;
     prList?: string;
-    dailyScans?: { date: string, type: string, time: string }[];
 }
 
 const EventAttendees: React.FC = () => {
@@ -152,7 +151,6 @@ const EventAttendees: React.FC = () => {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stato</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingresso</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uscita</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scan Giornalieri</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-gray-800 divide-y divide-gray-700">
@@ -191,21 +189,6 @@ const EventAttendees: React.FC = () => {
                                                      <span className="flex items-center text-blue-400">
                                                         <Clock className="w-3 h-3 mr-1" /> {formatTime(a.exitTime)}
                                                     </span>
-                                                ) : '-'}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-400">
-                                                {a.dailyScans && a.dailyScans.length > 0 ? (
-                                                    <div className="flex flex-col gap-1 max-h-20 overflow-y-auto">
-                                                        {a.dailyScans.map((s, idx) => (
-                                                            <div key={idx} className="flex items-center gap-1">
-                                                                <span className="font-bold text-[10px]">{s.date.split('-').slice(1).reverse().join('/')}</span>
-                                                                <span className={`px-1 rounded ${s.type === 'entry' ? 'bg-green-900/40 text-green-400' : 'bg-blue-900/40 text-blue-400'}`}>
-                                                                    {s.type === 'entry' ? 'IN' : 'OUT'}
-                                                                </span>
-                                                                <span>{formatTime(s.time)}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
                                                 ) : '-'}
                                             </td>
                                         </tr>

@@ -64,9 +64,7 @@ const EventDetails: React.FC = () => {
                   title: data.title,
                   description: data.description,
                   longDescription: data.longDescription,
-                  dates: data.dates ? data.dates.map((d: string) => d.split('T')[0]) : [data.date.split('T')[0]],
                   date: data.date.split('T')[0], 
-                  isMultiDay: data.isMultiDay || false,
                   time: data.time,
                   location: data.location,
                   image: data.image,
@@ -257,9 +255,7 @@ const EventDetails: React.FC = () => {
       e.preventDefault();
       setSaving(true);
       try {
-          const finalDates = editForm.dates && editForm.dates.length > 0 
-            ? editForm.dates.map(d => new Date(d).toISOString())
-            : [new Date(editForm.date!).toISOString()];
+          const isoDate = new Date(editForm.date!).toISOString();
           
           const cleanPrice = parseFloat(editPriceString.replace(',', '.'));
           const finalPrice = isNaN(cleanPrice) ? 0 : Number(cleanPrice.toFixed(2));
@@ -267,9 +263,7 @@ const EventDetails: React.FC = () => {
           const updatedData = {
               ...editForm,
               price: finalPrice,
-              dates: finalDates,
-              date: finalDates[0],
-              isMultiDay: finalDates.length > 1,
+              date: isoDate,
               requiresCorsoStudi: editForm.requiresMatricola 
           };
 
@@ -347,63 +341,8 @@ const EventDetails: React.FC = () => {
                               required
                           />
                       </div>
-                      <div className="space-y-4 bg-gray-900/50 p-4 rounded-xl border border-gray-700">
-                          <div className="flex items-center justify-between">
-                              <label className="block text-sm font-medium text-gray-300">Date dell'evento</label>
-                              <button 
-                                  type="button"
-                                  onClick={() => {
-                                      const newDates = [...(editForm.dates || []), ''];
-                                      setEditForm({...editForm, dates: newDates});
-                                  }}
-                                  className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded transition flex items-center"
-                              >
-                                  <Plus className="w-3 h-3 mr-1" /> Aggiungi Data
-                              </button>
-                          </div>
-                          
-                          <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                              {(editForm.dates || [editForm.date || '']).map((d, idx) => (
-                                  <div key={idx} className="flex items-center gap-2">
-                                      <input 
-                                          type="date" 
-                                          value={d} 
-                                          onChange={e => {
-                                              const newDates = [...(editForm.dates || [editForm.date || ''])];
-                                              newDates[idx] = e.target.value;
-                                              setEditForm({
-                                                  ...editForm, 
-                                                  dates: newDates,
-                                                  date: newDates[0],
-                                                  isMultiDay: newDates.length > 1
-                                              });
-                                          }}
-                                          className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white text-sm"
-                                          required
-                                      />
-                                      {(editForm.dates || []).length > 1 && (
-                                          <button 
-                                              type="button"
-                                              onClick={() => {
-                                                  const newDates = (editForm.dates || []).filter((_, i) => i !== idx);
-                                                  setEditForm({
-                                                      ...editForm, 
-                                                      dates: newDates,
-                                                      date: newDates[0],
-                                                      isMultiDay: newDates.length > 1
-                                                  });
-                                              }}
-                                              className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition"
-                                          >
-                                              <Trash2 className="w-4 h-4" />
-                                          </button>
-                                      )}
-                                  </div>
-                              ))}
-                          </div>
-                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="hidden">
+                          <div>
                               <label className="block text-sm font-medium text-gray-300 mb-1">Date</label>
                               <input 
                                   type="date" value={editForm.date} 
@@ -695,24 +634,9 @@ const EventDetails: React.FC = () => {
                 </span>
                 <h1 className="text-3xl md:text-5xl font-bold text-white mb-2 drop-shadow-md">{event.title}</h1>
                 <div className="flex flex-wrap items-center text-gray-300 text-sm md:text-base gap-4 md:gap-8">
-                    <div className="flex flex-col">
-                        <div className="flex items-center">
-                            <Calendar className="w-5 h-5 mr-2 text-indigo-400" />
-                            {event.isMultiDay ? (
-                                <span className="font-bold text-indigo-400">Evento Multi-giorno</span>
-                            ) : (
-                                <span>{new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                            )}
-                        </div>
-                        {event.isMultiDay && event.dates && (
-                            <div className="ml-7 mt-1 flex flex-wrap gap-2">
-                                {event.dates.map((d, idx) => (
-                                    <span key={idx} className="text-xs bg-gray-800 px-2 py-1 rounded border border-gray-700">
-                                        {new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
-                                    </span>
-                                ))}
-                            </div>
-                        )}
+                    <div className="flex items-center">
+                        <Calendar className="w-5 h-5 mr-2 text-indigo-400" />
+                        {new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </div>
                     <div className="flex items-center">
                         <Clock className="w-5 h-5 mr-2 text-indigo-400" />

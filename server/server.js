@@ -770,7 +770,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         }
 
         let { 
-            title, description, longDescription, image, dates, time, 
+            title, description, longDescription, image, date, time, 
             location, city, price, maxCapacity, category, prLists, status,
             requiresMatricola, requiresCorsoStudi, scanType
         } = req.body;
@@ -778,21 +778,18 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         if (price < 0) return res.status(400).json({ error: "Price cannot be negative" });
         if (maxCapacity <= 0) return res.status(400).json({ error: "Max capacity must be > 0" });
         if (!city) return res.status(400).json({ error: "City is required" });
-        if (!dates || !Array.isArray(dates) || dates.length === 0) return res.status(400).json({ error: "At least one date is required" });
         
-        const firstDate = new Date(dates[0]);
+        const inputDate = new Date(date);
         const today = new Date();
         today.setHours(0,0,0,0);
-        if (firstDate < today) return res.status(400).json({ error: "Event date cannot be in the past" });
+        if (inputDate < today) return res.status(400).json({ error: "Event date cannot be in the past" });
 
         const newEvent = await Event.create({
             title, 
             description, 
             longDescription, 
             image, 
-            dates,
-            date: dates[0], // For backward compatibility
-            isMultiDay: dates.length > 1,
+            date, 
             time, 
             location, 
             city,
@@ -861,26 +858,20 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
         }
 
         let { 
-            title, description, longDescription, image, dates, time, 
+            title, description, longDescription, image, date, time, 
             location, city, maxCapacity, category, prLists, price, status,
             requiresMatricola, requiresCorsoStudi, scanType
         } = req.body;
 
-        const updateData = {
-            title, description, longDescription, image, dates, time, 
+        const updated = await Event.findByIdAndUpdate(req.params.id, {
+            title, description, longDescription, image, date, time, 
             location, city, maxCapacity, category, prLists,
-            ...(dates && Array.isArray(dates) && dates.length > 0 && { 
-                date: dates[0],
-                isMultiDay: dates.length > 1
-            }),
             ...(price !== undefined && { price }),
             ...(status !== undefined && { status }),
             ...(requiresMatricola !== undefined && { requiresMatricola }),
             ...(requiresCorsoStudi !== undefined && { requiresCorsoStudi }),
             ...(scanType !== undefined && { scanType })
-        };
-
-        const updated = await Event.findByIdAndUpdate(req.params.id, updateData, { new: true }).populate('organization', 'name _id profileImage');
+        }, { new: true }).populate('organization', 'name _id profileImage');
 
         res.json(updated);
     } catch (e) {
@@ -1024,70 +1015,35 @@ app.post('/api/tickets/validate', authMiddleware, async (req, res) => {
 
         const event = ticket.event;
         const scanType = event.scanType || 'entry_only';
-        const isMultiDay = event.isMultiDay || false;
-
-        // Current date as string YYYY-MM-DD
-        const todayStr = new Date().toISOString().split('T')[0];
-        const todayScans = ticket.dailyScans.filter(s => s.date === todayStr);
 
         let message = "Voucher Valid";
         let action = "check-in";
 
-        if (isMultiDay) {
-            if (scanType === 'entry_only') {
-                if (todayScans.some(s => s.type === 'entry')) {
-                    return res.status(400).json({ error: "GIA_ENTRATO_OGGI" });
-                }
-                ticket.dailyScans.push({ date: todayStr, type: 'entry' });
-                message = "Ingresso Registrato (Multi-giorno)";
-                action = "entry";
-            } else {
-                // entry_exit
-                const hasEntry = todayScans.some(s => s.type === 'entry');
-                const hasExit = todayScans.some(s => s.type === 'exit');
-
-                if (!hasEntry) {
-                    ticket.dailyScans.push({ date: todayStr, type: 'entry' });
-                    message = "Ingresso Registrato (Multi-giorno)";
-                    action = "entry";
-                } else if (!hasExit) {
-                    ticket.dailyScans.push({ date: todayStr, type: 'exit' });
-                    message = "Uscita Registrata (Multi-giorno)";
-                    action = "exit";
-                } else {
-                    return res.status(400).json({ error: "OPERAZIONI_COMPLETATE_OGGI" });
-                }
-            }
-            // For multi-day, we don't set ticket.used = true globally until maybe the last day, 
-            // but the requirement says "Non usare più il campo globale ticket.used per bloccare il biglietto se l'evento è isMultiDay"
+        if (scanType === 'entry_only') {
+             if (ticket.used || ticket.status === 'completed') {
+                 return res.status(400).json({ error: "ALREADY_USED" });
+             }
+             ticket.used = true;
+             ticket.status = 'completed';
+             ticket.checkInDate = new Date();
+             ticket.entryTime = new Date(); 
+             message = "Ingresso Registrato";
         } else {
-            // Standard single day logic
-            if (scanType === 'entry_only') {
-                 if (ticket.used || ticket.status === 'completed') {
-                     return res.status(400).json({ error: "ALREADY_USED" });
-                 }
-                 ticket.used = true;
-                 ticket.status = 'completed';
-                 ticket.checkInDate = new Date();
-                 ticket.entryTime = new Date(); 
-                 message = "Ingresso Registrato";
-            } else {
-                if (ticket.status === 'valid' || ticket.status === 'active' || !ticket.status) {
-                    ticket.status = 'entered';
-                    ticket.entryTime = new Date();
-                    message = "Ingresso Registrato";
-                    action = "entry";
-                } 
-                else if (ticket.status === 'entered') {
-                    ticket.status = 'completed';
-                    ticket.exitTime = new Date();
-                    ticket.used = true; 
-                    message = "Uscita Registrata";
-                    action = "exit";
-                }
-                else if (ticket.status === 'completed') {
-                    return res.status(400).json({ error: "ALREADY_USED" }); 
-                }
+            if (ticket.status === 'valid' || ticket.status === 'active' || !ticket.status) {
+                ticket.status = 'entered';
+                ticket.entryTime = new Date();
+                message = "Ingresso Registrato";
+                action = "entry";
+            } 
+            else if (ticket.status === 'entered') {
+                ticket.status = 'completed';
+                ticket.exitTime = new Date();
+                ticket.used = true; 
+                message = "Uscita Registrata";
+                action = "exit";
+            }
+            else if (ticket.status === 'completed') {
+                return res.status(400).json({ error: "ALREADY_USED" }); 
             }
         }
 
