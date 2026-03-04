@@ -315,7 +315,7 @@ const EventDetails: React.FC = () => {
 
   const remainingTickets = event.maxCapacity - event.ticketsSold;
   const isSoldOut = remainingTickets <= 0;
-  const maxPurchaseLimit = Math.min(10, remainingTickets);
+  const maxPurchaseLimit = Math.min(5, remainingTickets);
   const soldRatio = event.ticketsSold / event.maxCapacity;
   const isAlmostSoldOut = soldRatio >= 0.6 && !isSoldOut;
 
@@ -809,24 +809,30 @@ const EventDetails: React.FC = () => {
                          </div>
                      ) : (
                          <div className="space-y-4">
-                             <div className="flex items-center justify-between bg-gray-900 p-2 rounded-lg border border-gray-700">
-                                 <span className="text-sm font-medium text-gray-300 ml-2">Quantità</span>
-                                 <div className="flex items-center">
-                                     <button 
-                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                        className="p-2 bg-gray-800 rounded-md shadow-sm hover:bg-gray-700 text-indigo-400 disabled:opacity-50 border border-gray-700 transition"
-                                        disabled={quantity <= 1}
-                                     >
-                                         <Minus className="w-4 h-4" />
-                                     </button>
-                                     <span className="w-12 text-center font-bold text-white">{quantity}</span>
-                                     <button 
-                                        onClick={() => setQuantity(Math.min(maxPurchaseLimit, quantity + 1))}
-                                        className="p-2 bg-gray-800 rounded-md shadow-sm hover:bg-gray-700 text-indigo-400 disabled:opacity-50 border border-gray-700 transition"
-                                        disabled={quantity >= maxPurchaseLimit}
-                                     >
-                                         <Plus className="w-4 h-4" />
-                                     </button>
+                             <div className="flex flex-col bg-gray-900 p-2 rounded-lg border border-gray-700">
+                                 <div className="flex items-center justify-between w-full">
+                                     <span className="text-sm font-medium text-gray-300 ml-2">Quantità</span>
+                                     <div className="flex items-center">
+                                         <button 
+                                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                            className="p-2 bg-gray-800 rounded-md shadow-sm hover:bg-gray-700 text-indigo-400 disabled:opacity-50 border border-gray-700 transition"
+                                            disabled={quantity <= 1}
+                                         >
+                                             <Minus className="w-4 h-4" />
+                                         </button>
+                                         <span className="w-12 text-center font-bold text-white">{quantity}</span>
+                                         <button 
+                                            onClick={() => setQuantity(Math.min(maxPurchaseLimit, quantity + 1))}
+                                            className="p-2 bg-gray-800 rounded-md shadow-sm hover:bg-gray-700 text-indigo-400 disabled:opacity-50 border border-gray-700 transition"
+                                            disabled={quantity >= maxPurchaseLimit}
+                                         >
+                                             <Plus className="w-4 h-4" />
+                                         </button>
+                                     </div>
+                                 </div>
+                                 <div className="flex items-center mt-2 px-2">
+                                     <Info className="w-3 h-3 text-indigo-400 mr-1" />
+                                     <p className="text-[10px] text-indigo-400 font-medium">Limite anti-bagarinaggio: max 5 biglietti per persona.</p>
                                  </div>
                              </div>
 

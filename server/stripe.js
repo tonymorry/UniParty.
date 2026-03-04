@@ -126,6 +126,20 @@ const StripeController = {
           return res.status(400).json({ error: "Not enough tickets available" });
       }
 
+      // Anti-scalping check: Limit to 5 tickets per user per event
+      const MAX_TICKETS_PER_USER = 5;
+      const existingTicketsCount = await Ticket.countDocuments({ 
+          event: eventId, 
+          owner: userId, 
+          status: { $ne: 'deleted' } 
+      });
+      
+      if (existingTicketsCount + quantity > MAX_TICKETS_PER_USER) {
+          return res.status(400).json({ 
+              error: "Limite anti-bagarinaggio superato: puoi acquistare un massimo di 5 biglietti totali per questo evento." 
+          });
+      }
+
       // 2. PRICE CALCULATION (STRICT INTEGER MATH)
       // Convert price (e.g. 15.00) to cents (1500) strictly.
       const unitPriceCents = Math.round(Number(event.price) * 100); 

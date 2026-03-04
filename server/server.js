@@ -738,7 +738,7 @@ app.get('/api/events', async (req, res) => {
             query.date = { $gte: visibilityCutoff };
         }
 
-        const events = await Event.find(query).populate('organization', 'name _id');
+        const events = await Event.find(query).populate('organization', 'name _id profileImage');
         res.json(events);
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -747,7 +747,7 @@ app.get('/api/events', async (req, res) => {
 
 app.get('/api/events/:id', async (req, res) => {
     try {
-        const event = await Event.findById(req.params.id).populate('organization', 'name _id email');
+        const event = await Event.findById(req.params.id).populate('organization', 'name _id email profileImage');
         if (!event) return res.status(404).json({ error: "Not Found" });
         res.json(event);
     } catch (e) {
@@ -871,7 +871,7 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
             ...(requiresMatricola !== undefined && { requiresMatricola }),
             ...(requiresCorsoStudi !== undefined && { requiresCorsoStudi }),
             ...(scanType !== undefined && { scanType })
-        }, { new: true }).populate('organization', 'name _id');
+        }, { new: true }).populate('organization', 'name _id profileImage');
 
         res.json(updated);
     } catch (e) {
