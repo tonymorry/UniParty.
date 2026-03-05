@@ -557,6 +557,7 @@ const Dashboard: React.FC = () => {
         Aggiungi un'altra data
     </button>
 </div>
+                                   </div>
 
                                    <div className="grid grid-cols-1 gap-2">
                                        <div>
