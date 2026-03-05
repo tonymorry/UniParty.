@@ -10,12 +10,10 @@ interface Attendee {
     _id: string;
     ticketHolderName: string;
     matricola?: string;
-    corsoStudi?: string; // New
+    corsoStudi?: string;
     status: 'valid' | 'entered' | 'completed' | 'active';
-    entryTime?: string;
-    exitTime?: string;
     prList?: string;
-    dailyScans?: { date: string, type: string, time: string }[];
+    scanHistory?: { date: string; entryTime?: string; exitTime?: string }[];
 }
 
 const EventAttendees: React.FC = () => {
@@ -66,21 +64,27 @@ const EventAttendees: React.FC = () => {
     const downloadCSV = () => {
         if (!attendees.length) return;
 
-        // Header CSV - Added Corso Studi
-        const headers = ["Nome", "Matricola", "Corso di Studi", "Lista PR", "Stato", "Orario Ingresso", "Orario Uscita"];
+        const headers = ["Nome", "Matricola", "Corso di Studi", "Lista PR", "Stato", "Cronologia Scansioni"];
         
-        // Rows Data
+        const formatScanHistory = (history?: any[]) => {
+            if (!history || history.length === 0) return "";
+            return history.map(s => {
+                const date = s.date;
+                const inTime = s.entryTime ? new Date(s.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A';
+                const outTime = s.exitTime ? new Date(s.exitTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A';
+                return `${date}: IN ${inTime} OUT ${outTime}`;
+            }).join(' | ');
+        };
+
         const rows = attendees.map(a => [
-            `"${a.ticketHolderName.replace(/"/g, '""')}"`, // Escape quotes
+            `"${a.ticketHolderName.replace(/"/g, '""')}"`,
             `"${a.matricola || ''}"`,
             `"${a.corsoStudi ? a.corsoStudi.replace(/"/g, '""') : ''}"`,
             `"${a.prList || ''}"`,
             `"${a.status}"`,
-            `"${a.entryTime ? new Date(a.entryTime).toLocaleString() : ''}"`,
-            `"${a.exitTime ? new Date(a.exitTime).toLocaleString() : ''}"`
+            `"${formatScanHistory(a.scanHistory)}"`
         ]);
 
-        // Join content using semicolon (;) for better compatibility with Excel (European locales)
         const csvContent = [
             headers.join(';'), 
             ...rows.map(e => e.join(';'))
@@ -150,9 +154,7 @@ const EventAttendees: React.FC = () => {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matricola</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Corso Studi</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stato</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingresso</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uscita</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scan Giornalieri</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cronologia Ingressi</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-gray-800 divide-y divide-gray-700">
@@ -179,30 +181,14 @@ const EventAttendees: React.FC = () => {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {getStatusBadge(a.status)}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                                                {a.entryTime ? (
-                                                    <span className="flex items-center text-green-400">
-                                                        <Clock className="w-3 h-3 mr-1" /> {formatTime(a.entryTime)}
-                                                    </span>
-                                                ) : '-'}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                                                {a.exitTime ? (
-                                                     <span className="flex items-center text-blue-400">
-                                                        <Clock className="w-3 h-3 mr-1" /> {formatTime(a.exitTime)}
-                                                    </span>
-                                                ) : '-'}
-                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-400">
-                                                {a.dailyScans && a.dailyScans.length > 0 ? (
+                                                {a.scanHistory && a.scanHistory.length > 0 ? (
                                                     <div className="flex flex-col gap-1 max-h-20 overflow-y-auto">
-                                                        {a.dailyScans.map((s, idx) => (
-                                                            <div key={idx} className="flex items-center gap-1">
-                                                                <span className="font-bold text-[10px]">{s.date.split('-').slice(1).reverse().join('/')}</span>
-                                                                <span className={`px-1 rounded ${s.type === 'entry' ? 'bg-green-900/40 text-green-400' : 'bg-blue-900/40 text-blue-400'}`}>
-                                                                    {s.type === 'entry' ? 'IN' : 'OUT'}
-                                                                </span>
-                                                                <span>{formatTime(s.time)}</span>
+                                                        {a.scanHistory.map((s, idx) => (
+                                                            <div key={idx} className="flex items-center gap-2">
+                                                                <span className="font-bold text-[10px]">{s.date.split('-').slice(1).reverse().join('/')}:</span>
+                                                                <span className="text-green-400">IN {formatTime(s.entryTime)}</span>
+                                                                {s.exitTime && <span className="text-blue-400">- OUT {formatTime(s.exitTime)}</span>}
                                                             </div>
                                                         ))}
                                                     </div>

@@ -30,7 +30,7 @@ const Dashboard: React.FC = () => {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('0');
   const [dates, setDates] = useState<string[]>(['']);
-  const [time, setTime] = useState('22:00');
+  const [times, setTimes] = useState<string[]>(['22:00']);
   const [location, setLocation] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('');
   const [city, setCity] = useState('');
@@ -196,7 +196,8 @@ const Dashboard: React.FC = () => {
             description,
             longDescription: description,
             dates,
-            time,
+            times,
+            time: times[0] || '22:00',
             location,
             city,
             image,
@@ -540,16 +541,7 @@ const Dashboard: React.FC = () => {
                                         </button>
                                     </div>
                                 </div>
-                                   <div>
-                                       <label className="block text-sm font-medium text-gray-300 mb-1">Ora</label>
-                                       <input 
-                                           type="time" 
-                                           value={time} 
-                                           onChange={e => setTime(e.target.value)} 
-                                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
-                                           required
-                                       />
-                                   </div>
+
                                    <div className="grid grid-cols-1 gap-2">
                                        <div>
                                            <label className="block text-sm font-medium text-gray-300 mb-1">Regione</label>

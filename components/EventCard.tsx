@@ -108,7 +108,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
           <div className="space-y-1.5 md:space-y-3 text-[9px] md:text-sm text-gray-400 mt-auto pt-2 md:pt-5 border-t border-white/5">
             <div className="flex items-center">
               <Calendar className="h-3 w-3 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-400/80 shrink-0" />
-              <span className="font-semibold truncate">{eventDate} • {event.time}</span>
+              <span className="font-semibold truncate">{eventDate} • {(event.times ? event.times.join(' / ') : event.time || 'N/A')}</span>
             </div>
             <div className="flex items-center">
               <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-400/80 shrink-0" />

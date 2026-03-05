@@ -403,7 +403,7 @@ app.get('/api/users/favorites/list', authMiddleware, async (req, res) => {
         const visibilityCutoff = new Date();
         visibilityCutoff.setHours(0, 0, 0, 0); 
 
-        if (currentHour < 10) {
+        if (currentHour < 6) {
             visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); 
         }
 
@@ -516,11 +516,11 @@ app.post('/api/notifications/subscribe', authMiddleware, async (req, res) => {
 // Get User Notifications (Filtered by Event Visibility)
 app.get('/api/notifications', authMiddleware, async (req, res) => {
   try {
-    // Calcola orario limite (ieri alle 10:00 se è mattina, oggi alle 10:00 se è pomeriggio)
+    // Calcola orario limite (ieri alle 06:00 se è mattina, oggi alle 06:00 se è pomeriggio)
     const now = new Date();
     const visibilityCutoff = new Date();
     visibilityCutoff.setHours(0, 0, 0, 0);
-    if (now.getHours() < 10) visibilityCutoff.setDate(visibilityCutoff.getDate() - 1);
+    if (now.getHours() < 6) visibilityCutoff.setDate(visibilityCutoff.getDate() - 1);
 
     const notifications = await Notification.find({ recipient: req.user.userId })
       .populate('relatedEvent', 'dates') // Popola per controllare la data
@@ -707,12 +707,12 @@ app.get('/api/events', async (req, res) => {
                     { status: { $exists: false } }
                  ];
                  
-                 // APPLICA LA REGOLA DELLE 10:00 AM ANCHE PER PROFILI PUBBLICI
+                 // APPLICA LA REGOLA DELLE 06:00 AM ANCHE PER PROFILI PUBBLICI
                  const now = new Date();
                  const visibilityCutoff = new Date();
                  visibilityCutoff.setHours(0, 0, 0, 0); 
 
-                 if (now.getHours() < 10) {
+                 if (now.getHours() < 6) {
                      visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); 
                  }
                  query.dates = { $gte: visibilityCutoff };
@@ -735,7 +735,7 @@ app.get('/api/events', async (req, res) => {
             const visibilityCutoff = new Date();
             visibilityCutoff.setHours(0, 0, 0, 0); 
 
-            if (currentHour < 10) {
+            if (currentHour < 6) {
                 visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); 
             } 
 
@@ -774,7 +774,7 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         }
 
         let { 
-            title, description, longDescription, image, dates, time, 
+            title, description, longDescription, image, dates, times, time, 
             location, city, price, maxCapacity, category, prLists, status,
             requiresMatricola, requiresCorsoStudi, scanType
         } = req.body;
@@ -797,7 +797,8 @@ app.post('/api/events', authMiddleware, async (req, res) => {
             longDescription, 
             image, 
             dates, 
-            time, 
+            times,
+            time: time || (times && times.length > 0 ? times[0] : ''), 
             location, 
             city,
             price, 
@@ -865,13 +866,14 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
         }
 
         let { 
-            title, description, longDescription, image, dates, time, 
+            title, description, longDescription, image, dates, times, time, 
             location, city, maxCapacity, category, prLists, price, status,
             requiresMatricola, requiresCorsoStudi, scanType
         } = req.body;
 
         const updated = await Event.findByIdAndUpdate(req.params.id, {
-            title, description, longDescription, image, dates, time, 
+            title, description, longDescription, image, dates, times,
+            time: time || (times && times.length > 0 ? times[0] : ''), 
             location, city, maxCapacity, category, prLists,
             ...(price !== undefined && { price }),
             ...(status !== undefined && { status }),
@@ -950,7 +952,7 @@ app.get('/api/events/:id/attendees', authMiddleware, async (req, res) => {
         }
 
         const tickets = await Ticket.find({ event: eventId, status: { $ne: 'deleted' } })
-            .select('ticketHolderName matricola corsoStudi status entryTime exitTime prList purchaseDate')
+            .select('ticketHolderName matricola corsoStudi status entryTime exitTime prList purchaseDate scanHistory')
             .sort({ ticketHolderName: 1 });
             
         res.json(tickets);
@@ -980,7 +982,7 @@ app.get('/api/tickets', authMiddleware, async (req, res) => {
         const visibilityCutoff = new Date();
         visibilityCutoff.setHours(0, 0, 0, 0); 
 
-        if (currentHour < 10) {
+        if (currentHour < 6) {
             visibilityCutoff.setDate(visibilityCutoff.getDate() - 1); 
         }
         

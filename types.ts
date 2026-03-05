@@ -67,7 +67,8 @@ export interface Event {
   longDescription: string;
   image: string;
   dates: string[]; // ISO Date strings
-  time: string;
+  times: string[]; // Array of times corresponding to dates
+  time: string; // Legacy field
   location: string;
   city: string; 
   price: number;

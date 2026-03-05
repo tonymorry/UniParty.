@@ -82,6 +82,7 @@ const eventSchema = new mongoose.Schema({
   longDescription: String,
   image: String,
   dates: [{ type: Date, required: true }],
+  times: [String],
   time: String,
   location: String,
   city: { 

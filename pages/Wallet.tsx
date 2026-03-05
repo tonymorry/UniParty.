@@ -93,7 +93,7 @@ const Wallet: React.FC = () => {
                                             )
                                         ) : (
                                             'Data non disponibile'
-                                        )} {ticket.event?.time ? `alle ${ticket.event.time}` : ''}
+                                        )} {ticket.event?.times ? `alle ${ticket.event.times.join(' / ')}` : ticket.event?.time ? `alle ${ticket.event.time}` : ''}
                                     </div>
                                     <div className="flex items-center text-gray-400 text-sm mb-4">
                                         <MapPin className="w-4 h-4 mr-2 text-indigo-500"/>
