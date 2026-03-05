@@ -507,40 +507,56 @@ const Dashboard: React.FC = () => {
                                         <Clock className="w-4 h-4 mr-1 text-indigo-400"/> Date dell'Evento
                                     </label>
                                     <div className="space-y-2">
-                                        {dates.map((d, index) => (
-                                            <div key={index} className="flex gap-2">
-                                                <input 
-                                                    type="date" 
-                                                    value={d} 
-                                                    onChange={e => {
-                                                        const newDates = [...dates];
-                                                        newDates[index] = e.target.value;
-                                                        setDates(newDates);
-                                                    }} 
-                                                    className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
-                                                    required
-                                                />
-                                                {dates.length > 1 && (
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={() => setDates(dates.filter((_, i) => i !== index))}
-                                                        className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition"
-                                                    >
-                                                        <X className="w-5 h-5" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))}
+    {dates.map((d, index) => (
+        <div key={index} className="flex flex-col sm:flex-row gap-2 mb-2">
+            <input 
+                type="date" 
+                value={d} 
+                onChange={e => {
+                    const newDates = [...dates];
+                    newDates[index] = e.target.value;
+                    setDates(newDates);
+                }} 
+                className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
+                required
+            />
+            <input 
+                type="time" 
+                value={times[index] || ''} 
+                onChange={e => {
+                    const newTimes = [...times];
+                    newTimes[index] = e.target.value;
+                    setTimes(newTimes);
+                }} 
+                className="w-full sm:w-32 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
+                required
+            />
+            {dates.length > 1 && (
+                <button 
+                    type="button" 
+                    onClick={() => {
+                        setDates(dates.filter((_, i) => i !== index));
+                        setTimes(times.filter((_, i) => i !== index));
+                    }}
+                    className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition shrink-0"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+            )}
+        </div>
+    ))}
                                         <button 
-                                            type="button"
-                                            onClick={() => setDates([...dates, ''])}
-                                            className="text-indigo-400 text-sm font-medium flex items-center hover:text-indigo-300 transition"
-                                        >
-                                            <Plus className="w-4 h-4 mr-1" />
-                                            Aggiungi un'altra data
-                                        </button>
-                                    </div>
-                                </div>
+        type="button"
+        onClick={() => {
+            setDates([...dates, '']);
+            setTimes([...times, '22:00']);
+        }}
+        className="text-indigo-400 text-sm font-medium flex items-center hover:text-indigo-300 transition mt-2"
+    >
+        <Plus className="w-4 h-4 mr-1" />
+        Aggiungi un'altra data
+    </button>
+</div>
 
                                    <div className="grid grid-cols-1 gap-2">
                                        <div>
