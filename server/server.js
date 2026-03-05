@@ -318,17 +318,31 @@ app.delete('/api/auth/staff-accounts/:id', authMiddleware, async (req, res) => {
 });
 
 // Update Profile
+// Update Profile
 app.put('/api/users/:id', authMiddleware, async (req, res) => {
+    // 1. Verifica che l'utente stia modificando il proprio profilo
     if (req.user.userId !== req.params.id) return res.status(403).json({ error: "Unauthorized" });
     
+    // 2. Estrai SOLO i campi che è sicuro lasciar modificare all'utente
+    const { name, surname, description, socialLinks, profileImage } = req.body;
+    
+    // 3. Crea un nuovo oggetto con questi dati puliti
+    const updateData = { name, surname, description, socialLinks, profileImage };
+    
+    // 4. Gestisci l'email (se è stata inviata, la puliamo e la aggiungiamo)
     if (req.body.email) {
-        req.body.email = req.body.email.toLowerCase().trim();
+        updateData.email = req.body.email.toLowerCase().trim();
     }
 
-    const updated = await User.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('followedAssociations', 'name profileImage');
+    // 5. Passiamo al database solo i dati puliti (updateData) e NON tutto req.body
+    const updated = await User.findByIdAndUpdate(
+        req.params.id, 
+        updateData, 
+        { new: true }
+    ).populate('followedAssociations', 'name profileImage');
+    
     res.json(updated);
 });
-
 // DELETE ACCOUNT 
 app.delete('/api/users/:id', authMiddleware, async (req, res) => {
     if (req.user.userId !== req.params.id) return res.status(403).json({ error: "Unauthorized" });
