@@ -112,13 +112,16 @@ const AdminDashboard: React.FC = () => {
 
   const handleViewStats = async (event: Event) => {
       setIsStatsModalOpen(true);
-      setSelectedEvent(event);
       setStatsLoading(true);
       try {
-          const stats = await api.events.getEventStats(event._id);
+          const [stats, freshEvent] = await Promise.all([
+              api.events.getEventStats(event._id),
+              api.events.getById(event._id)
+          ]);
           setSelectedEventStats(stats);
+          if (freshEvent) setSelectedEvent(freshEvent);
       } catch (e) {
-          console.error("Failed to fetch stats", e);
+          console.error("Failed to fetch stats or fresh event", e);
           setSelectedEventStats(null);
       } finally {
           setStatsLoading(false);
