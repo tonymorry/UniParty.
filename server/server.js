@@ -1026,7 +1026,7 @@ app.post('/api/tickets/validate', authMiddleware, async (req, res) => {
         const scanType = event.scanType || 'entry_only';
 
         // Multi-day logic
-        const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const todayStr = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString().split('T')[0]; // YYYY-MM-DD
         
         // Check if today is an event day
         const isTodayEventDay = event.dates.some(d => new Date(d).toISOString().split('T')[0] === todayStr);

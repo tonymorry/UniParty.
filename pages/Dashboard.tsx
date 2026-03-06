@@ -673,7 +673,7 @@ const Dashboard: React.FC = () => {
                                        />
                                        <label htmlFor="reqAcademicData" className="text-sm text-gray-300 font-medium cursor-pointer flex items-center">
                                            <GraduationCap className="w-4 h-4 mr-2 text-indigo-400" />
-                                           Richiedi Dati Accademici (Matricola e Corso)
+                                           Richiedi Dati Accademici
                                        </label>
                                    </div>
                                    <div>
