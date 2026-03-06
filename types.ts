@@ -98,7 +98,10 @@ export interface Ticket {
   checkInDate?: string; // When was it scanned
   // New Fields
   matricola?: string;
-  corsoStudi?: string; // New field
+  corsoStudi?: string; 
+  annoCorso?: string;
+  telefono?: string;
+  emailIstituzionale?: string;
   entryTime?: string;
   exitTime?: string;
   scanHistory?: {

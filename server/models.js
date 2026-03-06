@@ -125,7 +125,10 @@ const ticketSchema = new mongoose.Schema({
   
   // Academic Fields
   matricola: { type: String },
-  corsoStudi: { type: String }, // New Field
+  corsoStudi: { type: String }, 
+  annoCorso: { type: String },
+  telefono: { type: String },
+  emailIstituzionale: { type: String },
   entryTime: { type: Date },
   exitTime: { type: Date },
 
@@ -151,7 +154,10 @@ const orderSchema = new mongoose.Schema({
   eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
   ticketNames: [String], 
   ticketMatricolas: [String],
-  ticketCorsoStudi: [String], // New Field
+  ticketCorsoStudi: [String], 
+  ticketAnnoCorso: [String],
+  ticketTelefono: [String],
+  ticketEmailIstituzionale: [String],
   prList: { type: String, default: 'Nessuna lista' },
   quantity: { type: Number, required: true },
   totalAmountCents: { type: Number, required: true },

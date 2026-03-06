@@ -318,31 +318,17 @@ app.delete('/api/auth/staff-accounts/:id', authMiddleware, async (req, res) => {
 });
 
 // Update Profile
-// Update Profile
 app.put('/api/users/:id', authMiddleware, async (req, res) => {
-    // 1. Verifica che l'utente stia modificando il proprio profilo
     if (req.user.userId !== req.params.id) return res.status(403).json({ error: "Unauthorized" });
     
-    // 2. Estrai SOLO i campi che è sicuro lasciar modificare all'utente
-    const { name, surname, description, socialLinks, profileImage } = req.body;
-    
-    // 3. Crea un nuovo oggetto con questi dati puliti
-    const updateData = { name, surname, description, socialLinks, profileImage };
-    
-    // 4. Gestisci l'email (se è stata inviata, la puliamo e la aggiungiamo)
     if (req.body.email) {
-        updateData.email = req.body.email.toLowerCase().trim();
+        req.body.email = req.body.email.toLowerCase().trim();
     }
 
-    // 5. Passiamo al database solo i dati puliti (updateData) e NON tutto req.body
-    const updated = await User.findByIdAndUpdate(
-        req.params.id, 
-        updateData, 
-        { new: true }
-    ).populate('followedAssociations', 'name profileImage');
-    
+    const updated = await User.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('followedAssociations', 'name profileImage');
     res.json(updated);
 });
+
 // DELETE ACCOUNT 
 app.delete('/api/users/:id', authMiddleware, async (req, res) => {
     if (req.user.userId !== req.params.id) return res.status(403).json({ error: "Unauthorized" });
@@ -966,7 +952,7 @@ app.get('/api/events/:id/attendees', authMiddleware, async (req, res) => {
         }
 
         const tickets = await Ticket.find({ event: eventId, status: { $ne: 'deleted' } })
-            .select('ticketHolderName matricola corsoStudi status entryTime exitTime prList purchaseDate scanHistory')
+            .select('ticketHolderName matricola corsoStudi annoCorso telefono emailIstituzionale status entryTime exitTime prList purchaseDate scanHistory')
             .sort({ ticketHolderName: 1 });
             
         res.json(tickets);

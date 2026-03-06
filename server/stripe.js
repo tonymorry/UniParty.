@@ -32,6 +32,9 @@ const processSuccessfulOrder = async (order, session, dbSession) => {
         const name = order.ticketNames[i];
         const matricola = order.ticketMatricolas && order.ticketMatricolas[i] ? order.ticketMatricolas[i] : undefined;
         const corsoStudi = order.ticketCorsoStudi && order.ticketCorsoStudi[i] ? order.ticketCorsoStudi[i] : undefined;
+        const annoCorso = order.ticketAnnoCorso && order.ticketAnnoCorso[i] ? order.ticketAnnoCorso[i] : undefined;
+        const telefono = order.ticketTelefono && order.ticketTelefono[i] ? order.ticketTelefono[i] : undefined;
+        const emailIstituzionale = order.ticketEmailIstituzionale && order.ticketEmailIstituzionale[i] ? order.ticketEmailIstituzionale[i] : undefined;
 
         ticketsToCreate.push({
             event: order.eventId,
@@ -39,6 +42,9 @@ const processSuccessfulOrder = async (order, session, dbSession) => {
             ticketHolderName: name || "Guest",
             matricola: matricola,
             corsoStudi: corsoStudi,
+            annoCorso: annoCorso,
+            telefono: telefono,
+            emailIstituzionale: emailIstituzionale,
             qrCodeId: uuidv4(), 
             prList: order.prList,
             used: false,
@@ -104,7 +110,10 @@ const StripeController = {
    */
   createCheckoutSession: async (req, res) => {
     try {
-      const { eventId, quantity, ticketNames, ticketMatricolas, ticketCorsoStudi, prList, userId } = req.body;
+      const { 
+        eventId, quantity, ticketNames, ticketMatricolas, ticketCorsoStudi, 
+        ticketAnnoCorso, ticketTelefono, ticketEmailIstituzionale, prList, userId 
+      } = req.body;
 
       // 1. Validations
       if (!ticketNames || ticketNames.length !== quantity) {
@@ -171,6 +180,9 @@ const StripeController = {
                   ticketNames,
                   ticketMatricolas: ticketMatricolas || [],
                   ticketCorsoStudi: ticketCorsoStudi || [],
+                  ticketAnnoCorso: ticketAnnoCorso || [],
+                  ticketTelefono: ticketTelefono || [],
+                  ticketEmailIstituzionale: ticketEmailIstituzionale || [],
                   prList: prList || "Nessuna lista",
                   quantity,
                   totalAmountCents: 0,
@@ -196,6 +208,9 @@ const StripeController = {
                       ticketHolderName: ticketNames[i] || "Guest",
                       matricola: ticketMatricolas && ticketMatricolas[i] ? ticketMatricolas[i] : undefined,
                       corsoStudi: ticketCorsoStudi && ticketCorsoStudi[i] ? ticketCorsoStudi[i] : undefined,
+                      annoCorso: ticketAnnoCorso && ticketAnnoCorso[i] ? ticketAnnoCorso[i] : undefined,
+                      telefono: ticketTelefono && ticketTelefono[i] ? ticketTelefono[i] : undefined,
+                      emailIstituzionale: ticketEmailIstituzionale && ticketEmailIstituzionale[i] ? ticketEmailIstituzionale[i] : undefined,
                       qrCodeId: uuidv4(), 
                       prList: prList || "Nessuna lista",
                       used: false,
@@ -238,6 +253,9 @@ const StripeController = {
           ticketNames,
           ticketMatricolas: ticketMatricolas || [], 
           ticketCorsoStudi: ticketCorsoStudi || [], 
+          ticketAnnoCorso: ticketAnnoCorso || [],
+          ticketTelefono: ticketTelefono || [],
+          ticketEmailIstituzionale: ticketEmailIstituzionale || [],
           prList: prList || "Nessuna lista",
           quantity,
           totalAmountCents: totalAmountCents,

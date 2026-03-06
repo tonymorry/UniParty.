@@ -5,7 +5,7 @@ import { Event, UserRole } from '../types';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 // Added Ticket as TicketIcon to the imports from lucide-react to fix the 'Cannot find name TicketIcon' error.
-import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck, Flag, AlertTriangle, ArrowLeft, DollarSign, Lock, Users, TrendingUp, Heart, Sparkles, Smartphone, Ticket as TicketIcon } from 'lucide-react';
+import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck, Flag, AlertTriangle, ArrowLeft, DollarSign, Lock, Users, TrendingUp, Heart, Sparkles, Smartphone, Phone, Mail, Ticket as TicketIcon } from 'lucide-react';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +20,9 @@ const EventDetails: React.FC = () => {
   const [ticketNames, setTicketNames] = useState<string[]>(['']);
   const [ticketMatricolas, setTicketMatricolas] = useState<string[]>(['']);
   const [ticketCorsoStudi, setTicketCorsoStudi] = useState<string[]>(['']);
+  const [ticketAnnoCorso, setTicketAnnoCorso] = useState<string[]>(['']);
+  const [ticketTelefono, setTicketTelefono] = useState<string[]>(['']);
+  const [ticketEmailIstituzionale, setTicketEmailIstituzionale] = useState<string[]>(['']);
   const [selectedPrList, setSelectedPrList] = useState<string>(""); 
 
   // Consent State
@@ -116,6 +119,36 @@ const EventDetails: React.FC = () => {
         }
         return newCors;
     });
+
+    setTicketAnnoCorso(prev => {
+        const newAnni = [...prev];
+        if (quantity > prev.length) {
+            for (let i = prev.length; i < quantity; i++) newAnni.push('');
+        } else {
+            return newAnni.slice(0, quantity);
+        }
+        return newAnni;
+    });
+
+    setTicketTelefono(prev => {
+        const newTels = [...prev];
+        if (quantity > prev.length) {
+            for (let i = prev.length; i < quantity; i++) newTels.push('');
+        } else {
+            return newTels.slice(0, quantity);
+        }
+        return newTels;
+    });
+
+    setTicketEmailIstituzionale(prev => {
+        const newEmails = [...prev];
+        if (quantity > prev.length) {
+            for (let i = prev.length; i < quantity; i++) newEmails.push('');
+        } else {
+            return newEmails.slice(0, quantity);
+        }
+        return newEmails;
+    });
   }, [quantity]);
 
   const handleNameChange = (index: number, value: string) => {
@@ -134,6 +167,24 @@ const EventDetails: React.FC = () => {
       const newCors = [...ticketCorsoStudi];
       newCors[index] = value;
       setTicketCorsoStudi(newCors);
+  };
+
+  const handleAnnoCorsoChange = (index: number, value: string) => {
+      const newAnni = [...ticketAnnoCorso];
+      newAnni[index] = value;
+      setTicketAnnoCorso(newAnni);
+  };
+
+  const handleTelefonoChange = (index: number, value: string) => {
+      const newTels = [...ticketTelefono];
+      newTels[index] = value;
+      setTicketTelefono(newTels);
+  };
+
+  const handleEmailIstituzionaleChange = (index: number, value: string) => {
+      const newEmails = [...ticketEmailIstituzionale];
+      newEmails[index] = value;
+      setTicketEmailIstituzionale(newEmails);
   };
 
   const handlePurchase = async () => {
@@ -162,6 +213,21 @@ const EventDetails: React.FC = () => {
         return;
     }
 
+    if (event?.requiresMatricola) {
+        if (ticketAnnoCorso.some(a => a.trim() === '')) {
+            alert("Inserisci l'anno di corso per ogni voucher.");
+            return;
+        }
+        if (ticketTelefono.some(t => t.trim() === '')) {
+            alert("Inserisci il numero di telefono per ogni voucher.");
+            return;
+        }
+        if (ticketEmailIstituzionale.some(e => e.trim() === '')) {
+            alert("Inserisci l'email istituzionale per ogni voucher.");
+            return;
+        }
+    }
+
     // MANDATORY PR SELECTION IF LISTS EXIST
     if (event && event.prLists && event.prLists.length > 0 && selectedPrList === "") {
         alert("Seleziona una Lista PR (o 'Nessuna lista').");
@@ -183,7 +249,10 @@ const EventDetails: React.FC = () => {
             ticketNames, 
             selectedPrList || "Nessuna lista",
             event.requiresMatricola ? ticketMatricolas : undefined,
-            event.requiresCorsoStudi ? ticketCorsoStudi : undefined
+            event.requiresCorsoStudi ? ticketCorsoStudi : undefined,
+            event.requiresMatricola ? ticketAnnoCorso : undefined,
+            event.requiresMatricola ? ticketTelefono : undefined,
+            event.requiresMatricola ? ticketEmailIstituzionale : undefined
         );
         if (redirectUrl) {
             if (isFree) {
@@ -904,16 +973,48 @@ const EventDetails: React.FC = () => {
                                              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none placeholder-gray-400"
                                          />
                                          {event.requiresMatricola && (
-                                              <div className="flex items-center">
-                                                  <GraduationCap className="w-4 h-4 mr-2 text-gray-500" />
-                                                  <input
-                                                      type="text"
-                                                      placeholder="Matricola"
-                                                      value={ticketMatricolas[i]}
-                                                      onChange={e => handleMatricolaChange(i, e.target.value)}
-                                                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none placeholder-gray-400"
-                                                  />
-                                              </div>
+                                              <>
+                                                  <div className="flex items-center">
+                                                      <GraduationCap className="w-4 h-4 mr-2 text-gray-500" />
+                                                      <input
+                                                          type="text"
+                                                          placeholder="Matricola"
+                                                          value={ticketMatricolas[i]}
+                                                          onChange={e => handleMatricolaChange(i, e.target.value)}
+                                                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none placeholder-gray-400"
+                                                      />
+                                                  </div>
+                                                  <div className="flex items-center">
+                                                      <Clock className="w-4 h-4 mr-2 text-gray-500" />
+                                                      <input
+                                                          type="text"
+                                                          placeholder="Anno di corso (es. 1, 2, Fuoricorso)"
+                                                          value={ticketAnnoCorso[i]}
+                                                          onChange={e => handleAnnoCorsoChange(i, e.target.value)}
+                                                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none placeholder-gray-400"
+                                                      />
+                                                  </div>
+                                                  <div className="flex items-center">
+                                                      <Phone className="w-4 h-4 mr-2 text-gray-500" />
+                                                      <input
+                                                          type="tel"
+                                                          placeholder="Numero di telefono"
+                                                          value={ticketTelefono[i]}
+                                                          onChange={e => handleTelefonoChange(i, e.target.value)}
+                                                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none placeholder-gray-400"
+                                                      />
+                                                  </div>
+                                                  <div className="flex items-center">
+                                                      <Mail className="w-4 h-4 mr-2 text-gray-500" />
+                                                      <input
+                                                          type="email"
+                                                          placeholder="Email istituzionale"
+                                                          value={ticketEmailIstituzionale[i]}
+                                                          onChange={e => handleEmailIstituzionaleChange(i, e.target.value)}
+                                                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none placeholder-gray-400"
+                                                      />
+                                                  </div>
+                                              </>
                                          )}
                                          {event.requiresCorsoStudi && (
                                               <div className="flex items-center">

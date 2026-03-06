@@ -11,6 +11,9 @@ interface Attendee {
     ticketHolderName: string;
     matricola?: string;
     corsoStudi?: string;
+    annoCorso?: string;
+    telefono?: string;
+    emailIstituzionale?: string;
     status: 'valid' | 'entered' | 'completed' | 'active';
     prList?: string;
     scanHistory?: { date: string; entryTime?: string; exitTime?: string }[];
@@ -64,7 +67,7 @@ const EventAttendees: React.FC = () => {
     const downloadCSV = () => {
         if (!attendees.length) return;
 
-        const headers = ["Nome", "Matricola", "Corso di Studi", "Lista PR", "Stato", "Cronologia Scansioni"];
+        const headers = ["Nome", "Matricola", "Corso di Studi", "Anno di Corso", "Telefono", "Email Istituzionale", "Lista PR", "Stato", "Cronologia Scansioni"];
         
         const formatScanHistory = (history?: any[]) => {
             if (!history || history.length === 0) return "";
@@ -80,6 +83,9 @@ const EventAttendees: React.FC = () => {
             `"${a.ticketHolderName.replace(/"/g, '""')}"`,
             `"${a.matricola || ''}"`,
             `"${a.corsoStudi ? a.corsoStudi.replace(/"/g, '""') : ''}"`,
+            `"${a.annoCorso || ''}"`,
+            `"${a.telefono || ''}"`,
+            `"${a.emailIstituzionale || ''}"`,
             `"${a.prList || ''}"`,
             `"${a.status}"`,
             `"${formatScanHistory(a.scanHistory)}"`
@@ -153,6 +159,8 @@ const EventAttendees: React.FC = () => {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partecipante</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matricola</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Corso Studi</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Anno</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contatti</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stato</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cronologia Ingressi</th>
                                     </tr>
@@ -177,6 +185,13 @@ const EventAttendees: React.FC = () => {
                                                         <BookOpen className="w-3 h-3 mr-1 text-gray-500" /> {a.corsoStudi}
                                                     </span>
                                                 ) : <span className="text-gray-600 text-xs">-</span>}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="text-sm text-gray-300">{a.annoCorso || '-'}</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-xs text-gray-300">{a.telefono || '-'}</div>
+                                                <div className="text-[10px] text-gray-500">{a.emailIstituzionale || '-'}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {getStatusBadge(a.status)}
