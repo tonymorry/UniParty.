@@ -14,6 +14,8 @@ const PaymentSuccess: React.FC = () => {
   useEffect(() => {
     const finalize = async () => {
       const sessionId = searchParams.get('session_id');
+      const freeOrderId = searchParams.get('free_order_id');
+
       if (sessionId && user) {
         try {
            await api.payments.verifyPayment(sessionId);
@@ -22,6 +24,8 @@ const PaymentSuccess: React.FC = () => {
             console.error(e);
             setStatus('error');
         }
+      } else if (freeOrderId) {
+        setStatus('success');
       } else {
          const eventId = searchParams.get('eventId');
          if(eventId) {

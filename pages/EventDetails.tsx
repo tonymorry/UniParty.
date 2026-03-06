@@ -1140,7 +1140,10 @@ const EventDetails: React.FC = () => {
                   <button 
                     onClick={() => {
                         setShowAdOverlay(false);
-                        if (pendingRedirect) window.location.href = pendingRedirect;
+                        if (pendingRedirect) {
+                            const path = pendingRedirect.includes('#') ? pendingRedirect.split('#')[1] : pendingRedirect;
+                            navigate(path);
+                        }
                     }}
                     className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-full font-bold transition border border-white/20 shadow-xl"
                   >
