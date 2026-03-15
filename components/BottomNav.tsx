@@ -33,7 +33,7 @@ const BottomNav: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-slate-950/80 backdrop-blur-xl border-t border-white/10 h-16 z-50 md:hidden flex justify-around items-center px-2 pb-safe shadow-2xl">
+    <div className="fixed bottom-0 left-0 right-0 bg-slate-950/80 backdrop-blur-xl border-t border-white/10 min-h-[64px] z-50 md:hidden flex justify-around items-center px-2 shadow-2xl" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       
       {/* ==========================================
           RUOLO: STAFF
