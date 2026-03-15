@@ -12,7 +12,7 @@ const USE_MOCK = false;
 // Automatically determine API URL based on the current browser domain
 // If we are on localhost, look for port 5000. Otherwise, use relative path '/api'
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_URL = Capacitor.isNativePlatform() ? 'https://uniparty.app/api' : (isLocalhost ? 'http://localhost:5000/api' : '/api');
+const API_URL = Capacitor.isNativePlatform() ? 'https://www.uniparty.app/api' : (isLocalhost ? 'http://localhost:5000/api' : '/api');
 
 // ==========================================
 // MOCK DATA & IMPLEMENTATION (Fallback)
