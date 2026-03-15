@@ -39,7 +39,8 @@ app.use(cors({
     'http://localhost:5000', 
     'https://uniparty.app',
     'capacitor://localhost',
-    'http://localhost'
+    'http://localhost',
+    'https://localhost'
   ],
   credentials: true
 }));
