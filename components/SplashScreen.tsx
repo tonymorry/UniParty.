@@ -35,40 +35,6 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
 
   return (
     <div style={styles.container}>
-      <style>
-        {`
-          @keyframes glow-in {
-            0% { opacity: 0; transform: scale(0.2); }
-            50% { opacity: 0.5; }
-            100% { opacity: 0.4; transform: scale(1); }
-          }
-
-          @keyframes logo-in {
-            0% { opacity: 0; transform: scale(0.4); }
-            100% { opacity: 1; transform: scale(1); }
-          }
-
-          @keyframes text-in {
-            0% { opacity: 0; transform: translateY(15px); }
-            100% { opacity: 0.8; transform: translateY(0); }
-          }
-
-          @keyframes particle-float {
-            0% { 
-              opacity: 0; 
-              transform: translate(-50%, -50%) scale(0.5); 
-            }
-            30% { 
-              opacity: 0.8; 
-            }
-            100% { 
-              opacity: 0; 
-              transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.5); 
-            }
-          }
-        `}
-      </style>
-
       <div style={styles.glow}></div>
 
       <div style={styles.particlesContainer}>
@@ -90,7 +56,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
 
       <div style={styles.logoContainer}>
         <img
-          src="/Gemini_Generated_Image_bn3cj1bn3cj1bn3c.png"
+          src="Gemini_Generated_Image_bn3cj1bn3cj1bn3c.png"
           alt="UniParty Logo"
           style={styles.logo}
         />
