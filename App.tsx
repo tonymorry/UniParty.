@@ -1,11 +1,12 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LocationProvider } from './context/LocationContext';
 import { api } from './services/api';
 import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
+import SplashScreen from './components/SplashScreen';
 import Home from './pages/Home';
 import Auth from './pages/Auth';
 import EventDetails from './pages/EventDetails';
@@ -79,6 +80,7 @@ const NotificationManager: React.FC = () => {
 };
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -94,6 +96,10 @@ function App() {
       });
     }
   }, []);
+
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
 
   return (
     <AuthProvider>
