@@ -7,6 +7,7 @@ interface SplashScreenProps {
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
   const [particles, setParticles] = useState<{ id: number; size: number; tx: number; ty: number; delay: number }[]>([]);
+  const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
     // Generate particles
@@ -25,16 +26,28 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
     }
     setParticles(newParticles);
 
+    // Start fading after 2.5 seconds
+    const fadeTimer = setTimeout(() => {
+      setIsFading(true);
+    }, 2500);
+
     // Finish after 3 seconds
-    const timer = setTimeout(() => {
+    const finishTimer = setTimeout(() => {
       onFinish();
     }, 3000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(finishTimer);
+    };
   }, [onFinish]);
 
   return (
-    <div style={styles.container}>
+    <div style={{
+      ...styles.container,
+      opacity: isFading ? 0 : 1,
+      transition: 'opacity 0.5s ease',
+    }}>
       <div style={styles.glow}></div>
 
       <div style={styles.particlesContainer}>
