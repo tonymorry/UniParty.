@@ -807,6 +807,51 @@ app.put('/api/admin/users/:id/restore', authMiddleware, adminMiddleware, async (
     }
 });
 
+app.delete('/api/admin/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        // Check constraints (similar to user self-delete)
+        const hasPaidOrders = await Order.exists({
+            userId: userId,
+            status: 'completed',
+            totalAmountCents: { $gt: 0 }
+        });
+
+        const hasSoldPaidEvents = await Event.exists({
+            organization: userId,
+            price: { $gt: 0 },
+            ticketsSold: { $gt: 0 }
+        });
+
+        const mustRetainData = hasPaidOrders || hasSoldPaidEvents;
+
+        if (mustRetainData) {
+            // Soft Delete
+            await User.findByIdAndUpdate(userId, {
+                isDeleted: true,
+                deletedAt: new Date(),
+            });
+            return res.json({ 
+                success: true, 
+                message: "Account disattivato e bloccato per motivi legali (presenza di transazioni o eventi venduti)." 
+            });
+        } else {
+            // Hard Delete
+            await Ticket.deleteMany({ owner: userId });
+            await Event.deleteMany({ organization: userId });
+            await User.findByIdAndDelete(userId);
+            return res.json({ 
+                success: true, 
+                message: "Account e tutti i dati associati eliminati definitivamente." 
+            });
+        }
+    } catch (e) {
+        console.error("Admin Delete User Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 
 // --- PR SYSTEM ---
 

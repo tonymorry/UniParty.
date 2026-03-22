@@ -71,6 +71,7 @@ const mockApi = {
       getUserTickets: async () => [],
       verifyUser: async () => {},
       restoreUser: async () => {},
+      deleteUser: async () => {},
       deleteEventWithReason: async () => ({}),
   },
   notifications: {
@@ -408,6 +409,12 @@ const realApi = {
       restoreUser: async (userId: string) => {
           const res = await fetch(`${API_URL}/admin/users/${userId}/restore`, { method: 'PUT', headers: getHeaders() });
           return res.json();
+      },
+      deleteUser: async (userId: string) => {
+          const res = await fetch(`${API_URL}/admin/users/${userId}`, { method: 'DELETE', headers: getHeaders() });
+          const data = await res.json();
+          if(!res.ok) throw new Error(data.error || 'Failed to delete user');
+          return data;
       },
       deleteEventWithReason: async (eventId: string, reason: string) => {
         const res = await fetch(`${API_URL}/admin/events/${eventId}/delete-with-reason`, {

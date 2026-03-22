@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Shield, User as UserIcon, Calendar, CheckCircle, XCircle, Trash2, RefreshCw, Ticket as TicketIcon, Search, Eye, Filter, BarChart, X, TrendingUp, DollarSign, Heart, GraduationCap, Clock, Users, Flag, AlertTriangle } from 'lucide-react';
 
 type UserFilter = 'all' | 'studente' | 'associazione';
+type UserStatusFilter = 'all' | 'active' | 'deleted';
 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [userFilter, setUserFilter] = useState<UserFilter>('all');
+  const [userStatusFilter, setUserStatusFilter] = useState<UserStatusFilter>('all');
 
   // Modal Ticket State
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
@@ -95,6 +97,17 @@ const AdminDashboard: React.FC = () => {
       }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+      if(!window.confirm("Sei sicuro di voler eliminare questo utente? Se ha vincoli fiscali verrà solo bloccato (Soft Delete), altrimenti verrà rimosso definitivamente.")) return;
+      try {
+          const res = await api.admin.deleteUser(userId);
+          alert(res.message || "Utente eliminato con successo");
+          fetchData();
+      } catch(e) {
+          alert("Errore eliminazione utente");
+      }
+  };
+
   const handleViewTickets = async (userId: string, userName: string) => {
       setIsTicketModalOpen(true);
       setSelectedUserName(userName);
@@ -153,7 +166,10 @@ const AdminDashboard: React.FC = () => {
       const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             u.email.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesRole = userFilter === 'all' || u.role === userFilter;
-      return matchesSearch && matchesRole;
+      const matchesStatus = userStatusFilter === 'all' || 
+                            (userStatusFilter === 'active' && !u.isDeleted) || 
+                            (userStatusFilter === 'deleted' && u.isDeleted);
+      return matchesSearch && matchesRole && matchesStatus;
   });
 
   const filteredEvents = events.filter(e => 
@@ -233,18 +249,33 @@ const AdminDashboard: React.FC = () => {
                 </div>
 
                 {activeTab === 'users' && (
-                    <div className="flex items-center bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 shadow-sm">
-                        <Filter className="w-5 h-5 text-gray-500 mr-2" />
-                        <select 
-                            value={userFilter}
-                            onChange={(e) => setUserFilter(e.target.value as UserFilter)}
-                            className="bg-transparent outline-none text-gray-300 font-medium cursor-pointer"
-                        >
-                            <option value="all">Tutti i Ruoli</option>
-                            <option value="studente">Studenti</option>
-                            <option value="associazione">Associazioni</option>
-                        </select>
-                    </div>
+                    <>
+                        <div className="flex items-center bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 shadow-sm">
+                            <Filter className="w-5 h-5 text-gray-500 mr-2" />
+                            <select 
+                                value={userFilter}
+                                onChange={(e) => setUserFilter(e.target.value as UserFilter)}
+                                className="bg-transparent outline-none text-gray-300 font-medium cursor-pointer"
+                            >
+                                <option value="all">Tutti i Ruoli</option>
+                                <option value="studente">Studenti</option>
+                                <option value="associazione">Associazioni</option>
+                            </select>
+                        </div>
+
+                        <div className="flex items-center bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 shadow-sm">
+                            <Users className="w-5 h-5 text-gray-500 mr-2" />
+                            <select 
+                                value={userStatusFilter}
+                                onChange={(e) => setUserStatusFilter(e.target.value as UserStatusFilter)}
+                                className="bg-transparent outline-none text-gray-300 font-medium cursor-pointer"
+                            >
+                                <option value="all">Tutti gli Stati</option>
+                                <option value="active">Attivi</option>
+                                <option value="deleted">Bloccati/Cancellati</option>
+                            </select>
+                        </div>
+                    </>
                 )}
             </div>
         )}
@@ -320,13 +351,21 @@ const AdminDashboard: React.FC = () => {
                                                    </button>
                                                )}
 
-                                               {u.isDeleted && (
+                                               {u.isDeleted ? (
                                                    <button 
                                                        onClick={() => handleRestoreUser(u._id)}
                                                        className="text-green-400 bg-green-900/20 p-2 rounded-full hover:bg-green-900/40 transition"
                                                        title="Ripristina Account"
                                                    >
                                                        <RefreshCw className="w-4 h-4" />
+                                                   </button>
+                                               ) : (
+                                                   <button 
+                                                       onClick={() => handleDeleteUser(u._id)}
+                                                       className="text-red-400 bg-red-900/20 p-2 rounded-full hover:bg-red-900/40 transition"
+                                                       title="Elimina/Blocca Utente"
+                                                   >
+                                                       <Trash2 className="w-4 h-4" />
                                                    </button>
                                                )}
                                            </td>
