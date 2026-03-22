@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Users, Flame, Heart } from 'lucide-react';
+import { Calendar, MapPin, Users, Flame, Heart, Share2 } from 'lucide-react';
 import { Event, UserRole } from '../types';
 import { useAuth } from '../context/AuthContext';
 
@@ -52,6 +52,34 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
       }
   };
 
+  const handleShareClick = async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const shareData = {
+          title: event.title,
+          text: `Guarda questo evento su UniParty: ${event.title}`,
+          url: `${window.location.origin}/#/events/${event._id}`
+      };
+
+      try {
+          if (navigator.share) {
+              await navigator.share(shareData);
+          } else {
+              throw new Error('Web Share API not supported');
+          }
+      } catch (error) {
+          console.error('Error sharing:', error);
+          // Fallback: Copy to clipboard
+          try {
+              await navigator.clipboard.writeText(shareData.url);
+              alert("Link copiato negli appunti!");
+          } catch (err) {
+              console.error('Failed to copy:', err);
+          }
+      }
+  };
+
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     e.currentTarget.src = "https://picsum.photos/800/400?random=999"; 
   };
@@ -78,6 +106,14 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
                         />
                    </button>
                )}
+               {/* Share Button */}
+               <button 
+                   onClick={handleShareClick}
+                   className="bg-black/40 backdrop-blur-md p-1.5 md:p-2 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all z-10 border border-white/10"
+                   title="Condividi"
+               >
+                   <Share2 className="w-3.5 h-3.5 md:w-5 md:h-5 text-white/70 hover:text-indigo-400 transition-colors" />
+               </button>
                {/* Owner sees favorite count */}
                {isOwner && (
                    <div className="bg-black/60 backdrop-blur-md px-2 md:px-3 py-0.5 md:py-1 rounded-full text-neon-pink font-bold text-[9px] md:text-sm shadow-sm flex items-center border border-white/10">

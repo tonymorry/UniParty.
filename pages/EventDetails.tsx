@@ -5,7 +5,7 @@ import { Event, UserRole } from '../types';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 // Added Ticket as TicketIcon to the imports from lucide-react to fix the 'Cannot find name TicketIcon' error.
-import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck, Flag, AlertTriangle, ArrowLeft, DollarSign, Lock, Users, TrendingUp, Heart, Sparkles, Smartphone, Phone, Mail, Ticket as TicketIcon } from 'lucide-react';
+import { MapPin, Calendar, Clock, Info, Minus, Plus, Ban, Trash2, Pencil, X, Save, Image as ImageIcon, BarChart, List, FileText, CheckCircle, GraduationCap, BookOpen, ChevronRight, ShieldCheck, Flag, AlertTriangle, ArrowLeft, DollarSign, Lock, Users, TrendingUp, Heart, Sparkles, Smartphone, Phone, Mail, Ticket as TicketIcon, Share2 } from 'lucide-react';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -187,6 +187,31 @@ const EventDetails: React.FC = () => {
       const newEmails = [...ticketEmailIstituzionale];
       newEmails[index] = value;
       setTicketEmailIstituzionale(newEmails);
+  };
+
+  const handleShareEvent = async (eventTitle: string, eventDescription: string, eventId: string) => {
+      const shareData = {
+          title: eventTitle,
+          text: `Guarda questo evento su UniParty: ${eventTitle}`,
+          url: `${window.location.origin}/#/events/${eventId}`
+      };
+
+      try {
+          if (navigator.share) {
+              await navigator.share(shareData);
+          } else {
+              throw new Error('Web Share API not supported');
+          }
+      } catch (error) {
+          console.error('Error sharing:', error);
+          // Fallback: Copy to clipboard
+          try {
+              await navigator.clipboard.writeText(shareData.url);
+              alert("Link copiato negli appunti!");
+          } catch (err) {
+              console.error('Failed to copy:', err);
+          }
+      }
   };
 
   const handlePurchase = async () => {
@@ -711,7 +736,15 @@ const EventDetails: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent"></div>
         
         <div className="absolute top-4 sm:top-24 right-4 sm:right-8 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 z-20">
-            {isOwner ? (
+                    <button 
+                        type="button"
+                        onClick={() => handleShareEvent(event.title, event.description, event._id)}
+                        className="bg-white/10 backdrop-blur hover:bg-white/20 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition border border-white/20 cursor-pointer"
+                    >
+                        <Share2 className="w-4 h-4 mr-2 text-indigo-400" />
+                        Condividi
+                    </button>
+                    {isOwner ? (
                 <>
                     {event.status === 'draft' && (
                         <button
