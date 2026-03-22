@@ -726,20 +726,20 @@ const EventDetails: React.FC = () => {
           </div>
       )}
 
-      <div className="h-[40vh] relative w-full cursor-pointer" onClick={() => setIsImageModalOpen(true)}>
+      <div className="w-full bg-black relative group">
         <img 
             src={event.image} 
             alt={event.title} 
             onError={handleImageError}
-            className="w-full h-full object-cover" 
+            onClick={() => setIsImageModalOpen(true)}
+            className="w-full h-auto max-h-[70vh] object-contain block mx-auto cursor-pointer" 
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent"></div>
         
-        <div className="absolute top-4 sm:top-24 right-4 sm:right-8 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 z-20">
+        <div className="absolute top-4 right-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 z-20">
                     <button 
                         type="button"
                         onClick={() => handleShareEvent(event.title, event.description, event._id)}
-                        className="bg-white/10 backdrop-blur hover:bg-white/20 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition border border-white/20 cursor-pointer"
+                        className="bg-black/40 backdrop-blur hover:bg-black/60 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition border border-white/10 cursor-pointer"
                     >
                         <Share2 className="w-4 h-4 mr-2 text-indigo-400" />
                         Condividi
@@ -783,7 +783,7 @@ const EventDetails: React.FC = () => {
                 <button 
                     type="button"
                     onClick={() => setIsReportModalOpen(true)}
-                    className="bg-white/10 backdrop-blur hover:bg-white/20 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition border border-white/20 cursor-pointer"
+                    className="bg-black/40 backdrop-blur hover:bg-black/60 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition border border-white/10 cursor-pointer"
                 >
                     <Flag className="w-4 h-4 mr-2 text-red-400" />
                     Segnala
@@ -793,39 +793,42 @@ const EventDetails: React.FC = () => {
 
         <button 
             onClick={() => navigate('/')} 
-            className="absolute top-4 sm:top-24 left-4 sm:left-8 bg-gray-900/40 backdrop-blur hover:bg-gray-900/60 text-white p-2 rounded-full transition z-20 border border-white/10"
+            className="absolute top-4 left-4 bg-black/40 backdrop-blur hover:bg-black/60 text-white p-2 rounded-full transition z-20 border border-white/10"
         >
              <ArrowLeft className="h-6 w-6" />
         </button>
+      </div>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">
-            <div className="max-w-7xl mx-auto">
-                <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 inline-block shadow-lg">
-                    {event.category}
-                </span>
-                <h1 className="text-3xl md:text-5xl font-bold text-white mb-2 drop-shadow-md">{event.title}</h1>
-                <div className="flex flex-wrap items-center text-gray-300 text-sm md:text-base gap-4 md:gap-8">
-                    <div className="flex flex-col gap-1">
-                        {event.dates && event.dates.map((d, idx) => (
-                            <div key={idx} className="flex items-center text-gray-300 text-sm md:text-base">
-                                <Calendar className="w-4 h-4 mr-2 text-indigo-400" />
-                                <span className="font-medium">{new Date(d).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
-                                <Clock className="w-4 h-4 ml-4 mr-2 text-indigo-400" />
-                                <span>{event.times && event.times[idx] ? event.times[idx] : event.time}</span>
-                            </div>
-                        ))}
-                    </div>
-                    <a 
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group"
-                    >
-                        <MapPin className="w-5 h-5 mr-2 text-indigo-400 group-hover:text-red-400 transition-colors" />
-                        <span className="mr-2">{event.location}</span>
-                        <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full hidden sm:inline-block border border-white/10">View on Map</span>
-                    </a>
+      {/* Event Header Details Section */}
+      <div className="bg-gray-900 border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4 inline-block shadow-lg">
+                {event.category}
+            </span>
+            <h1 className="text-3xl md:text-5xl font-bold text-white mb-6">{event.title}</h1>
+            <div className="flex flex-wrap items-center text-gray-300 text-sm md:text-base gap-6 md:gap-12">
+                <div className="flex flex-col gap-3">
+                    {event.dates && event.dates.map((d, idx) => (
+                        <div key={idx} className="flex items-center text-gray-300 text-sm md:text-base">
+                            <Calendar className="w-5 h-5 mr-3 text-indigo-400" />
+                            <span className="font-semibold">{new Date(d).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                            <Clock className="w-5 h-5 ml-6 mr-3 text-indigo-400" />
+                            <span className="font-medium">{event.times && event.times[idx] ? event.times[idx] : event.time}</span>
+                        </div>
+                    ))}
                 </div>
+                <a 
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group bg-gray-800/50 px-4 py-3 rounded-xl border border-white/5"
+                >
+                    <MapPin className="w-6 h-6 mr-3 text-indigo-400 group-hover:text-red-400 transition-colors" />
+                    <div className="flex flex-col">
+                        <span className="font-bold text-white">{event.location}</span>
+                        <span className="text-xs text-gray-500">Apri su Google Maps</span>
+                    </div>
+                </a>
             </div>
         </div>
       </div>
