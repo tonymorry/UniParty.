@@ -1,12 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LocationProvider } from './context/LocationContext';
 import { api } from './services/api';
 import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
 import SplashScreen from './components/SplashScreen';
+import { XCircle, ShieldCheck } from 'lucide-react';
 import Home from './pages/Home';
 import Auth from './pages/Auth';
 import EventDetails from './pages/EventDetails';
@@ -81,6 +82,36 @@ const NotificationManager: React.FC = () => {
 
 function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
+  const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  useEffect(() => {
+    if (showSplash) return;
+
+    const isAuthPage = location.pathname === '/auth' || location.pathname.startsWith('/reset-password');
+    const hasDismissed = sessionStorage.getItem('welcomeModalDismissed');
+
+    if (!user && !hasDismissed && !isAuthPage) {
+      const timer = setTimeout(() => {
+        setShowWelcomeModal(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    } else if (user || isAuthPage) {
+      setShowWelcomeModal(false);
+    }
+  }, [user, location.pathname, showSplash]);
+
+  const handleCloseWelcomeModal = () => {
+    setShowWelcomeModal(false);
+    sessionStorage.setItem('welcomeModalDismissed', 'true');
+  };
+
+  const handleAuthRedirect = () => {
+    handleCloseWelcomeModal();
+    navigate('/auth');
+  };
 
   if (showSplash) {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
@@ -114,6 +145,46 @@ function AppContent() {
       <Footer />
       <BottomNav />
       <CookieBanner />
+
+      {/* Welcome Modal */}
+      {showWelcomeModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="bg-gray-800 rounded-2xl border border-gray-700 p-8 text-white max-w-md w-full relative shadow-2xl animate-in fade-in zoom-in duration-300">
+            <button 
+              onClick={handleCloseWelcomeModal}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              <XCircle className="w-8 h-8" />
+            </button>
+            
+            <div className="text-center space-y-6">
+              <div className="bg-indigo-600/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShieldCheck className="w-8 h-8 text-indigo-500" />
+              </div>
+              
+              <h2 className="text-2xl font-bold">Benvenuto su UniParty!</h2>
+              <p className="text-gray-300">
+                Accedi o registrati per vivere al meglio l'esperienza UniParty e prenotare i tuoi voucher senza interruzioni.
+              </p>
+              
+              <div className="space-y-3 pt-4">
+                <button 
+                  onClick={handleAuthRedirect}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-900/20"
+                >
+                  Crea Account / Accedi
+                </button>
+                <button 
+                  onClick={handleCloseWelcomeModal}
+                  className="w-full bg-transparent hover:bg-gray-700 text-gray-300 font-medium py-3 rounded-xl transition"
+                >
+                  Continua come ospite
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
