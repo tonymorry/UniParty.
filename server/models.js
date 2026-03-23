@@ -183,11 +183,31 @@ const reportSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+// --- ARCHIVED LIST SCHEMA ---
+const archivedListSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  eventDate: { type: Date, required: true },
+  organization: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  attendees: [{
+    ticketHolderName: String,
+    matricola: String,
+    emailIstituzionale: String,
+    corsoStudi: String,
+    annoCorso: String,
+    telefono: String,
+    prList: String,
+    entryTime: Date,
+    exitTime: Date,
+    scanHistory: [mongoose.Schema.Types.Mixed]
+  }]
+}, { timestamps: true });
+
 module.exports = {
   User: mongoose.model('User', userSchema),
   Event: mongoose.model('Event', eventSchema),
   Ticket: mongoose.model('Ticket', ticketSchema),
   Order: mongoose.model('Order', orderSchema),
   Notification: mongoose.model('Notification', notificationSchema),
-  Report: mongoose.model('Report', reportSchema)
+  Report: mongoose.model('Report', reportSchema),
+  ArchivedList: mongoose.model('ArchivedList', archivedListSchema)
 };

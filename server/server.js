@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const StripeController = require('./stripe');
-const { User, Event, Ticket, Order, Notification, Report, PRRequest } = require('./models');
+const { User, Event, Ticket, Order, Notification, Report, PRRequest, ArchivedList } = require('./models');
 const { authMiddleware, adminMiddleware } = require('./middleware');
 const mailer = require('./mailer'); // Import Mailer
 const admin = require('firebase-admin');
@@ -93,6 +93,31 @@ const cleanupExpiredEvents = async () => {
 
             if (event.price === 0) {
                 // Hard Delete Free Events
+                
+                // --- ARCHIVING LOGIC ---
+                const tickets = await Ticket.find({ event: event._id });
+                if (tickets.length > 0) {
+                    const attendees = tickets.map(t => ({
+                        ticketHolderName: t.ticketHolderName,
+                        matricola: t.matricola,
+                        emailIstituzionale: t.emailIstituzionale,
+                        corsoStudi: t.corsoStudi,
+                        annoCorso: t.annoCorso,
+                        telefono: t.telefono,
+                        prList: t.prList,
+                        entryTime: t.entryTime,
+                        exitTime: t.exitTime,
+                        scanHistory: t.scanHistory
+                    }));
+
+                    await ArchivedList.create({
+                        title: event.title,
+                        eventDate: event.dates[event.dates.length - 1],
+                        organization: event.organization,
+                        attendees
+                    });
+                }
+
                 await Ticket.deleteMany({ event: event._id });
                 await Event.findByIdAndDelete(event._id);
                 hardDeletedCount++;
@@ -1069,6 +1094,36 @@ app.delete('/api/events/:id', authMiddleware, async (req, res) => {
         if (!event) return res.status(404).json({ error: "Not Found" });
         if (event.organization.toString() !== req.user.userId) return res.status(403).json({ error: "Unauthorized" });
 
+        // --- ARCHIVING LOGIC FOR FREE EVENTS ---
+        if (event.price === 0) {
+            const tickets = await Ticket.find({ event: event._id });
+            if (tickets.length > 0) {
+                const attendees = tickets.map(t => ({
+                    ticketHolderName: t.ticketHolderName,
+                    matricola: t.matricola,
+                    emailIstituzionale: t.emailIstituzionale,
+                    corsoStudi: t.corsoStudi,
+                    annoCorso: t.annoCorso,
+                    telefono: t.telefono,
+                    prList: t.prList,
+                    entryTime: t.entryTime,
+                    exitTime: t.exitTime,
+                    scanHistory: t.scanHistory
+                }));
+
+                await ArchivedList.create({
+                    title: event.title,
+                    eventDate: event.dates[event.dates.length - 1],
+                    organization: event.organization,
+                    attendees
+                });
+            }
+            
+            // For free events, we can do a hard delete or soft delete.
+            // The user said: "Applica la stessa logica di archiviazione prima di settare event.status = 'deleted' e ticket.status = 'deleted' (o eventuale hard delete)."
+            // I'll stick to soft delete as it was before, but with archiving.
+        }
+
         event.status = 'deleted';
         await event.save();
         
@@ -1270,6 +1325,28 @@ app.post('/api/tickets/validate', authMiddleware, async (req, res) => {
 app.post('/api/stripe/connect', authMiddleware, StripeController.createConnectAccount);
 app.post('/api/stripe/create-checkout-session', authMiddleware, StripeController.createCheckoutSession);
 app.post('/api/stripe/verify', authMiddleware, StripeController.verifyPayment);
+
+// --- ARCHIVE ROUTES ---
+app.get('/api/archive/my-lists', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'associazione') return res.status(403).json({ error: "Accesso negato" });
+    try {
+        const archives = await ArchivedList.find({ organization: req.user.userId }).sort({ eventDate: -1 });
+        res.json(archives);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/archive/admin-lists', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const archives = await ArchivedList.find({})
+            .populate('organization', 'name email')
+            .sort({ eventDate: -1 });
+        res.json(archives);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // --- SERVE STATIC FILES ---
 app.use(express.static(path.join(__dirname, '../dist')));

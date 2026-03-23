@@ -79,6 +79,10 @@ const mockApi = {
       getAll: async () => [],
       markAsRead: async () => {},
       getVapidKey: async () => ({ key: 'mock' })
+  },
+  archive: {
+    getMyArchivedLists: async () => [],
+    getAllArchivedListsAdmin: async () => []
   }
 };
 
@@ -456,6 +460,18 @@ const realApi = {
           const res = await fetch(`${API_URL}/notifications/vapid-key`);
           return res.json();
       }
+  },
+  archive: {
+    getMyArchivedLists: async () => {
+        const res = await fetch(`${API_URL}/archive/my-lists`, { headers: getHeaders() });
+        if(!res.ok) throw new Error('Failed to fetch archived lists');
+        return res.json();
+    },
+    getAllArchivedListsAdmin: async () => {
+        const res = await fetch(`${API_URL}/archive/admin-lists`, { headers: getHeaders() });
+        if(!res.ok) throw new Error('Failed to fetch admin archived lists');
+        return res.json();
+    }
   }
 };
 
