@@ -13,24 +13,25 @@ const SearchAssociations: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [followLoading, setFollowLoading] = useState<string | null>(null);
 
-  // Debounce logic could be added here, but simple submit/effect for now
+  // Initial load and search
   useEffect(() => {
-    if (query.length > 2) {
-      const search = async () => {
-        setLoading(true);
-        try {
-          const data = await api.auth.searchAssociations(query);
-          setResults(data);
-        } catch (e) {
-          console.error(e);
-        } finally {
-          setLoading(false);
-        }
-      };
+    const search = async () => {
+      setLoading(true);
+      try {
+        const data = await api.auth.searchAssociations(query);
+        setResults(data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (query.trim() === '') {
+      search();
+    } else {
       const timeoutId = setTimeout(search, 500);
       return () => clearTimeout(timeoutId);
-    } else {
-        setResults([]);
     }
   }, [query]);
 
@@ -89,6 +90,9 @@ const SearchAssociations: React.FC = () => {
              </div>
         ) : (
             <div className="space-y-4">
+                <h2 className="text-lg font-bold text-gray-300 mb-4">
+                    {query.trim() === '' ? 'Associazioni in Evidenza' : 'Risultati Ricerca'}
+                </h2>
                 {results.length > 0 ? (
                     results.map(assoc => (
                         <div 
@@ -140,18 +144,11 @@ const SearchAssociations: React.FC = () => {
                         </div>
                     ))
                 ) : (
-                    query.length > 2 && (
+                    query.trim().length > 0 && (
                         <div className="text-center py-12 text-gray-500">
                             Nessuna associazione trovata.
                         </div>
                     )
-                )}
-                
-                {query.length <= 2 && (
-                     <div className="text-center py-12 text-gray-500 bg-gray-800/30 rounded-2xl border border-dashed border-gray-700 p-8">
-                         Inizia a digitare per cercare organizzatori da seguire.
-                         <br/><span className="text-indigo-400/80">Riceverai una notifica email quando pubblicheranno nuovi eventi!</span>
-                     </div>
                 )}
             </div>
         )}

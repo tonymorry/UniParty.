@@ -771,13 +771,27 @@ app.post('/api/users/block/toggle', authMiddleware, async (req, res) => {
 app.get('/api/users/search', authMiddleware, async (req, res) => {
     try {
         const { q } = req.query;
-        if (!q) return res.json([]);
+        
+        if (!q || q.trim() === '') {
+            const topAssociations = await User.find({
+                role: 'associazione',
+                isDeleted: { $ne: true }
+            })
+            .sort({ followersCount: -1 })
+            .limit(20)
+            .select('name profileImage followersCount description');
+            
+            return res.json(topAssociations);
+        }
 
         const associations = await User.find({
             role: 'associazione',
             isDeleted: { $ne: true }, 
             name: { $regex: q, $options: 'i' }
-        }).select('name profileImage followersCount description');
+        })
+        .sort({ followersCount: -1 })
+        .limit(50)
+        .select('name profileImage followersCount description');
 
         res.json(associations);
     } catch (e) {
