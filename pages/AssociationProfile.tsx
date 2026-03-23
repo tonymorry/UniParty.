@@ -4,7 +4,7 @@ import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, Event, User } from '../types';
 import EventCard from '../components/EventCard';
-import { Users, Globe, UserPlus, UserCheck, Briefcase, Calendar, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Users, Globe, UserPlus, UserCheck, Briefcase, Calendar, ArrowLeft, ShieldCheck, Ban } from 'lucide-react';
 
 const AssociationProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +15,7 @@ const AssociationProfile: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
+  const [blockLoading, setBlockLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -65,9 +66,33 @@ const AssociationProfile: React.FC = () => {
     }
   };
 
+  const handleToggleBlock = async () => {
+    if (!user) {
+        navigate('/auth');
+        return;
+    }
+    if (!association) return;
+    setBlockLoading(true);
+    try {
+        await api.auth.toggleBlock(association._id);
+        await refreshUser();
+    } catch (e) {
+        console.error("Block error", e);
+    } finally {
+        setBlockLoading(false);
+    }
+  };
+
   const isFollowing = () => {
       if (!user?.followedAssociations || !association) return false;
       return user.followedAssociations.some((f: any) => 
+          (typeof f === 'string' ? f : f._id) === association._id
+      );
+  };
+
+  const isBlocked = () => {
+      if (!user?.blockedAssociations || !association) return false;
+      return user.blockedAssociations.some((f: any) => 
           (typeof f === 'string' ? f : f._id) === association._id
       );
   };
@@ -160,6 +185,30 @@ const AssociationProfile: React.FC = () => {
                                         <>
                                             <UserPlus className="w-5 h-5 mr-2" />
                                             Segui
+                                        </>
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={handleToggleBlock}
+                                    disabled={blockLoading}
+                                    className={`px-6 py-2.5 rounded-full font-bold shadow-lg transition transform active:scale-95 flex items-center ${
+                                        isBlocked() 
+                                        ? 'bg-red-600/20 text-red-500 border border-red-500/30 hover:bg-red-600/30' 
+                                        : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700'
+                                    }`}
+                                >
+                                    {blockLoading ? (
+                                        <span className="opacity-70">...</span>
+                                    ) : isBlocked() ? (
+                                        <>
+                                            <Ban className="w-5 h-5 mr-2" />
+                                            Sblocca
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Ban className="w-5 h-5 mr-2" />
+                                            Blocca
                                         </>
                                     )}
                                 </button>

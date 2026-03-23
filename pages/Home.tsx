@@ -4,6 +4,7 @@ import { Event, EventCategory } from '../types';
 import { api } from '../services/api';
 import EventCard from '../components/EventCard';
 import { useLocationContext } from '../context/LocationContext';
+import { useAuth } from '../context/AuthContext';
 import { Search, Filter, X, Calendar, Tag, DollarSign, Check, MapPin, Sparkles } from 'lucide-react';
 
 const Home: React.FC = () => {
@@ -11,6 +12,7 @@ const Home: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { selectedCity } = useLocationContext();
+  const { user } = useAuth();
   
   // Filter States
   const [showFilters, setShowFilters] = useState(false);
@@ -34,6 +36,15 @@ const Home: React.FC = () => {
 
   // FILTER LOGIC
   const filteredEvents = events.filter(e => {
+    // Blocked Associations Filter
+    if (user && user.blockedAssociations) {
+        const orgId = typeof e.organization === 'object' ? e.organization._id : e.organization;
+        const isBlocked = user.blockedAssociations.some((b: any) => 
+            (typeof b === 'string' ? b : b._id) === orgId
+        );
+        if (isBlocked) return false;
+    }
+
     if (selectedCity !== 'Tutte' && e.city !== selectedCity) return false;
     const lowerSearch = searchTerm.toLowerCase();
     const orgName = typeof e.organization === 'object' && e.organization !== null && 'name' in e.organization

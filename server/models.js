@@ -40,6 +40,7 @@ const userSchema = new mongoose.Schema({
   surname: String,
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }], 
   followedAssociations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], 
+  blockedAssociations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], 
   
   // Web Push Subscription (Legacy)
   pushSubscription: {

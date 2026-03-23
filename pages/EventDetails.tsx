@@ -307,6 +307,14 @@ const EventDetails: React.FC = () => {
           alert("Segnalazione inviata con successo. Verrà esaminata entro 24 ore.");
           setIsReportModalOpen(false);
           setReportReason('');
+
+          // Block association prompt
+          const associationId = typeof event!.organization === 'object' ? event!.organization._id : event!.organization;
+          if (window.confirm("Segnalazione inviata. Vuoi anche bloccare questa associazione? Non vedrai più i suoi eventi.")) {
+              await api.auth.toggleBlock(associationId);
+              alert("Associazione bloccata.");
+              navigate('/');
+          }
       } catch (err) {
           alert("Errore durante l'invio della segnalazione.");
       } finally {

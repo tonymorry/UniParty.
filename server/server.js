@@ -370,7 +370,9 @@ app.post('/api/auth/reset-password', async (req, res) => {
 });
 
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
-    const user = await User.findById(req.user.userId).populate('followedAssociations', 'name profileImage');
+    const user = await User.findById(req.user.userId)
+        .populate('followedAssociations', 'name profileImage')
+        .populate('blockedAssociations', 'name profileImage');
     if (!user || user.isDeleted) return res.status(404).json({ error: "User not found" });
     res.json(user);
 });
@@ -728,6 +730,39 @@ app.post('/api/users/follow/toggle', authMiddleware, async (req, res) => {
 
         const updatedStudent = await User.findById(req.user.userId).populate('followedAssociations', 'name profileImage');
         res.json(updatedStudent.followedAssociations);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/users/block/toggle', authMiddleware, async (req, res) => {
+    try {
+        const { associationId } = req.body;
+        const student = await User.findById(req.user.userId);
+        const association = await User.findById(associationId);
+
+        if (!association || association.role !== 'associazione') {
+            return res.status(404).json({ error: "Association not found" });
+        }
+
+        const isBlocked = student.blockedAssociations.some(id => id.toString() === associationId);
+
+        if (isBlocked) {
+            student.blockedAssociations = student.blockedAssociations.filter(id => id.toString() !== associationId);
+        } else {
+            student.blockedAssociations.push(associationId);
+            
+            // If blocking, also unfollow if currently following
+            const isFollowing = student.followedAssociations.some(id => id.toString() === associationId);
+            if (isFollowing) {
+                student.followedAssociations = student.followedAssociations.filter(id => id.toString() !== associationId);
+                association.followersCount = Math.max(0, (association.followersCount || 0) - 1);
+                await association.save();
+            }
+        }
+
+        await student.save();
+        res.json(student.blockedAssociations);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

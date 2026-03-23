@@ -53,6 +53,7 @@ export interface User {
   stripeOnboardingComplete?: boolean; // Only for associations
   favorites?: string[]; // Array of Event IDs
   followedAssociations?: User[] | string[]; // Array of User IDs or populated Users
+  blockedAssociations?: User[] | string[]; // Array of User IDs or populated Users
   followersCount?: number; // Only for associations
   isVerified?: boolean;
   isDeleted?: boolean; // For Admin view

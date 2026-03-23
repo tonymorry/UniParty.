@@ -29,6 +29,7 @@ const mockApi = {
     getFavoriteEvents: async () => [],
     me: async () => ({}) as any,
     toggleFollow: async () => [],
+    toggleBlock: async () => [],
     searchAssociations: async () => [],
     getPublicProfile: async () => ({} as any),
     forgotPassword: async () => ({ message: "Mock: Email sent" }),
@@ -163,6 +164,15 @@ const realApi = {
             body: JSON.stringify({ associationId })
         });
         if(!res.ok) throw new Error('Failed to toggle follow');
+        return res.json();
+    },
+    toggleBlock: async (associationId: string) => {
+        const res = await fetch(`${API_URL}/users/block/toggle`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ associationId })
+        });
+        if(!res.ok) throw new Error('Failed to toggle block');
         return res.json();
     },
     getFavoriteEventsForUser: async () => {
