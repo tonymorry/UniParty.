@@ -1094,6 +1094,11 @@ app.delete('/api/events/:id', authMiddleware, async (req, res) => {
         if (!event) return res.status(404).json({ error: "Not Found" });
         if (event.organization.toString() !== req.user.userId) return res.status(403).json({ error: "Unauthorized" });
 
+        // Security restriction: Associations cannot delete paid events with sold tickets
+        if (event.price > 0 && event.ticketsSold > 0 && req.user.role !== 'admin') {
+            return res.status(403).json({ error: "Impossibile eliminare un evento a pagamento con biglietti già venduti. Contatta l'amministratore." });
+        }
+
         // --- ARCHIVING LOGIC FOR FREE EVENTS ---
         if (event.price === 0) {
             const tickets = await Ticket.find({ event: event._id });

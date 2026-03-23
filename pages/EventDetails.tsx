@@ -417,6 +417,8 @@ const EventDetails: React.FC = () => {
   const soldRatio = event.ticketsSold / event.maxCapacity;
   const isAlmostSoldOut = soldRatio >= 0.6 && !isSoldOut;
 
+  const cannotDeletePaidEvent = event.price > 0 && event.ticketsSold > 0 && user?.role !== 'admin';
+
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-12 relative">
       
@@ -772,12 +774,15 @@ const EventDetails: React.FC = () => {
                     <button 
                         type="button"
                         onClick={handleDelete}
-                        disabled={isDeleting}
-                        className="bg-red-600/90 backdrop-blur hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition cursor-pointer"
+                        disabled={isDeleting || cannotDeletePaidEvent}
+                        className="bg-red-600/90 backdrop-blur hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm flex items-center transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Trash2 className="w-4 h-4 mr-2" />
                         {isDeleting ? 'Deleting...' : 'Delete'}
                     </button>
+                    {cannotDeletePaidEvent && (
+                        <p className="text-[10px] text-red-400 mt-1">Non puoi eliminare un evento a pagamento con vendite attive.</p>
+                    )}
                 </>
             ) : user && (
                 <button 
