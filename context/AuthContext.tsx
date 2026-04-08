@@ -2,6 +2,16 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, Props
 import { User, LoginResponse } from '../types';
 import { api } from '../services/api';
 
+const isTokenValid = (token: string) => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    // payload.exp è in secondi, Date.now() è in millisecondi
+    return payload.exp && (payload.exp * 1000 > Date.now());
+  } catch (e) {
+    return false; // Token malformato
+  }
+};
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -32,11 +42,20 @@ export const AuthProvider = ({ children }: PropsWithChildren<{}>) => {
   useEffect(() => {
     const storedToken = localStorage.getItem('uniparty_token');
     const storedUser = localStorage.getItem('uniparty_user');
+    
     if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      // Background refresh to update permissions/status
-      refreshUser();
+      if (isTokenValid(storedToken)) {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+        refreshUser();
+      } else {
+        // Token scaduto: pulizia silenziosa durante lo splash screen (nessun redirect)
+        console.log("Token scaduto rilevato all'avvio. Eseguo logout silenzioso.");
+        localStorage.removeItem('uniparty_token');
+        localStorage.removeItem('uniparty_user');
+        setToken(null);
+        setUser(null);
+      }
     }
   }, []);
 
@@ -75,7 +94,11 @@ export const AuthProvider = ({ children }: PropsWithChildren<{}>) => {
              setUser(updatedUser);
              localStorage.setItem('uniparty_user', JSON.stringify(updatedUser));
          } catch (e) {
-             console.error("Failed to refresh user", e);
+             console.error("Failed to refresh user, forcing logout", e);
+             localStorage.removeItem('uniparty_token');
+             localStorage.removeItem('uniparty_user');
+             setToken(null);
+             setUser(null);
          }
      }
   };
