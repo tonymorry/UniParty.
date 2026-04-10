@@ -87,7 +87,6 @@ export interface Event {
   requiresMatricola?: boolean;
   requiresCorsoStudi?: boolean; // New field
   scanType?: 'entry_only' | 'entry_exit';
-  dateSpecificLocations?: Record<string, string>; // Mappa la data (in formato ISO o stringa) al suo indirizzo specifico.
 }
 
 export interface Ticket {

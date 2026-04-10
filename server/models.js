@@ -116,8 +116,7 @@ const eventSchema = new mongoose.Schema({
   // --- ACADEMIC / SEMINAR FEATURES ---
   requiresMatricola: { type: Boolean, default: false },
   requiresCorsoStudi: { type: Boolean, default: false }, // New Field
-  scanType: { type: String, enum: ['entry_only', 'entry_exit'], default: 'entry_only' },
-  dateSpecificLocations: { type: Map, of: String, default: {} }
+  scanType: { type: String, enum: ['entry_only', 'entry_exit'], default: 'entry_only' }
 }, { timestamps: true });
 
 // --- TICKET SCHEMA ---

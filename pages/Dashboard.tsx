@@ -69,7 +69,6 @@ const Dashboard: React.FC = () => {
   const [maxCapacity, setMaxCapacity] = useState("100");
   const [category, setCategory] = useState<EventCategory>(EventCategory.PARTY);
   const [isTicketless, setIsTicketless] = useState(false);
-  const [dateSpecificLocations, setDateSpecificLocations] = useState<Record<string, string>>({});
 
   // Advanced Options
   const [requiresAcademicData, setRequiresAcademicData] = useState(false);
@@ -294,7 +293,6 @@ const Dashboard: React.FC = () => {
           requiresCorsoStudi: requiresAcademicData,
           isTicketless,
           scanType,
-          dateSpecificLocations,
         },
         user,
       );
@@ -709,99 +707,42 @@ const Dashboard: React.FC = () => {
                         {dates.map((d, index) => (
                           <div
                             key={index}
-                            className="flex flex-col gap-2 mb-4 p-3 bg-gray-900/20 rounded-lg border border-gray-700/50"
+                            className="flex flex-col sm:flex-row gap-2 mb-2"
                           >
-                            <div className="flex flex-col sm:flex-row gap-2">
-                              <input
-                                type="date"
-                                value={d}
-                                onChange={(e) => {
-                                  const newDates = [...dates];
-                                  newDates[index] = e.target.value;
-                                  setDates(newDates);
+                            <input
+                              type="date"
+                              value={d}
+                              onChange={(e) => {
+                                const newDates = [...dates];
+                                newDates[index] = e.target.value;
+                                setDates(newDates);
+                              }}
+                              className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
+                              required
+                            />
+                            <input
+                              type="time"
+                              value={times[index] || ""}
+                              onChange={(e) => {
+                                const newTimes = [...times];
+                                newTimes[index] = e.target.value;
+                                setTimes(newTimes);
+                              }}
+                              className="w-full sm:w-32 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
+                              required
+                            />
+                            {dates.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDates(dates.filter((_, i) => i !== index));
+                                  setTimes(times.filter((_, i) => i !== index));
                                 }}
-                                className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
-                                required
-                              />
-                              <input
-                                type="time"
-                                value={times[index] || ""}
-                                onChange={(e) => {
-                                  const newTimes = [...times];
-                                  newTimes[index] = e.target.value;
-                                  setTimes(newTimes);
-                                }}
-                                className="w-full sm:w-32 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
-                                required
-                              />
-                              {dates.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const dateToRemove = dates[index];
-                                    setDates(dates.filter((_, i) => i !== index));
-                                    setTimes(times.filter((_, i) => i !== index));
-                                    if (dateToRemove) {
-                                      const newLocs = { ...dateSpecificLocations };
-                                      delete newLocs[dateToRemove];
-                                      setDateSpecificLocations(newLocs);
-                                    }
-                                  }}
-                                  className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition shrink-0"
-                                >
-                                  <X className="w-5 h-5" />
-                                </button>
-                              )}
-                            </div>
-                            
-                            {/* Date Specific Location */}
-                            <div className="mt-1">
-                              {dateSpecificLocations[d] !== undefined || !d ? (
-                                <div className="flex items-center gap-2">
-                                  <MapPin className="w-4 h-4 text-indigo-400 shrink-0" />
-                                  <input 
-                                    type="text"
-                                    placeholder="Indirizzo specifico per questa data..."
-                                    value={dateSpecificLocations[d] || ""}
-                                    onChange={(e) => {
-                                      if (!d) return;
-                                      setDateSpecificLocations({
-                                        ...dateSpecificLocations,
-                                        [d]: e.target.value
-                                      });
-                                    }}
-                                    className="flex-1 bg-transparent border-b border-gray-600 text-xs py-1 outline-none focus:border-indigo-500 text-gray-200"
-                                  />
-                                  {dateSpecificLocations[d] !== undefined && (
-                                    <button 
-                                      type="button"
-                                      onClick={() => {
-                                        const newLocs = { ...dateSpecificLocations };
-                                        delete newLocs[d];
-                                        setDateSpecificLocations(newLocs);
-                                      }}
-                                      className="text-[10px] text-gray-500 hover:text-red-400"
-                                    >
-                                      Rimuovi
-                                    </button>
-                                  )}
-                                </div>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setDateSpecificLocations({
-                                      ...dateSpecificLocations,
-                                      [d]: ""
-                                    });
-                                  }}
-                                  className="text-[10px] text-indigo-400 hover:underline flex items-center"
-                                >
-                                  <Plus className="w-3 h-3 mr-1" />
-                                  + Aggiungi luogo specifico per questa data
-                                </button>
-                              )}
-                            </div>
+                                className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition shrink-0"
+                              >
+                                <X className="w-5 h-5" />
+                              </button>
+                            )}
                           </div>
                         ))}
                         <button
