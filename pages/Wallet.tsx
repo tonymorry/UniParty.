@@ -95,9 +95,28 @@ const Wallet: React.FC = () => {
                                             'Data non disponibile'
                                         )} {ticket.event?.times ? `alle ${ticket.event.times.join(' / ')}` : ticket.event?.time ? `alle ${ticket.event.time}` : ''}
                                     </div>
-                                    <div className="flex items-center text-gray-400 text-sm mb-4">
-                                        <MapPin className="w-4 h-4 mr-2 text-indigo-500"/>
-                                        {ticket.event?.location || 'Location non specificata'}
+                                    <div className="flex flex-col text-gray-400 text-sm mb-4 space-y-1">
+                                        <div className="flex items-center">
+                                            <MapPin className="w-4 h-4 mr-2 text-indigo-500 shrink-0"/>
+                                            <span className="font-medium">{ticket.event?.location || 'Location non specificata'}</span>
+                                        </div>
+                                        {ticket.event?.dateSpecificLocations && Object.keys(ticket.event.dateSpecificLocations).length > 0 && (
+                                            <div className="ml-6 space-y-1 mt-1 border-l border-gray-700 pl-3">
+                                                {ticket.event.dates.map((d, idx) => {
+                                                    const dateKey = new Date(d).toISOString().split('T')[0];
+                                                    const specificLoc = ticket.event.dateSpecificLocations![dateKey];
+                                                    if (!specificLoc) return null;
+                                                    return (
+                                                        <div key={idx} className="text-[10px] flex items-start">
+                                                            <span className="text-indigo-400 mr-2 font-bold whitespace-nowrap">
+                                                                {new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })}:
+                                                            </span>
+                                                            <span className="italic">{specificLoc}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
                                     <span className="inline-block bg-green-900/30 text-green-400 text-xs px-2 py-1 rounded-md font-semibold border border-green-800/30">
                                         PRENOTATO • {ticket.ticketHolderName || 'Ospite'}

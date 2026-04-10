@@ -148,7 +148,22 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
             </div>
             <div className="flex items-center">
               <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-400/80 shrink-0" />
-              <span className="truncate font-medium">{event.location}</span>
+              <span className="truncate font-medium">
+                {(() => {
+                  const firstDateKey = event.dates && event.dates.length > 0 
+                    ? new Date(event.dates[0]).toISOString().split('T')[0] 
+                    : null;
+                  const specificLoc = firstDateKey && event.dateSpecificLocations ? event.dateSpecificLocations[firstDateKey] : null;
+                  const hasMultipleLocs = event.dateSpecificLocations && Object.keys(event.dateSpecificLocations).length > 1;
+                  
+                  return (
+                    <>
+                      {specificLoc || event.location}
+                      {hasMultipleLocs && <span className="text-[8px] md:text-[10px] text-indigo-400 ml-1">(+ altri luoghi)</span>}
+                    </>
+                  );
+                })()}
+              </span>
             </div>
             <div className="flex items-center">
               <Users className="h-3 w-3 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-400/80 shrink-0" />
