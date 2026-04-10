@@ -146,9 +146,23 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
               <Calendar className="h-3 w-3 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-400/80 shrink-0" />
               <span className="font-semibold truncate">{eventDate} • {(event.times ? event.times.join(' / ') : event.time || 'N/A')}</span>
             </div>
-            <div className="flex items-center">
-              <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-400/80 shrink-0" />
-              <span className="truncate font-medium">{event.location}</span>
+            <div className="flex flex-col">
+              <div className="flex items-center">
+                <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-400/80 shrink-0" />
+                <span className="truncate font-medium">{event.location}</span>
+              </div>
+              {event.dateSpecificLocations && Object.keys(event.dateSpecificLocations).length > 0 && (
+                <div className="ml-5 md:ml-7 mt-0.5 space-y-0.5">
+                  {Object.entries(event.dateSpecificLocations).slice(0, 2).map(([date, loc]) => (
+                    <div key={date} className="text-[8px] md:text-[10px] text-indigo-300/60 italic truncate">
+                      {new Date(date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })}: {loc}
+                    </div>
+                  ))}
+                  {Object.keys(event.dateSpecificLocations).length > 2 && (
+                    <div className="text-[8px] md:text-[10px] text-indigo-300/60 italic">...e altri</div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex items-center">
               <Users className="h-3 w-3 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-400/80 shrink-0" />

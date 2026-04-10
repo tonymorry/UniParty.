@@ -83,6 +83,7 @@ export interface Event {
   status?: 'active' | 'draft' | 'archived' | 'deleted';
   isTicketless?: boolean;
   coverImage?: string;
+  dateSpecificLocations?: Record<string, string>;
   // New Academic Fields
   requiresMatricola?: boolean;
   requiresCorsoStudi?: boolean; // New field

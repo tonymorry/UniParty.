@@ -63,6 +63,7 @@ const Dashboard: React.FC = () => {
   const [dates, setDates] = useState<string[]>([""]);
   const [times, setTimes] = useState<string[]>(["22:00"]);
   const [location, setLocation] = useState("");
+  const [dateSpecificLocations, setDateSpecificLocations] = useState<Record<string, string>>({});
   const [selectedRegion, setSelectedRegion] = useState("");
   const [city, setCity] = useState("");
   const [image, setImage] = useState("");
@@ -282,6 +283,7 @@ const Dashboard: React.FC = () => {
           times,
           time: times[0] || "22:00",
           location,
+          dateSpecificLocations,
           city,
           image,
           maxCapacity: parseInt(maxCapacity),
@@ -819,6 +821,29 @@ const Dashboard: React.FC = () => {
                         required
                         placeholder="Es. Via Roma 123, locale X"
                       />
+                      <div className="mt-3 space-y-2">
+                        {dates.filter(d => d.trim() !== "").map((d, index) => (
+                          <div key={index} className="text-sm">
+                            {dateSpecificLocations[d] !== undefined ? (
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-indigo-400 font-medium min-w-[80px]">{new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })}:</span>
+                                <input 
+                                  type="text" 
+                                  placeholder="Indirizzo per questa data..." 
+                                  value={dateSpecificLocations[d]} 
+                                  onChange={(e) => setDateSpecificLocations({...dateSpecificLocations, [d]: e.target.value})} 
+                                  className="flex-1 px-3 py-1 bg-gray-900 border border-gray-600 rounded focus:border-indigo-500 outline-none text-white text-xs" 
+                                />
+                                <button type="button" onClick={() => { const newLocs = {...dateSpecificLocations}; delete newLocs[d]; setDateSpecificLocations(newLocs); }} className="text-red-400 text-xs hover:underline">Rimuovi</button>
+                              </div>
+                            ) : (
+                              <button type="button" onClick={() => setDateSpecificLocations({...dateSpecificLocations, [d]: ""})} className="text-indigo-400 text-xs hover:underline flex items-center">
+                                + Aggiungi indirizzo specifico per il {new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })}
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
