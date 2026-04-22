@@ -1055,9 +1055,16 @@ const EventDetails: React.FC = () => {
                                                       <GraduationCap className="w-4 h-4 mr-2 text-gray-500" />
                                                       <input
                                                           type="text"
-                                                          placeholder="Matricola"
+                                                          inputMode="numeric"
+                                                          pattern="[0-9]*"
+                                                          placeholder="Matricola (solo numeri)"
                                                           value={ticketMatricolas[i]}
-                                                          onChange={e => handleMatricolaChange(i, e.target.value)}
+                                                          onChange={(e) => {
+                                                              const val = e.target.value.replace(/\D/g, '');
+                                                              const newMatricolas = [...ticketMatricolas];
+                                                              newMatricolas[i] = val;
+                                                              setTicketMatricolas(newMatricolas);
+                                                          }}
                                                           className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none placeholder-gray-400"
                                                       />
                                                   </div>
