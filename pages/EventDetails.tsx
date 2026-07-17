@@ -26,6 +26,51 @@ const EventDetails: React.FC = () => {
     }
     return [];
   };
+
+  const getDailyLocationsList = (): { label: string; location: string }[] => {
+    if (!event) return [];
+
+    // 1. Check dailyLocations as requested by the user
+    const dailyLocs = (event as any).dailyLocations;
+    if (Array.isArray(dailyLocs) && dailyLocs.length > 0) {
+      const valid = dailyLocs
+        .map((item, idx) => {
+          if (typeof item === 'string' && item.trim()) {
+            return { label: `Giorno ${idx + 1}`, location: item.trim() };
+          }
+          if (item && typeof item === 'object') {
+            const loc = item.location || item.address;
+            if (typeof loc === 'string' && loc.trim()) {
+              const label = item.day || item.date || item.label || `Giorno ${idx + 1}`;
+              return { label: String(label), location: loc.trim() };
+            }
+          }
+          return null;
+        })
+        .filter((item): item is { label: string; location: string } => item !== null);
+      if (valid.length > 0) return valid;
+    }
+
+    // 2. Fallback to dateSpecificLocations
+    if (event.dateSpecificLocations && typeof event.dateSpecificLocations === 'object') {
+      const entries = Object.entries(event.dateSpecificLocations)
+        .filter(([k, v]) => k && v && typeof v === 'string');
+      if (entries.length > 0) {
+        return entries.map(([date, loc]) => {
+          let label = date;
+          try {
+            const d = new Date(date);
+            if (!isNaN(d.getTime())) {
+              label = d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+            }
+          } catch (e) {}
+          return { label, location: loc };
+        });
+      }
+    }
+
+    return [];
+  };
   const [quantity, setQuantity] = useState(1);
   const [purchasing, setPurchasing] = useState(false);
   
@@ -843,13 +888,13 @@ const EventDetails: React.FC = () => {
                         </div>
                     ))}
                 </div>
-                {getDateSpecificLocations().length > 0 ? (
+                {getDailyLocationsList().length > 0 ? (
                     <div className="flex flex-col gap-3 bg-gray-800/50 px-5 py-4 rounded-xl border border-white/5 w-full">
                         <span className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Luoghi dell'evento</span>
-                        {getDateSpecificLocations().map(([date, loc]) => (
+                        {getDailyLocationsList().map((item, idx) => (
                             <a 
-                                key={date}
-                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`}
+                                key={idx}
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group"
@@ -857,7 +902,7 @@ const EventDetails: React.FC = () => {
                                 <MapPin className="w-5 h-5 mr-3 text-indigo-400 group-hover:text-red-400 transition-colors shrink-0" />
                                 <div className="flex flex-col min-w-0">
                                     <span className="font-bold text-white text-sm whitespace-normal break-words">
-                                        {new Date(date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })}: {loc}
+                                        {item.label}: {item.location}
                                     </span>
                                     <span className="text-[10px] text-gray-500">Apri su Google Maps</span>
                                 </div>
@@ -1242,20 +1287,20 @@ const EventDetails: React.FC = () => {
                     <p className="text-xs text-gray-400 mb-3 leading-relaxed">
                         Mostra il QR Code all'ingresso direttamente dal tuo smartphone. Non serve stampare il biglietto.
                     </p>
-                     {getDateSpecificLocations().length > 0 ? (
+                     {getDailyLocationsList().length > 0 ? (
                          <div className="space-y-2 mt-2">
                              <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider block">Programma Luoghi:</span>
-                             {getDateSpecificLocations().map(([date, loc]) => (
+                             {getDailyLocationsList().map((item, idx) => (
                                  <a 
-                                    key={date}
-                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`}
+                                    key={idx}
+                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`}
                                     target="_blank" 
                                     rel="noreferrer"
                                     className="text-xs font-bold text-indigo-400 hover:text-indigo-300 hover:underline flex items-start transition"
                                  >
                                      <MapPin className="w-3.5 h-3.5 mr-1.5 mt-0.5 shrink-0 text-red-400" />
                                      <span className="whitespace-normal break-words">
-                                         {new Date(date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })}: {loc}
+                                         {item.label}: {item.location}
                                      </span>
                                  </a>
                              ))}
