@@ -889,33 +889,43 @@ const EventDetails: React.FC = () => {
                     ))}
                 </div>
                 <div className="flex flex-col space-y-4 mb-6 w-full">
+                  {/* CONTROLLO EVENTO MULTI-LUOGO */}
                   {getDailyLocationsList().length > 0 ? (
-                    getDailyLocationsList().map((dayItem, index) => (
-                      <div key={index} className="flex items-start space-x-3">
-                        <MapPin className="w-5 h-5 text-indigo-400 mt-0.5 shrink-0" />
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-medium text-gray-400">{dayItem.label}</span>
-                          <a
-                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dayItem.location)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-white hover:text-indigo-400 transition-colors underline decoration-indigo-500/30 text-sm whitespace-normal break-words"
-                          >
-                            {dayItem.location}
-                          </a>
-                        </div>
-                      </div>
-                    ))
+                    <div className="flex flex-col space-y-3">
+                      <h3 className="text-sm font-semibold text-gray-300">Luoghi dell'evento:</h3>
+                      {getDailyLocationsList().map((dayItem, index) => {
+                        const addressText = dayItem.location || 'Indirizzo non specificato'; 
+                        return (
+                          <div key={index} className="flex items-start space-x-3">
+                            <MapPin className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-gray-500">
+                                {dayItem.label}
+                              </span>
+                              <a
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressText)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-base text-white hover:text-indigo-400 transition-colors underline decoration-indigo-500/30 whitespace-normal break-words"
+                              >
+                                {addressText}
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   ) : (
+                    /* CONTROLLO EVENTO LUOGO SINGOLO */
                     <div className="flex items-start space-x-3">
-                      <MapPin className="w-5 h-5 text-indigo-400 mt-0.5 shrink-0" />
+                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location || '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-white hover:text-indigo-400 transition-colors underline decoration-indigo-500/30 text-sm whitespace-normal break-words"
+                        className="text-base text-white hover:text-indigo-400 transition-colors underline decoration-indigo-500/30 whitespace-normal break-words"
                       >
-                        {event.location}
+                        {event.location || 'Indirizzo non specificato'}
                       </a>
                     </div>
                   )}
