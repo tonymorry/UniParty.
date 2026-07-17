@@ -71,6 +71,53 @@ const EventDetails: React.FC = () => {
 
     return [];
   };
+
+  const getSpecificLocationForDate = (dateVal: string, idx: number): string | null => {
+    if (!event) return null;
+
+    // 1. Check dateSpecificLocations first
+    if (event.dateSpecificLocations) {
+      let shortDate = '';
+      try {
+        const dObj = new Date(dateVal);
+        if (!isNaN(dObj.getTime())) {
+          shortDate = dObj.toISOString().split('T')[0];
+        }
+      } catch (e) {
+        shortDate = dateVal.split('T')[0];
+      }
+
+      const locs = event.dateSpecificLocations as Record<string, string>;
+      for (const [key, value] of Object.entries(locs)) {
+        if (key === dateVal && value) return value;
+        if (key.split('T')[0] === shortDate && value) return value;
+        try {
+          const kObj = new Date(key);
+          if (!isNaN(kObj.getTime()) && kObj.toISOString().split('T')[0] === shortDate && value) {
+            return value;
+          }
+        } catch (e) {}
+      }
+    }
+
+    // 2. Check dailyLocations as fallback
+    const dailyLocs = (event as any).dailyLocations;
+    if (Array.isArray(dailyLocs) && dailyLocs.length > idx) {
+      const item = dailyLocs[idx];
+      if (typeof item === 'string' && item.trim()) {
+        return item.trim();
+      }
+      if (item && typeof item === 'object') {
+        const loc = item.location || item.address;
+        if (typeof loc === 'string' && loc.trim()) {
+          return loc.trim();
+        }
+      }
+    }
+
+    return null;
+  };
+
   const [quantity, setQuantity] = useState(1);
   const [purchasing, setPurchasing] = useState(false);
   
@@ -879,14 +926,27 @@ const EventDetails: React.FC = () => {
             <h1 className="text-3xl md:text-5xl font-bold text-white mb-6">{event.title}</h1>
             <div className="flex flex-wrap items-center text-gray-300 text-sm md:text-base gap-6 md:gap-12">
                 <div className="flex flex-col gap-3">
-                    {event.dates && event.dates.map((d, idx) => (
-                        <div key={idx} className="flex items-center text-gray-300 text-sm md:text-base">
-                            <Calendar className="w-5 h-5 mr-3 text-indigo-400" />
-                            <span className="font-semibold">{new Date(d).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                            <Clock className="w-5 h-5 ml-6 mr-3 text-indigo-400" />
-                            <span className="font-medium">{event.times && event.times[idx] ? event.times[idx] : event.time}</span>
-                        </div>
-                    ))}
+                    {event.dates && event.dates.map((d, idx) => {
+                        const dayLoc = getSpecificLocationForDate(d, idx);
+                        return (
+                            <div key={idx} className="flex flex-col md:flex-row md:items-center text-gray-300 text-sm md:text-base gap-2 md:gap-6 bg-gray-800/20 md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none border border-white/5 md:border-none">
+                                <div className="flex items-center">
+                                    <Calendar className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                    <span className="font-semibold">{new Date(d).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <Clock className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                    <span className="font-medium">{event.times && event.times[idx] ? event.times[idx] : event.time}</span>
+                                </div>
+                                {dayLoc && (
+                                    <div className="flex items-center text-indigo-300">
+                                        <MapPin className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                        <span className="font-semibold">{dayLoc}</span>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
                 {getDailyLocationsList().length > 0 ? (
                     <div className="flex flex-col gap-3 bg-gray-800/50 px-5 py-4 rounded-xl border border-white/5 w-full">
