@@ -13,6 +13,152 @@ const Wallet: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  const downloadTicket = (ticket: Ticket) => {
+    try {
+      const qrId = `qr-${ticket._id}`;
+      const qrCanvas = document.getElementById(qrId) as HTMLCanvasElement;
+      if (!qrCanvas) {
+        alert("Errore: QR Code non pronto per il download.");
+        return;
+      }
+
+      // Create high-res master canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 700;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Enable anti-aliasing
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      // 1. Draw Slate Dark Gradient Background
+      const gradient = ctx.createLinearGradient(0, 0, 0, 700);
+      gradient.addColorStop(0, '#0f172a'); // slate-900
+      gradient.addColorStop(1, '#1e1b4b'); // indigo-950
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 600, 700);
+
+      // Decorative blurred glow circle in top-right
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.15)'; // indigo with opacity
+      ctx.beginPath();
+      ctx.arc(500, 100, 150, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Draw "UniParty" Logo & Text top left
+      // Drawing a neon party glass or geometric star
+      ctx.fillStyle = '#818cf8'; // indigo-400
+      ctx.beginPath();
+      ctx.moveTo(50, 45);
+      ctx.lineTo(70, 45);
+      ctx.lineTo(60, 65);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(60, 65);
+      ctx.lineTo(60, 75);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(53, 75);
+      ctx.lineTo(67, 75);
+      ctx.strokeStyle = '#818cf8';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 32px sans-serif';
+      ctx.fillText('UniParty', 85, 68);
+
+      // Decorative divider
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(40, 110);
+      ctx.lineTo(560, 110);
+      ctx.stroke();
+
+      // 3. Event Title
+      ctx.fillStyle = '#818cf8';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText('EVENTO', 40, 150);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 24px sans-serif';
+      const eventTitle = ticket.event?.title || 'Evento senza titolo';
+      const displayTitle = eventTitle.length > 35 ? eventTitle.substring(0, 35) + '...' : eventTitle;
+      ctx.fillText(displayTitle, 40, 185);
+
+      // 4. Participant Name
+      ctx.fillStyle = '#818cf8';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText('PARTECIPANTE', 40, 240);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText(ticket.ticketHolderName || 'Ospite', 40, 275);
+
+      // Date & Location Info row
+      ctx.fillStyle = '#818cf8';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText('DATA', 40, 330);
+      
+      ctx.fillStyle = '#cbd5e1'; // slate-300
+      ctx.font = '16px sans-serif';
+      const dateStr = ticket.event?.dates && ticket.event.dates.length > 0
+        ? new Date(ticket.event.dates[0]).toLocaleDateString('it-IT')
+        : 'N/A';
+      ctx.fillText(dateStr, 40, 360);
+
+      ctx.fillStyle = '#818cf8';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText('LOCATION', 280, 330);
+
+      ctx.fillStyle = '#cbd5e1'; // slate-300
+      ctx.font = '16px sans-serif';
+      const locationStr = ticket.event?.location || 'N/A';
+      const displayLocation = locationStr.length > 25 ? locationStr.substring(0, 25) + '...' : locationStr;
+      ctx.fillText(displayLocation, 280, 360);
+
+      // Decorative Card for QR Code
+      const cardX = 180, cardY = 410, cardW = 240, cardH = 240, r = 16;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(cardX + r, cardY);
+      ctx.lineTo(cardX + cardW - r, cardY);
+      ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + r);
+      ctx.lineTo(cardX + cardW, cardY + cardH - r);
+      ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - r, cardY + cardH);
+      ctx.lineTo(cardX + r, cardY + cardH);
+      ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - r);
+      ctx.lineTo(cardX, cardY + r);
+      ctx.quadraticCurveTo(cardX, cardY, cardX + r, cardY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Draw standard margin/padding for the QR canvas inside card
+      ctx.drawImage(qrCanvas, cardX + 20, cardY + 20, 200, 200);
+
+      // Draw watermark footer
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.font = '11px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`VOUCHER: ${ticket.qrCodeId || 'N/A'}`, 300, 680);
+
+      // Trigger download
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `UniParty_Ticket_${ticket.event?.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'Voucher'}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (e) {
+      console.error("Failed to generate ticket download", e);
+      alert("Errore durante la generazione del biglietto da scaricare.");
+    }
+  };
+
   useEffect(() => {
     if (!user || user.role !== UserRole.STUDENTE) {
       navigate('/');
@@ -117,9 +263,17 @@ const Wallet: React.FC = () => {
                             </div>
 
                             {/* QR Code Right (or Bottom) */}
-                            <div className="bg-gray-950 p-6 flex flex-col items-center justify-center md:border-l border-gray-700 min-w-[200px]">
+                            <div className="bg-gray-950 p-6 flex flex-col items-center justify-center md:border-l border-gray-700 min-w-[200px] relative">
+                                <button 
+                                    onClick={() => downloadTicket(ticket)}
+                                    className="absolute top-2 right-2 p-1.5 bg-gray-800 hover:bg-gray-700 text-indigo-400 rounded-full transition shadow-md border border-gray-700 z-10"
+                                    title="Scarica Biglietto"
+                                >
+                                    <Download className="w-4 h-4" />
+                                </button>
                                 <div className="bg-white p-4 rounded-lg shadow-inner">
-                                    <QRCodeSVG 
+                                    <QRCodeCanvas 
+                                        id={`qr-${ticket._id}`}
                                         value={ticket.qrCodeId || 'invalid-code'} 
                                         size={120} 
                                         bgColor="#FFFFFF" 

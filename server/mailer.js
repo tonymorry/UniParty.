@@ -2,14 +2,30 @@
 
 const { Resend } = require('resend');
 
-// Initialize Resend with API Key from environment variables
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization helper for Resend client to avoid crashing when API key is missing
+let resendInstance = null;
+function getResendClient() {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("⚠️ Warning: RESEND_API_KEY is not set in the environment variables. Email notifications will be skipped.");
+    return null;
+  }
+  if (!resendInstance) {
+    resendInstance = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendInstance;
+}
 
 const FRONTEND_URL = 'https://uniparty.app';
 
 const sendWelcomeEmail = async (to, name) => {
   try {
     console.log(`📤 Attempting to send WELCOME email via Resend to: ${to}`);
+    
+    const resend = getResendClient();
+    if (!resend) {
+      console.log(`⚠️ Skipping sending welcome email to ${to}: Resend API key is missing.`);
+      return;
+    }
     
     const { data, error } = await resend.emails.send({
       from: 'UniParty <no-reply@uniparty.app>',
@@ -54,6 +70,12 @@ const sendWelcomeEmail = async (to, name) => {
 const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
   try {
     console.log(`📤 Attempting to send TICKETS email via Resend to: ${to}`);
+    
+    const resend = getResendClient();
+    if (!resend) {
+      console.log(`⚠️ Skipping sending tickets email to ${to}: Resend API key is missing.`);
+      return;
+    }
     
     const namesListHtml = ticketNames.map(name => 
       `<li style="margin-bottom: 8px; font-weight: 600; color: #374151;">${name}</li>`
@@ -114,6 +136,12 @@ const sendTicketsEmail = async (to, ticketNames, eventTitle) => {
 const sendPasswordResetEmail = async (to, token) => {
     try {
       console.log(`📤 Attempting to send PASSWORD RESET email via Resend to: ${to}`);
+      
+      const resend = getResendClient();
+      if (!resend) {
+        console.log(`⚠️ Skipping sending password reset email to ${to}: Resend API key is missing.`);
+        return;
+      }
       
       const resetUrl = `${FRONTEND_URL}/#/reset-password/${token}`;
   
