@@ -46,116 +46,119 @@ const Wallet: React.FC = () => {
       ctx.arc(500, 100, 150, 0, Math.PI * 2);
       ctx.fill();
 
-      // 2. Draw "UniParty" Logo & Text top left
-      // Drawing a neon party glass or geometric star
-      ctx.fillStyle = '#818cf8'; // indigo-400
-      ctx.beginPath();
-      ctx.moveTo(50, 45);
-      ctx.lineTo(70, 45);
-      ctx.lineTo(60, 65);
-      ctx.closePath();
-      ctx.fill();
-      
-      ctx.beginPath();
-      ctx.moveTo(60, 65);
-      ctx.lineTo(60, 75);
-      ctx.stroke();
+      // Load logo image dynamically
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      logoImg.src = '/favicon.png';
 
-      ctx.beginPath();
-      ctx.moveTo(53, 75);
-      ctx.lineTo(67, 75);
-      ctx.strokeStyle = '#818cf8';
-      ctx.lineWidth = 3;
-      ctx.stroke();
+      const executeDraw = () => {
+        // 2. Draw "UniParty" Logo & Text top left
+        try {
+          // Draw real logo image
+          ctx.drawImage(logoImg, 45, 30, 48, 48);
+        } catch (err) {
+          // Fallback if image fails to load
+          ctx.fillStyle = '#818cf8'; // indigo-400
+          ctx.beginPath();
+          ctx.moveTo(50, 45);
+          ctx.lineTo(70, 45);
+          ctx.lineTo(60, 65);
+          ctx.closePath();
+          ctx.fill();
+        }
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 32px sans-serif';
-      ctx.fillText('UniParty', 85, 68);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 32px sans-serif';
+        ctx.fillText('UniParty', 105, 65);
 
-      // Decorative divider
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(40, 110);
-      ctx.lineTo(560, 110);
-      ctx.stroke();
+        // Decorative divider
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(40, 110);
+        ctx.lineTo(560, 110);
+        ctx.stroke();
 
-      // 3. Event Title
-      ctx.fillStyle = '#818cf8';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText('EVENTO', 40, 150);
+        // 3. Event Title
+        ctx.fillStyle = '#818cf8';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText('EVENTO', 40, 150);
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 24px sans-serif';
-      const eventTitle = ticket.event?.title || 'Evento senza titolo';
-      const displayTitle = eventTitle.length > 35 ? eventTitle.substring(0, 35) + '...' : eventTitle;
-      ctx.fillText(displayTitle, 40, 185);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px sans-serif';
+        const eventTitle = ticket.event?.title || 'Evento senza titolo';
+        const displayTitle = eventTitle.length > 35 ? eventTitle.substring(0, 35) + '...' : eventTitle;
+        ctx.fillText(displayTitle, 40, 185);
 
-      // 4. Participant Name
-      ctx.fillStyle = '#818cf8';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText('PARTECIPANTE', 40, 240);
+        // 4. Participant Name
+        ctx.fillStyle = '#818cf8';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText('PARTECIPANTE', 40, 240);
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 20px sans-serif';
-      ctx.fillText(ticket.ticketHolderName || 'Ospite', 40, 275);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.fillText(ticket.ticketHolderName || 'Ospite', 40, 275);
 
-      // Date & Location Info row
-      ctx.fillStyle = '#818cf8';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText('DATA', 40, 330);
-      
-      ctx.fillStyle = '#cbd5e1'; // slate-300
-      ctx.font = '16px sans-serif';
-      const dateStr = ticket.event?.dates && ticket.event.dates.length > 0
-        ? new Date(ticket.event.dates[0]).toLocaleDateString('it-IT')
-        : 'N/A';
-      ctx.fillText(dateStr, 40, 360);
+        // Date & Location Info row
+        ctx.fillStyle = '#818cf8';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText('DATA', 40, 330);
+        
+        ctx.fillStyle = '#cbd5e1'; // slate-300
+        ctx.font = '16px sans-serif';
+        const dateStr = ticket.event?.dates && ticket.event.dates.length > 0
+          ? new Date(ticket.event.dates[0]).toLocaleDateString('it-IT')
+          : 'N/A';
+        ctx.fillText(dateStr, 40, 360);
 
-      ctx.fillStyle = '#818cf8';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText('LOCATION', 280, 330);
+        ctx.fillStyle = '#818cf8';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText('LOCATION', 280, 330);
 
-      ctx.fillStyle = '#cbd5e1'; // slate-300
-      ctx.font = '16px sans-serif';
-      const locationStr = ticket.event?.location || 'N/A';
-      const displayLocation = locationStr.length > 25 ? locationStr.substring(0, 25) + '...' : locationStr;
-      ctx.fillText(displayLocation, 280, 360);
+        ctx.fillStyle = '#cbd5e1'; // slate-300
+        ctx.font = '16px sans-serif';
+        const locationStr = ticket.event?.location || 'N/A';
+        const displayLocation = locationStr.length > 25 ? locationStr.substring(0, 25) + '...' : locationStr;
+        ctx.fillText(displayLocation, 280, 360);
 
-      // Decorative Card for QR Code
-      const cardX = 180, cardY = 410, cardW = 240, cardH = 240, r = 16;
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.moveTo(cardX + r, cardY);
-      ctx.lineTo(cardX + cardW - r, cardY);
-      ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + r);
-      ctx.lineTo(cardX + cardW, cardY + cardH - r);
-      ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - r, cardY + cardH);
-      ctx.lineTo(cardX + r, cardY + cardH);
-      ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - r);
-      ctx.lineTo(cardX, cardY + r);
-      ctx.quadraticCurveTo(cardX, cardY, cardX + r, cardY);
-      ctx.closePath();
-      ctx.fill();
+        // Decorative Card for QR Code
+        const cardX = 180, cardY = 410, cardW = 240, cardH = 240, r = 16;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(cardX + r, cardY);
+        ctx.lineTo(cardX + cardW - r, cardY);
+        ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + r);
+        ctx.lineTo(cardX + cardW, cardY + cardH - r);
+        ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - r, cardY + cardH);
+        ctx.lineTo(cardX + r, cardY + cardH);
+        ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - r);
+        ctx.lineTo(cardX, cardY + r);
+        ctx.quadraticCurveTo(cardX, cardY, cardX + r, cardY);
+        ctx.closePath();
+        ctx.fill();
 
-      // Draw standard margin/padding for the QR canvas inside card
-      ctx.drawImage(qrCanvas, cardX + 20, cardY + 20, 200, 200);
+        // Draw standard margin/padding for the QR canvas inside card
+        ctx.drawImage(qrCanvas, cardX + 20, cardY + 20, 200, 200);
 
-      // Draw watermark footer
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.font = '11px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(`VOUCHER: ${ticket.qrCodeId || 'N/A'}`, 300, 680);
+        // Draw watermark footer
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.font = '11px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`VOUCHER: ${ticket.qrCodeId || 'N/A'}`, 300, 680);
 
-      // Trigger download
-      const dataUrl = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = `UniParty_Ticket_${ticket.event?.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'Voucher'}.png`;
-      link.href = dataUrl;
-      link.click();
+        // Trigger download
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `UniParty_Voucher_${ticket.event?.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'Voucher'}.png`;
+        link.href = dataUrl;
+        link.click();
+      };
+
+      logoImg.onload = executeDraw;
+      logoImg.onerror = executeDraw; // drawing logic runs even if image load errors out
     } catch (e) {
       console.error("Failed to generate ticket download", e);
-      alert("Errore durante la generazione del biglietto da scaricare.");
+      alert("Errore durante la generazione del voucher da scaricare.");
     }
   };
 

@@ -13,6 +13,19 @@ const EventDetails: React.FC = () => {
   const { user } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const getDateSpecificLocations = (): [string, string][] => {
+    if (!event || !event.dateSpecificLocations) return [];
+    try {
+      const locs = event.dateSpecificLocations;
+      if (typeof locs === 'object') {
+        return Object.entries(locs).filter(([k, v]) => k && v && typeof v === 'string');
+      }
+    } catch (e) {
+      console.error("Error parsing dateSpecificLocations", e);
+    }
+    return [];
+  };
   const [quantity, setQuantity] = useState(1);
   const [purchasing, setPurchasing] = useState(false);
   
@@ -830,10 +843,10 @@ const EventDetails: React.FC = () => {
                         </div>
                     ))}
                 </div>
-                {event.dateSpecificLocations && Object.keys(event.dateSpecificLocations).length > 0 ? (
-                    <div className="flex flex-col gap-3 bg-gray-800/50 px-5 py-4 rounded-xl border border-white/5">
+                {getDateSpecificLocations().length > 0 ? (
+                    <div className="flex flex-col gap-3 bg-gray-800/50 px-5 py-4 rounded-xl border border-white/5 w-full">
                         <span className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Luoghi dell'evento</span>
-                        {Object.entries(event.dateSpecificLocations).map(([date, loc]) => (
+                        {getDateSpecificLocations().map(([date, loc]) => (
                             <a 
                                 key={date}
                                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`}
@@ -843,7 +856,7 @@ const EventDetails: React.FC = () => {
                             >
                                 <MapPin className="w-5 h-5 mr-3 text-indigo-400 group-hover:text-red-400 transition-colors shrink-0" />
                                 <div className="flex flex-col min-w-0">
-                                    <span className="font-bold text-white text-sm truncate">
+                                    <span className="font-bold text-white text-sm whitespace-normal break-words">
                                         {new Date(date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })}: {loc}
                                     </span>
                                     <span className="text-[10px] text-gray-500">Apri su Google Maps</span>
@@ -860,7 +873,7 @@ const EventDetails: React.FC = () => {
                     >
                         <MapPin className="w-6 h-6 mr-3 text-indigo-400 group-hover:text-red-400 transition-colors" />
                         <div className="flex flex-col">
-                            <span className="font-bold text-white">{event.location}</span>
+                            <span className="font-bold text-white whitespace-normal break-words">{event.location}</span>
                             <span className="text-xs text-gray-500">Apri su Google Maps</span>
                         </div>
                     </a>
@@ -1057,7 +1070,7 @@ const EventDetails: React.FC = () => {
                                  </div>
                                  <div className="flex items-center mt-2 px-2">
                                      <Info className="w-3 h-3 text-indigo-400 mr-1" />
-                                     <p className="text-[10px] text-indigo-400 font-medium">Limite anti-bagarinaggio: max 5 biglietti per persona.</p>
+                                     <p className="text-[10px] text-indigo-400 font-medium">Limite anti-bagarinaggio: max 5 Voucher per persona.</p>
                                  </div>
                              </div>
 
@@ -1164,7 +1177,7 @@ const EventDetails: React.FC = () => {
 
                      <div className="border-t border-gray-700 my-4 pt-4 space-y-2">
                          <div className="flex justify-between text-sm text-gray-400">
-                             <span>Biglietti x {quantity}</span>
+                             <span>(voucher x {quantity})</span>
                              <span className="text-gray-200">€{(priceInCents * quantity / 100).toFixed(2)}</span>
                          </div>
                          {!isFree && (
@@ -1229,10 +1242,10 @@ const EventDetails: React.FC = () => {
                     <p className="text-xs text-gray-400 mb-3 leading-relaxed">
                         Mostra il QR Code all'ingresso direttamente dal tuo smartphone. Non serve stampare il biglietto.
                     </p>
-                     {event.dateSpecificLocations && Object.keys(event.dateSpecificLocations).length > 0 ? (
+                     {getDateSpecificLocations().length > 0 ? (
                          <div className="space-y-2 mt-2">
                              <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider block">Programma Luoghi:</span>
-                             {Object.entries(event.dateSpecificLocations).map(([date, loc]) => (
+                             {getDateSpecificLocations().map(([date, loc]) => (
                                  <a 
                                     key={date}
                                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`}
@@ -1241,7 +1254,7 @@ const EventDetails: React.FC = () => {
                                     className="text-xs font-bold text-indigo-400 hover:text-indigo-300 hover:underline flex items-start transition"
                                  >
                                      <MapPin className="w-3.5 h-3.5 mr-1.5 mt-0.5 shrink-0 text-red-400" />
-                                     <span className="truncate">
+                                     <span className="whitespace-normal break-words">
                                          {new Date(date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })}: {loc}
                                      </span>
                                  </a>
