@@ -56,16 +56,23 @@ const EventDetails: React.FC = () => {
       const entries = Object.entries(event.dateSpecificLocations)
         .filter(([k, v]) => k && v && typeof v === 'string');
       if (entries.length > 0) {
-        return entries.map(([date, loc]) => {
-          let label = date;
-          try {
-            const d = new Date(date);
-            if (!isNaN(d.getTime())) {
-              label = d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
-            }
-          } catch (e) {}
-          return { label, location: loc };
-        });
+        return entries
+          .sort(([dateA], [dateB]) => {
+            const timeA = new Date(dateA).getTime();
+            const timeB = new Date(dateB).getTime();
+            if (isNaN(timeA) || isNaN(timeB)) return 0;
+            return timeA - timeB;
+          })
+          .map(([date, loc]) => {
+            let label = date;
+            try {
+              const d = new Date(date);
+              if (!isNaN(d.getTime())) {
+                label = d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+              }
+            } catch (e) {}
+            return { label, location: loc };
+          });
       }
     }
 
@@ -949,7 +956,7 @@ const EventDetails: React.FC = () => {
                     })}
                 </div>
                 {getDailyLocationsList().length > 0 ? (
-                    <div className="flex flex-col gap-3 bg-gray-800/50 px-5 py-4 rounded-xl border border-white/5 w-full">
+                    <div className="flex flex-col gap-3 w-full">
                         <span className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Luoghi dell'evento</span>
                         {getDailyLocationsList().map((item, idx) => (
                             <a 
@@ -957,14 +964,14 @@ const EventDetails: React.FC = () => {
                                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group"
+                                className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group bg-gray-800/50 px-4 py-3 rounded-xl border border-white/5"
                             >
-                                <MapPin className="w-5 h-5 mr-3 text-indigo-400 group-hover:text-red-400 transition-colors shrink-0" />
-                                <div className="flex flex-col min-w-0">
-                                    <span className="font-bold text-white text-sm whitespace-normal break-words">
+                                <MapPin className="w-6 h-6 mr-3 text-indigo-400 group-hover:text-red-400 transition-colors shrink-0" />
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-white whitespace-normal break-words">
                                         {item.label}: {item.location}
                                     </span>
-                                    <span className="text-[10px] text-gray-500">Apri su Google Maps</span>
+                                    <span className="text-xs text-gray-500">Apri su Google Maps</span>
                                 </div>
                             </a>
                         ))}
