@@ -84,6 +84,7 @@ export interface Event {
   isTicketless?: boolean;
   coverImage?: string;
   dateSpecificLocations?: Record<string, string>;
+  dailyLocations?: { label?: string; date?: string; location: string }[];
   // New Academic Fields
   requiresMatricola?: boolean;
   requiresCorsoStudi?: boolean; // New field
