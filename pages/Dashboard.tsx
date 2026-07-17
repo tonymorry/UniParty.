@@ -810,17 +810,25 @@ const Dashboard: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">
-                        Indirizzo Specifico (Location)
-                      </label>
-                      <input
-                        type="text"
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
-                        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
-                        required
-                        placeholder="Es. Via Roma 123, locale X"
-                      />
+                      {Object.keys(dateSpecificLocations).length === 0 ? (
+                        <>
+                          <label className="block text-sm font-medium text-gray-300 mb-1">
+                            Indirizzo Specifico (Location)
+                          </label>
+                          <input
+                            type="text"
+                            value={location}
+                            onChange={(e) => setLocation(e.target.value)}
+                            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white placeholder-gray-400"
+                            required
+                            placeholder="Es. Via Roma 123, locale X"
+                          />
+                        </>
+                      ) : (
+                        <div className="text-sm font-semibold text-indigo-400 mb-2">
+                          Luoghi specifici per data configurati:
+                        </div>
+                      )}
                       <div className="mt-3 space-y-2">
                         {dates.filter(d => d.trim() !== "").map((d, index) => (
                           <div key={index} className="text-sm">

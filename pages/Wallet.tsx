@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Ticket, UserRole } from '../types';
-import { QRCodeSVG } from 'qrcode.react';
-import { Calendar, MapPin, AlertCircle } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
+import { Calendar, MapPin, AlertCircle, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Wallet: React.FC = () => {
