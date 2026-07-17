@@ -11,31 +11,7 @@ const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [rawEvent, setRawEvent] = useState<Event | null>(null);
-  const event = rawEvent ? {
-    ...rawEvent,
-    dailyLocations: ((): { label?: string; date?: string; location: string }[] => {
-      if (rawEvent.dateSpecificLocations && typeof rawEvent.dateSpecificLocations === 'object') {
-        return Object.entries(rawEvent.dateSpecificLocations)
-          .filter(([k, v]) => k && v && typeof v === 'string')
-          .map(([date, loc]) => {
-            let label = date;
-            try {
-              const d = new Date(date);
-              if (!isNaN(d.getTime())) {
-                label = d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
-              }
-            } catch (e) {}
-            return {
-              label,
-              date,
-              location: loc
-            };
-          });
-      }
-      return [];
-    })()
-  } : null;
+  const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
 
   const getDateSpecificLocations = (): [string, string][] => {
@@ -51,7 +27,50 @@ const EventDetails: React.FC = () => {
     return [];
   };
 
+  const getDailyLocationsList = (): { label: string; location: string }[] => {
+    if (!event) return [];
 
+    // 1. Check dailyLocations as requested by the user
+    const dailyLocs = (event as any).dailyLocations;
+    if (Array.isArray(dailyLocs) && dailyLocs.length > 0) {
+      const valid = dailyLocs
+        .map((item, idx) => {
+          if (typeof item === 'string' && item.trim()) {
+            return { label: `Giorno ${idx + 1}`, location: item.trim() };
+          }
+          if (item && typeof item === 'object') {
+            const loc = item.location || item.address;
+            if (typeof loc === 'string' && loc.trim()) {
+              const label = item.day || item.date || item.label || `Giorno ${idx + 1}`;
+              return { label: String(label), location: loc.trim() };
+            }
+          }
+          return null;
+        })
+        .filter((item): item is { label: string; location: string } => item !== null);
+      if (valid.length > 0) return valid;
+    }
+
+    // 2. Fallback to dateSpecificLocations
+    if (event.dateSpecificLocations && typeof event.dateSpecificLocations === 'object') {
+      const entries = Object.entries(event.dateSpecificLocations)
+        .filter(([k, v]) => k && v && typeof v === 'string');
+      if (entries.length > 0) {
+        return entries.map(([date, loc]) => {
+          let label = date;
+          try {
+            const d = new Date(date);
+            if (!isNaN(d.getTime())) {
+              label = d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+            }
+          } catch (e) {}
+          return { label, location: loc };
+        });
+      }
+    }
+
+    return [];
+  };
   const [quantity, setQuantity] = useState(1);
   const [purchasing, setPurchasing] = useState(false);
   
@@ -101,7 +120,7 @@ const EventDetails: React.FC = () => {
   useEffect(() => {
     if (id) {
       api.events.getById(id).then((data: any) => {
-          setRawEvent(data || null);
+          setEvent(data || null);
           if(data) {
               setEditForm({
                   title: data.title,
@@ -413,7 +432,7 @@ const EventDetails: React.FC = () => {
            };
 
            const updatedEvent = await api.events.update(event!._id, updatedData);
-           setRawEvent(updatedEvent);
+           setEvent(updatedEvent);
            setIsEditing(false);
            alert("Event updated successfully");
        } catch (e: any) {
@@ -431,7 +450,7 @@ const EventDetails: React.FC = () => {
       setIsPublishing(true);
       try {
           const updatedEvent = await api.events.update(event._id, { status: 'active' });
-          setRawEvent(updatedEvent);
+          setEvent(updatedEvent);
           alert("Evento pubblicato con successo!");
       } catch (e: any) {
           console.error(e);
@@ -869,42 +888,41 @@ const EventDetails: React.FC = () => {
                         </div>
                     ))}
                 </div>
-                <div className="flex flex-col space-y-4 mb-6 w-full">
-                  {event.dailyLocations && event.dailyLocations.length > 0 ? (
-                    <div className="flex flex-col space-y-3">
-                      {event.dailyLocations.map((item, index) => (
-                        <div key={index} className="flex items-start space-x-3">
-                          <MapPin className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-gray-500">
-                               Giorno {index + 1}
-                            </span>
-                            <a
-                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-white hover:text-indigo-400 transition-colors text-base underline decoration-indigo-500/30 whitespace-normal break-words"
+                {getDailyLocationsList().length > 0 ? (
+                    <div className="flex flex-col gap-3 bg-gray-800/50 px-5 py-4 rounded-xl border border-white/5 w-full">
+                        <span className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Luoghi dell'evento</span>
+                        {getDailyLocationsList().map((item, idx) => (
+                            <a 
+                                key={idx}
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group"
                             >
-                              {item.location}
+                                <MapPin className="w-5 h-5 mr-3 text-indigo-400 group-hover:text-red-400 transition-colors shrink-0" />
+                                <div className="flex flex-col min-w-0">
+                                    <span className="font-bold text-white text-sm whitespace-normal break-words">
+                                        {item.label}: {item.location}
+                                    </span>
+                                    <span className="text-[10px] text-gray-500">Apri su Google Maps</span>
+                                </div>
                             </a>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
                     </div>
-                  ) : (
-                    <div className="flex items-start space-x-3">
-                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
-                      <a
+                ) : (
+                    <a 
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-white hover:text-indigo-400 transition-colors text-base underline decoration-indigo-500/30 whitespace-normal break-words"
-                      >
-                        {event.location}
-                      </a>
-                    </div>
-                  )}
-                </div>
+                        className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group bg-gray-800/50 px-4 py-3 rounded-xl border border-white/5"
+                    >
+                        <MapPin className="w-6 h-6 mr-3 text-indigo-400 group-hover:text-red-400 transition-colors" />
+                        <div className="flex flex-col">
+                            <span className="font-bold text-white whitespace-normal break-words">{event.location}</span>
+                            <span className="text-xs text-gray-500">Apri su Google Maps</span>
+                        </div>
+                    </a>
+                )}
             </div>
         </div>
       </div>
@@ -1269,10 +1287,10 @@ const EventDetails: React.FC = () => {
                     <p className="text-xs text-gray-400 mb-3 leading-relaxed">
                         Mostra il QR Code all'ingresso direttamente dal tuo smartphone. Non serve stampare il biglietto.
                     </p>
-                     {event.dailyLocations && event.dailyLocations.length > 0 ? (
+                     {getDailyLocationsList().length > 0 ? (
                          <div className="space-y-2 mt-2">
                              <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider block">Programma Luoghi:</span>
-                             {event.dailyLocations.map((item, idx) => (
+                             {getDailyLocationsList().map((item, idx) => (
                                  <a 
                                     key={idx}
                                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`}
