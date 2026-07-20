@@ -931,92 +931,131 @@ const EventDetails: React.FC = () => {
                 {event.category}
             </span>
             <h1 className="text-3xl md:text-5xl font-bold text-white mb-6">{event.title}</h1>
-            <div className="flex flex-wrap items-center text-gray-300 text-sm md:text-base gap-6 md:gap-12">
-                <div className="flex flex-col gap-3">
-                    {event.dates && event.dates.map((d, idx) => {
-                        const dayLoc = getSpecificLocationForDate(d, idx);
+            <div className="w-full flex flex-col gap-4">
+                {event.isMultiDay && event.days && event.days.length > 0 ? (
+                    event.days.map((day, idx) => {
+                        const dateObj = day.date ? new Date(day.date) : (event.dates?.[idx] ? new Date(event.dates[idx]) : null);
+                        const formattedDate = dateObj && !isNaN(dateObj.getTime())
+                            ? dateObj.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                            : 'Data non specificata';
+                        
+                        const formattedTime = event.times?.[idx] || event.time || 'Ora non specificata';
+                        const locationName = day.location || event.location || 'Luogo non specificato';
+                        const mapQuery = day.coordinates || event.coordinates || day.location || event.location;
+
                         return (
-                            <div key={idx} className="flex flex-col md:flex-row md:items-center text-gray-300 text-sm md:text-base gap-2 md:gap-6 bg-gray-800/20 md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none border border-white/5 md:border-none">
-                                <div className="flex items-center">
-                                    <Calendar className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
-                                    <span className="font-semibold">{new Date(d).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                                </div>
-                                <div className="flex items-center">
-                                    <Clock className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
-                                    <span className="font-medium">{event.times && event.times[idx] ? event.times[idx] : event.time}</span>
-                                </div>
-                                {dayLoc && (
+                            <div 
+                                key={idx} 
+                                id={`event-day-${idx}`}
+                                className="flex flex-col md:flex-row md:items-center justify-between bg-gray-800/40 p-4 rounded-xl border border-white/5 gap-4 w-full"
+                            >
+                                <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 w-full md:w-auto">
+                                    <div className="flex items-center text-gray-300">
+                                        <Calendar className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                        <span className="font-semibold">{formattedDate}</span>
+                                    </div>
+                                    <div className="flex items-center text-gray-300">
+                                        <Clock className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                        <span className="font-medium">{formattedTime}</span>
+                                    </div>
                                     <div className="flex items-center text-indigo-300">
                                         <MapPin className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
-                                        <span className="font-semibold">{dayLoc}</span>
+                                        <span className="font-semibold whitespace-normal break-all">{locationName}</span>
                                     </div>
+                                </div>
+                                {mapQuery && (
+                                    <a 
+                                        id={`event-day-map-${idx}`}
+                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white px-4 py-2 rounded-xl font-bold text-xs transition border border-indigo-500/30 hover:border-indigo-500 shrink-0 cursor-pointer"
+                                    >
+                                        <MapPin className="w-4 h-4 mr-2 text-indigo-400" />
+                                        Apri su Google Maps
+                                    </a>
                                 )}
                             </div>
                         );
-                    })}
-                </div>
-                {event.isMultiDay && event.days && event.days.length > 0 ? (
-                    <div className="flex flex-col gap-3 w-full">
-                        <span className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Luoghi dell'evento</span>
-                        {event.days.map((day, idx) => {
-                            const label = day.date 
-                                ? new Date(day.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) 
-                                : `Giorno ${idx + 1}`;
-                            const locationName = day.location || event.location;
-                            const mapQuery = day.coordinates || event.coordinates || event.location;
-                            return (
-                                <a 
-                                    key={idx}
-                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group bg-gray-800/50 px-4 py-3 rounded-xl border border-white/5"
-                                >
-                                    <MapPin className="w-6 h-6 mr-3 text-indigo-400 group-hover:text-red-400 transition-colors shrink-0" />
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-white whitespace-normal break-words">
-                                            {label}: {locationName}
-                                        </span>
-                                        <span className="text-xs text-gray-500">Apri su Google Maps</span>
+                    })
+                ) : event.dates && event.dates.length > 0 ? (
+                    event.dates.map((d, idx) => {
+                        const formattedDate = new Date(d).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                        const formattedTime = event.times && event.times[idx] ? event.times[idx] : event.time;
+                        const dayLoc = getSpecificLocationForDate(d, idx) || event.location;
+                        const mapQuery = getSpecificLocationForDate(d, idx) || event.coordinates || event.location;
+
+                        return (
+                            <div 
+                                key={idx} 
+                                id={`event-date-${idx}`}
+                                className="flex flex-col md:flex-row md:items-center justify-between bg-gray-800/40 p-4 rounded-xl border border-white/5 gap-4 w-full"
+                            >
+                                <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 w-full md:w-auto">
+                                    <div className="flex items-center text-gray-300">
+                                        <Calendar className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                        <span className="font-semibold">{formattedDate}</span>
                                     </div>
-                                </a>
-                            );
-                        })}
-                    </div>
-                ) : getDailyLocationsList().length > 0 ? (
-                    <div className="flex flex-col gap-3 w-full">
-                        <span className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Luoghi dell'evento</span>
-                        {getDailyLocationsList().map((item, idx) => (
+                                    <div className="flex items-center text-gray-300">
+                                        <Clock className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                        <span className="font-medium">{formattedTime}</span>
+                                    </div>
+                                    {dayLoc && (
+                                        <div className="flex items-center text-indigo-300">
+                                            <MapPin className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                            <span className="font-semibold whitespace-normal break-all">{dayLoc}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {mapQuery && (
+                                    <a 
+                                        id={`event-date-map-${idx}`}
+                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white px-4 py-2 rounded-xl font-bold text-xs transition border border-indigo-500/30 hover:border-indigo-500 shrink-0 cursor-pointer"
+                                    >
+                                        <MapPin className="w-4 h-4 mr-2 text-indigo-400" />
+                                        Apri su Google Maps
+                                    </a>
+                                )}
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div 
+                        id="event-no-dates"
+                        className="flex flex-col md:flex-row md:items-center justify-between bg-gray-800/40 p-4 rounded-xl border border-white/5 gap-4 w-full"
+                    >
+                        <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 w-full md:w-auto">
+                            <div className="flex items-center text-gray-300">
+                                <Calendar className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                <span className="font-semibold">Nessuna data specificata</span>
+                            </div>
+                            <div className="flex items-center text-gray-300">
+                                <Clock className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                <span className="font-medium">{event.time || 'Ora non specificata'}</span>
+                            </div>
+                            {event.location && (
+                                <div className="flex items-center text-indigo-300">
+                                    <MapPin className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                    <span className="font-semibold whitespace-normal break-all">{event.location}</span>
+                                </div>
+                            )}
+                        </div>
+                        {event.location && (
                             <a 
-                                key={idx}
-                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`}
+                                id="event-default-map"
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.coordinates || event.location)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group bg-gray-800/50 px-4 py-3 rounded-xl border border-white/5"
+                                className="flex items-center justify-center bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white px-4 py-2 rounded-xl font-bold text-xs transition border border-indigo-500/30 hover:border-indigo-500 shrink-0 cursor-pointer"
                             >
-                                <MapPin className="w-6 h-6 mr-3 text-indigo-400 group-hover:text-red-400 transition-colors shrink-0" />
-                                <div className="flex flex-col">
-                                    <span className="font-bold text-white whitespace-normal break-words">
-                                        {item.label}: {item.location}
-                                    </span>
-                                    <span className="text-xs text-gray-500">Apri su Google Maps</span>
-                                </div>
+                                <MapPin className="w-4 h-4 mr-2 text-indigo-400" />
+                                Apri su Google Maps
                             </a>
-                        ))}
+                        )}
                     </div>
-                ) : (
-                    <a 
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.coordinates || event.location)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group bg-gray-800/50 px-4 py-3 rounded-xl border border-white/5"
-                    >
-                        <MapPin className="w-6 h-6 mr-3 text-indigo-400 group-hover:text-red-400 transition-colors" />
-                        <div className="flex flex-col">
-                            <span className="font-bold text-white whitespace-normal break-words">{event.location}</span>
-                            <span className="text-xs text-gray-500">Apri su Google Maps</span>
-                        </div>
-                    </a>
                 )}
             </div>
         </div>
