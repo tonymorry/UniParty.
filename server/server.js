@@ -1013,7 +1013,8 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         let { 
             title, description, longDescription, image, dates, times, time, 
             location, city, price, maxCapacity, category, prLists, status,
-            requiresMatricola, requiresCorsoStudi, scanType, isTicketless
+            requiresMatricola, requiresCorsoStudi, scanType, isTicketless,
+            isMultiDay, days, dateSpecificLocations
         } = req.body;
 
         if (price < 0) return res.status(400).json({ error: "Price cannot be negative" });
@@ -1027,6 +1028,12 @@ app.post('/api/events', authMiddleware, async (req, res) => {
         for (const d of dates) {
             if (new Date(d) < today) return res.status(400).json({ error: "Event dates cannot be in the past" });
         }
+
+        const calculatedDays = days || (dates && dates.map((d, idx) => ({
+            date: d,
+            location: (dateSpecificLocations && dateSpecificLocations[d]) || location,
+            coordinates: (dateSpecificLocations && dateSpecificLocations[d]) || location
+        })));
 
         const newEvent = await Event.create({
             title, 
@@ -1050,7 +1057,10 @@ app.post('/api/events', authMiddleware, async (req, res) => {
             requiresMatricola: !!requiresMatricola,
             requiresCorsoStudi: !!requiresCorsoStudi,
             isTicketless: !!isTicketless,
-            scanType: scanType || 'entry_only'
+            scanType: scanType || 'entry_only',
+            isMultiDay: isMultiDay !== undefined ? !!isMultiDay : (dates && dates.length > 1),
+            days: calculatedDays,
+            dateSpecificLocations: dateSpecificLocations || {}
         });
 
         await newEvent.populate('organization', 'name _id');
@@ -1116,8 +1126,15 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
         let { 
             title, description, longDescription, image, dates, times, time, 
             location, city, maxCapacity, category, prLists, price, status,
-            requiresMatricola, requiresCorsoStudi, scanType, isTicketless
+            requiresMatricola, requiresCorsoStudi, scanType, isTicketless,
+            isMultiDay, days, dateSpecificLocations
         } = req.body;
+
+        const calculatedDays = days || (dates && dates.map((d, idx) => ({
+            date: d,
+            location: (dateSpecificLocations && dateSpecificLocations[d]) || location,
+            coordinates: (dateSpecificLocations && dateSpecificLocations[d]) || location
+        })));
 
         const updated = await Event.findByIdAndUpdate(req.params.id, {
             title, description, longDescription, image, dates, times,
@@ -1128,7 +1145,10 @@ app.put('/api/events/:id', authMiddleware, async (req, res) => {
             ...(requiresMatricola !== undefined && { requiresMatricola }),
             ...(requiresCorsoStudi !== undefined && { requiresCorsoStudi }),
             ...(isTicketless !== undefined && { isTicketless }),
-            ...(scanType !== undefined && { scanType })
+            ...(scanType !== undefined && { scanType }),
+            isMultiDay: isMultiDay !== undefined ? !!isMultiDay : (dates && dates.length > 1),
+            days: calculatedDays,
+            dateSpecificLocations: dateSpecificLocations || {}
         }, { new: true }).populate('organization', 'name _id profileImage');
 
         res.json(updated);

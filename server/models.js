@@ -117,7 +117,13 @@ const eventSchema = new mongoose.Schema({
   requiresMatricola: { type: Boolean, default: false },
   requiresCorsoStudi: { type: Boolean, default: false }, // New Field
   scanType: { type: String, enum: ['entry_only', 'entry_exit'], default: 'entry_only' },
-  dateSpecificLocations: { type: Map, of: String, default: {} }
+  dateSpecificLocations: { type: Map, of: String, default: {} },
+  isMultiDay: { type: Boolean, default: false },
+  days: [{
+    date: Date,
+    location: String,
+    coordinates: String
+  }]
 }, { timestamps: true });
 
 // --- TICKET SCHEMA ---

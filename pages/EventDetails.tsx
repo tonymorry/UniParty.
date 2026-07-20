@@ -176,6 +176,15 @@ const EventDetails: React.FC = () => {
       api.events.getById(id).then((data: any) => {
           setEvent(data || null);
           if(data) {
+              let parsedDateSpecificLocations: Record<string, string> = {};
+              if (data.dateSpecificLocations) {
+                  if (typeof data.dateSpecificLocations.toJSON === 'function') {
+                      parsedDateSpecificLocations = data.dateSpecificLocations.toJSON();
+                  } else if (typeof data.dateSpecificLocations === 'object') {
+                      parsedDateSpecificLocations = { ...data.dateSpecificLocations };
+                  }
+              }
+
               setEditForm({
                   title: data.title,
                   description: data.description,
@@ -190,6 +199,9 @@ const EventDetails: React.FC = () => {
                   requiresMatricola: data.requiresMatricola || false,
                   requiresCorsoStudi: data.requiresCorsoStudi || false,
                   isTicketless: data.isTicketless || false,
+                  isMultiDay: data.isMultiDay || false,
+                  days: data.days || [],
+                  dateSpecificLocations: parsedDateSpecificLocations,
               });
               setEditPriceString(data.price.toString());
           }
@@ -473,6 +485,15 @@ const EventDetails: React.FC = () => {
        setSaving(true);
        try {
            const isoDates = editForm.dates!.map(d => new Date(d).toISOString());
+           const isMultiDay = editForm.dates!.length > 1;
+           const days = editForm.dates!.map((d, index) => {
+               const specLoc = editForm.dateSpecificLocations?.[d] || editForm.location || '';
+               return {
+                   date: new Date(d).toISOString(),
+                   location: specLoc,
+                   coordinates: specLoc
+               };
+           });
            
            const cleanPrice = parseFloat(editPriceString.replace(',', '.'));
            const finalPrice = isNaN(cleanPrice) ? 0 : Number(cleanPrice.toFixed(2));
@@ -482,7 +503,10 @@ const EventDetails: React.FC = () => {
                price: finalPrice,
                dates: isoDates,
                times: editForm.times,
-               requiresCorsoStudi: editForm.requiresMatricola 
+               requiresCorsoStudi: editForm.requiresMatricola,
+               isMultiDay,
+               days,
+               dateSpecificLocations: editForm.dateSpecificLocations || {}
            };
 
            const updatedEvent = await api.events.update(event!._id, updatedData);
@@ -636,11 +660,88 @@ const EventDetails: React.FC = () => {
                       <div>
                           <label className="block text-sm font-medium text-gray-300 mb-1">Location</label>
                           <input 
-                              type="text" value={editForm.location} 
+                              type="text" value={editForm.location || ''} 
                               onChange={e => setEditForm({...editForm, location: e.target.value})}
                               className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-white"
                               required
                           />
+                      </div>
+
+                      {/* Dynamic date-specific locations for Edit Event */}
+                      <div className="p-4 bg-gray-900/50 rounded-xl border border-gray-700 space-y-3">
+                          <div className="text-sm font-semibold text-indigo-400">
+                              Luoghi specifici per data (Multi-luogo):
+                          </div>
+                          <div className="space-y-2">
+                              {editForm.dates?.filter(d => d.trim() !== "").map((d, index) => {
+                                  const locs = editForm.dateSpecificLocations || {};
+                                  const isConfigured = locs[d] !== undefined;
+
+                                  return (
+                                      <div key={index} className="text-sm bg-gray-850 p-2 rounded border border-gray-800">
+                                          {isConfigured ? (
+                                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                                  <span className="text-indigo-400 font-medium min-w-[80px]">
+                                                      {(() => {
+                                                          try {
+                                                              const dObj = new Date(d);
+                                                              return !isNaN(dObj.getTime()) ? dObj.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) : d;
+                                                          } catch (e) {
+                                                              return d;
+                                                          }
+                                                      })()}:
+                                                  </span>
+                                                  <input 
+                                                      type="text" 
+                                                      placeholder="Indirizzo specifico per questo giorno..." 
+                                                      value={locs[d] || ''} 
+                                                      onChange={(e) => {
+                                                          const updatedLocs = { ...locs, [d]: e.target.value };
+                                                          setEditForm({ ...editForm, dateSpecificLocations: updatedLocs });
+                                                      }} 
+                                                      className="flex-1 px-3 py-1 bg-gray-900 border border-gray-600 rounded focus:border-indigo-500 outline-none text-white text-xs" 
+                                                      required
+                                                  />
+                                                  <button 
+                                                      type="button" 
+                                                      onClick={() => {
+                                                          const updatedLocs = { ...locs };
+                                                          delete updatedLocs[d];
+                                                          setEditForm({ ...editForm, dateSpecificLocations: updatedLocs });
+                                                      }} 
+                                                      className="text-red-400 text-xs hover:underline whitespace-nowrap"
+                                                  >
+                                                      Rimuovi
+                                                  </button>
+                                              </div>
+                                          ) : (
+                                              <div className="flex items-center justify-between">
+                                                  <span className="text-gray-400 text-xs">
+                                                      {(() => {
+                                                          try {
+                                                              const dObj = new Date(d);
+                                                              return !isNaN(dObj.getTime()) ? dObj.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) : d;
+                                                          } catch (e) {
+                                                              return d;
+                                                          }
+                                                      })()}: <span className="italic text-gray-500">(Luogo predefinito)</span>
+                                                  </span>
+                                                  <button 
+                                                      type="button" 
+                                                      onClick={() => {
+                                                          const updatedLocs = { ...locs, [d]: editForm.location || '' };
+                                                          setEditForm({ ...editForm, dateSpecificLocations: updatedLocs });
+                                                      }} 
+                                                      className="text-indigo-400 text-xs hover:underline"
+                                                  >
+                                                      + Personalizza luogo
+                                                  </button>
+                                              </div>
+                                          )}
+                                      </div>
+                                  );
+                              })}
+                          </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -940,8 +1041,10 @@ const EventDetails: React.FC = () => {
                             : 'Data non specificata';
                         
                         const formattedTime = event.times?.[idx] || event.time || 'Ora non specificata';
-                        const locationName = day.location || event.location || 'Luogo non specificato';
-                        const mapQuery = day.coordinates || event.coordinates || day.location || event.location;
+                        
+                        const dateStr = day.date ? (typeof day.date === 'string' ? day.date : new Date(day.date).toISOString()) : (event.dates?.[idx] || '');
+                        const locationName = day.location || (dateStr ? getSpecificLocationForDate(dateStr, idx) : null) || event.location || 'Luogo non specificato';
+                        const mapQuery = day.coordinates || (dateStr ? getSpecificLocationForDate(dateStr, idx) : null) || event.coordinates || event.location;
 
                         return (
                             <div 

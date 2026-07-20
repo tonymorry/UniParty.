@@ -274,6 +274,13 @@ const Dashboard: React.FC = () => {
 
     setCreatingEvent(true);
     try {
+      const isMultiDay = dates.length > 1;
+      const days = dates.map((d, index) => ({
+        date: d,
+        location: dateSpecificLocations[d] || location,
+        coordinates: dateSpecificLocations[d] || location
+      }));
+
       const newEvent = await api.events.create(
         {
           title,
@@ -295,6 +302,8 @@ const Dashboard: React.FC = () => {
           requiresCorsoStudi: requiresAcademicData,
           isTicketless,
           scanType,
+          isMultiDay,
+          days,
         },
         user,
       );
