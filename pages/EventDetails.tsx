@@ -955,7 +955,35 @@ const EventDetails: React.FC = () => {
                         );
                     })}
                 </div>
-                {getDailyLocationsList().length > 0 ? (
+                {event.isMultiDay && event.days && event.days.length > 0 ? (
+                    <div className="flex flex-col gap-3 w-full">
+                        <span className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Luoghi dell'evento</span>
+                        {event.days.map((day, idx) => {
+                            const label = day.date 
+                                ? new Date(day.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) 
+                                : `Giorno ${idx + 1}`;
+                            const locationName = day.location || event.location;
+                            const mapQuery = day.coordinates || event.coordinates || event.location;
+                            return (
+                                <a 
+                                    key={idx}
+                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group bg-gray-800/50 px-4 py-3 rounded-xl border border-white/5"
+                                >
+                                    <MapPin className="w-6 h-6 mr-3 text-indigo-400 group-hover:text-red-400 transition-colors shrink-0" />
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-white whitespace-normal break-words">
+                                            {label}: {locationName}
+                                        </span>
+                                        <span className="text-xs text-gray-500">Apri su Google Maps</span>
+                                    </div>
+                                </a>
+                            );
+                        })}
+                    </div>
+                ) : getDailyLocationsList().length > 0 ? (
                     <div className="flex flex-col gap-3 w-full">
                         <span className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Luoghi dell'evento</span>
                         {getDailyLocationsList().map((item, idx) => (
@@ -978,7 +1006,7 @@ const EventDetails: React.FC = () => {
                     </div>
                 ) : (
                     <a 
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.coordinates || event.location)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center hover:text-white hover:underline transition-colors cursor-pointer group bg-gray-800/50 px-4 py-3 rounded-xl border border-white/5"
@@ -1354,7 +1382,32 @@ const EventDetails: React.FC = () => {
                     <p className="text-xs text-gray-400 mb-3 leading-relaxed">
                         Mostra il QR Code all'ingresso direttamente dal tuo smartphone. Non serve stampare il biglietto.
                     </p>
-                     {getDailyLocationsList().length > 0 ? (
+                     {event.isMultiDay && event.days && event.days.length > 0 ? (
+                         <div className="space-y-2 mt-2">
+                             <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider block">Programma Luoghi:</span>
+                             {event.days.map((day, idx) => {
+                                 const label = day.date 
+                                     ? new Date(day.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) 
+                                     : `Giorno ${idx + 1}`;
+                                 const locationName = day.location || event.location;
+                                 const mapQuery = day.coordinates || event.coordinates || event.location;
+                                 return (
+                                     <a 
+                                        key={idx}
+                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
+                                        target="_blank" 
+                                        rel="noreferrer"
+                                        className="text-xs font-bold text-indigo-400 hover:text-indigo-300 hover:underline flex items-start transition"
+                                     >
+                                         <MapPin className="w-3.5 h-3.5 mr-1.5 mt-0.5 shrink-0 text-red-400" />
+                                         <span className="whitespace-normal break-words">
+                                             {label}: {locationName}
+                                         </span>
+                                     </a>
+                                 );
+                             })}
+                         </div>
+                     ) : getDailyLocationsList().length > 0 ? (
                          <div className="space-y-2 mt-2">
                              <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider block">Programma Luoghi:</span>
                              {getDailyLocationsList().map((item, idx) => (
@@ -1372,16 +1425,16 @@ const EventDetails: React.FC = () => {
                                  </a>
                              ))}
                          </div>
-                     ) : (
-                          <a 
-                             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
-                             target="_blank" 
-                             rel="noreferrer"
-                             className="text-xs font-bold text-indigo-400 hover:text-indigo-300 hover:underline flex items-center transition"
-                          >
-                              <MapPin className="w-3 h-3 mr-1" /> Apri su Google Maps
-                          </a>
-                     )}
+                      ) : (
+                           <a 
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.coordinates || event.location)}`}
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 hover:underline flex items-center transition"
+                           >
+                               <MapPin className="w-3 h-3 mr-1" /> Apri su Google Maps
+                           </a>
+                      )}
                 </div>
             </div>
         </div>

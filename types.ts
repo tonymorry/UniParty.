@@ -88,6 +88,13 @@ export interface Event {
   requiresMatricola?: boolean;
   requiresCorsoStudi?: boolean; // New field
   scanType?: 'entry_only' | 'entry_exit';
+  isMultiDay?: boolean;
+  coordinates?: string;
+  days?: {
+    date: string;
+    location?: string;
+    coordinates?: string;
+  }[];
 }
 
 export interface Ticket {
