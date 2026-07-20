@@ -940,28 +940,41 @@ const EventDetails: React.FC = () => {
                             : 'Data non specificata';
                         
                         const formattedTime = event.times?.[idx] || event.time || 'Ora non specificata';
-                        const locationName = (day.location && day.location.trim() !== '') 
-                            ? day.location 
-                            : (event.location && event.location.trim() !== '' ? event.location : 'Luogo non specificato');
+                        const locationName = day.location || event.location || 'Luogo non specificato';
+                        const mapQuery = day.coordinates || event.coordinates || day.location || event.location;
 
                         return (
                             <div 
                                 key={idx} 
                                 id={`event-day-${idx}`}
-                                className="flex flex-col md:flex-row md:items-center bg-gray-800/40 p-4 rounded-xl border border-white/5 gap-4 md:gap-8 w-full"
+                                className="flex flex-col md:flex-row md:items-center justify-between bg-gray-800/40 p-4 rounded-xl border border-white/5 gap-4 w-full"
                             >
-                                <div className="flex items-center text-gray-300">
-                                    <Calendar className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
-                                    <span className="font-semibold">{formattedDate}</span>
+                                <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 w-full md:w-auto">
+                                    <div className="flex items-center text-gray-300">
+                                        <Calendar className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                        <span className="font-semibold">{formattedDate}</span>
+                                    </div>
+                                    <div className="flex items-center text-gray-300">
+                                        <Clock className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                        <span className="font-medium">{formattedTime}</span>
+                                    </div>
+                                    <div className="flex items-center text-indigo-300">
+                                        <MapPin className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
+                                        <span className="font-semibold whitespace-normal break-all">{locationName}</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center text-gray-300">
-                                    <Clock className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
-                                    <span className="font-medium">{formattedTime}</span>
-                                </div>
-                                <div className="flex items-center text-indigo-300">
-                                    <MapPin className="w-5 h-5 mr-3 text-indigo-400 shrink-0" />
-                                    <span className="font-semibold whitespace-normal break-all">{locationName}</span>
-                                </div>
+                                {mapQuery && (
+                                    <a 
+                                        id={`event-day-map-${idx}`}
+                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white px-4 py-2 rounded-xl font-bold text-xs transition border border-indigo-500/30 hover:border-indigo-500 shrink-0 cursor-pointer"
+                                    >
+                                        <MapPin className="w-4 h-4 mr-2 text-indigo-400" />
+                                        Apri su Google Maps
+                                    </a>
+                                )}
                             </div>
                         );
                     })
